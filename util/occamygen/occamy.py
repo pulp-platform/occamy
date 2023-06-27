@@ -2,7 +2,11 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-from .cluster import Generator, PMA, PMACfg, SnitchCluster, clog2
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent / '../../deps/snitch_cluster/util/clustergen'))
+from cluster import Generator, PMA, PMACfg, SnitchCluster, clog2
 
 
 class Occamy(Generator):

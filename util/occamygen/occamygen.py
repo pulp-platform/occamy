@@ -14,9 +14,10 @@ from subprocess import run
 import csv
 
 from jsonref import JsonRef
-from clustergen.occamy import Occamy
+from occamy import Occamy
 from mako.template import Template
 
+sys.path.append(str(pathlib.Path(__file__).parent / '../'))
 from solder import solder, device_tree, util
 
 # Compile a regex to trim trailing whitespaces on lines.

@@ -1,5 +1,7 @@
 .bender/
 Bender.lock
+/working_dir/
+
 .vscode/
 __pycache__
 

@@ -23,16 +23,17 @@ clean: clean-bender clean-sw clean-addrmap clean-vlt clean-vsim clean-vcs clean-
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-ROOT        := ${MKFILE_DIR}../../..
+ROOT        := $(MKFILE_DIR)../..
+SNITCH_ROOT := $(realpath $(ROOT)/deps/snitch_cluster)
 
-include $(ROOT)/util/Makefrag
+include $(SNITCH_ROOT)/target/common/common.mk
 
 ############
 # Programs #
 ############
 
 REGGEN     ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
-OCCAMYGEN  ?= $(ROOT)/util/occamygen.py
+OCCAMYGEN  ?= $(ROOT)/util/occamygen/occamygen.py
 ADDRMAPGEN ?= $(ROOT)/util/addrmapgen.py
 
 CLANG_FORMAT ?= $(shell which clang-format-12.0.1)
@@ -477,6 +478,7 @@ help:
 	@echo -e "${Blue}clean-vsim     ${Black}Clean all build directories and temporary files for Questasim simulation."
 	@echo -e ""
 	@echo -e "${Blue}sw             ${Black}Build all software."
+	@echo -e "${Blue}rtl            ${Black}Build all auto-generated RTL sources."
 	@echo -e ""
 	@echo -e "Additional useful targets from the included Makefrag:"
 	@echo -e "${Blue}traces         ${Black}Generate the better readable traces in .logs/trace_hart_<hart_id>.txt with spike-dasm."
