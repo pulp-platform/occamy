@@ -14,7 +14,7 @@ include ../../toolchain.mk
 BUILDDIR    = $(abspath build)
 APPSDIR     = $(abspath ../)
 RUNTIME_DIR = $(abspath ../../runtime)
-SNRT_DIR    = $(abspath ../../../../../../../sw/snRuntime)
+SNRT_DIR    = $(shell bender path snitch_cluster)/sw/snRuntime
 SW_DIR      = $(abspath ../../../)
 
 # Dependencies
