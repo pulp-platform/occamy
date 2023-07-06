@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://pulp-platform.org/snitch/axi_xbar.schema.json",
+    "$id": "http://pulp-platform.org/occamy/axi_xbar.schema.json",
     "title": "AXI Crossbar Schema",
     "description": "AXI Crossbar Properties",
     "type": "object",

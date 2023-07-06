@@ -14,7 +14,15 @@ class Occamy(Generator):
     Generate an Occamy system.
     """
     def __init__(self, cfg):
-        super().__init__("occamy.schema.json")
+        occamy_root = (Path(__file__).parent / "../../").resolve()
+        snitch_root = (Path(__file__).parent / "../../deps/snitch_cluster").resolve()
+        schema = occamy_root / "docs/schema/occamy.schema.json"
+        remote_schemas = [occamy_root / "docs/schema/axi_xbar.schema.json",
+                          occamy_root / "docs/schema/axi_tlb.schema.json",
+                          occamy_root / "docs/schema/address_range.schema.json",
+                          occamy_root / "docs/schema/peripherals.schema.json",
+                          snitch_root / "docs/schema/snitch_cluster.schema.json"]
+        super().__init__(schema, remote_schemas)
         # Validate the schema.
         self.validate(cfg)
         # from here we know that we have a valid object.
