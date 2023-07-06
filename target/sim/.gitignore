@@ -1,0 +1,10 @@
+/bin/
+/logs/
+/work/
+/work-vsim/
+/*.log
+/.*_targets_group
+/sw/**/build/
+
+# Auto-generated sources
+/src/
