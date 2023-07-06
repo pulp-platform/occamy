@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://pulp-platform.org/snitch/occamy.schema.json",
+    "$id": "http://pulp-platform.org/occamy/occamy.schema.json",
     "title": "Occamy System Schema",
     "description": "Description of an Occamy-based system.",
     "type": "object",
@@ -9,10 +9,10 @@
     ],
     "properties": {
         "cluster": {
-            "$ref": "http://pulp-platform.org/snitch/snitch_cluster.schema.json"
+            "$ref": "http://pulp-platform.org/snitch_cluster/snitch_cluster.schema.json"
         },
         "quadrant_pre_xbar": {
-            "$ref": "http://pulp-platform.org/snitch/axi_xbar.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/axi_xbar.schema.json"
         },
         "pre_xbar_slv_id_width_no_rocache": {
             "type": "integer",
@@ -20,16 +20,16 @@
             "default": 3
         },
         "wide_xbar": {
-            "$ref": "http://pulp-platform.org/snitch/axi_xbar.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/axi_xbar.schema.json"
         },
         "quadrant_inter_xbar": {
-            "$ref": "http://pulp-platform.org/snitch/axi_xbar.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/axi_xbar.schema.json"
         },
         "hbm_xbar": {
-            "$ref": "http://pulp-platform.org/snitch/axi_xbar.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/axi_xbar.schema.json"
         },
         "narrow_xbar": {
-            "$ref": "http://pulp-platform.org/snitch/axi_xbar.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/axi_xbar.schema.json"
         },
         "narrow_xbar_slv_id_width": {
             "type": "integer",
@@ -42,10 +42,10 @@
             "default": 8
         },
         "narrow_tlb_cfg": {
-            "$ref": "http://pulp-platform.org/snitch/axi_tlb.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/axi_tlb.schema.json"
         },
         "wide_tlb_cfg": {
-            "$ref": "http://pulp-platform.org/snitch/axi_tlb.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/axi_tlb.schema.json"
         },
         "cuts": {
             "title": "Number of cuts on the AXI bus",
@@ -345,7 +345,7 @@
                     }
                 },
                 "wide_xbar": {
-                    "$ref": "http://pulp-platform.org/snitch/axi_xbar.schema.json"
+                    "$ref": "http://pulp-platform.org/occamy/axi_xbar.schema.json"
                 },
                 "wide_xbar_slv_id_width": {
                     "type": "integer",
@@ -353,7 +353,7 @@
                     "default": 3
                 },
                 "narrow_xbar": {
-                    "$ref": "http://pulp-platform.org/snitch/axi_xbar.schema.json"
+                    "$ref": "http://pulp-platform.org/occamy/axi_xbar.schema.json"
                 },
                 "narrow_xbar_slv_id_width": {
                     "type": "integer",
@@ -373,13 +373,13 @@
             }
         },
         "spm_narrow": {
-            "$ref": "http://pulp-platform.org/snitch/address_range.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/address_range.schema.json"
         },
         "spm_wide": {
-            "$ref": "http://pulp-platform.org/snitch/address_range.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/address_range.schema.json"
         },
         "wide_zero_mem": {
-            "$ref": "http://pulp-platform.org/snitch/address_range.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/address_range.schema.json"
         },
         "pcie": {
             "title": "Configuration of external PCIe port",
@@ -403,7 +403,7 @@
             }
         },
         "hbi": {
-            "$ref": "http://pulp-platform.org/snitch/address_range.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/address_range.schema.json"
         },
         "hbm": {
             "title": "Configuration of external HBM interface",
@@ -436,16 +436,16 @@
                 },
                 "cfg_regions": {
                     "properties": {
-                        "top": {"$ref": "http://pulp-platform.org/snitch/address_range.schema.json"},
-                        "phy": {"$ref": "http://pulp-platform.org/snitch/address_range.schema.json"},
-                        "seq": {"$ref": "http://pulp-platform.org/snitch/address_range.schema.json"},
-                        "ctrl": {"$ref": "http://pulp-platform.org/snitch/address_range.schema.json"}
+                        "top": {"$ref": "http://pulp-platform.org/occamy/address_range.schema.json"},
+                        "phy": {"$ref": "http://pulp-platform.org/occamy/address_range.schema.json"},
+                        "seq": {"$ref": "http://pulp-platform.org/occamy/address_range.schema.json"},
+                        "ctrl": {"$ref": "http://pulp-platform.org/occamy/address_range.schema.json"}
                     }
                 }
             }
         },
         "peripherals": {
-            "$ref": "http://pulp-platform.org/snitch/peripherals.schema.json"
+            "$ref": "http://pulp-platform.org/occamy/peripherals.schema.json"
         }
     }
 }

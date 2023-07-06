@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://pulp-platform.org/snitch/peripherals.schema.json",
+    "$id": "http://pulp-platform.org/occamy/peripherals.schema.json",
     "title": "Peripherals Schema",
     "description": "Description of an a peripheral sub-system.",
     "type": "object",
