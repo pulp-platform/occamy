@@ -39,7 +39,7 @@ LD_SRCS       = $(BASE_LD) $(MEMORY_LD) $(ORIGIN_LD) $(SNRT_LIB)
 # Linker flags
 RISCV_LDFLAGS += -nostartfiles
 RISCV_LDFLAGS += -lm
-RISCV_LDFLAGS += -lgcc
+# RISCV_LDFLAGS += -lgcc
 # Linker script
 RISCV_LDFLAGS += -L$(APPSDIR)
 RISCV_LDFLAGS += -L$(BUILDDIR)
@@ -96,8 +96,8 @@ $(DUMP): $(ELF) | $(BUILDDIR)
 	$(RISCV_OBJDUMP) -D $< > $@
 
 $(DWARF): $(ELF) | $(BUILDDIR)
-	$(RISCV_READELF) --debug-dump $< > $@
-
+#	$(RISCV_READELF) --debug-dump $< > $@
+	$(RISCV_DWARFDUMP) $< > $@
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
 endif
