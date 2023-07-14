@@ -457,8 +457,8 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 # So we define a new variable to store the CVA6 binary
 CVA6_BINARY ?= $(shell cat $(LOGS_DIR)/.rtlbinary)
 
-$(LOGS_DIR)/hart_00000_perf.json: $(LOGS_DIR)/trace_hart_00000.txt $(ROOT)/util/trace/events.py
-	$(PYTHON) $(ROOT)/util/trace/events.py -f cva6 $< -o $@
+$(LOGS_DIR)/hart_00000_perf.json: $(LOGS_DIR)/trace_hart_00000.txt $(SNITCH_ROOT)/util/trace/events.py
+	$(PYTHON) $(SNITCH_ROOT)/util/trace/events.py -f cva6 $< -o $@
 
 $(LOGS_DIR)/trace_hart_00000.s: $(LOGS_DIR)/trace_hart_00000.txt ${ANNOTATE}
 	$(PYTHON) ${ANNOTATE} ${ANNOTATE_FLAGS} -o $@ $(CVA6_BINARY) $<
@@ -472,12 +472,12 @@ annotate: $(shell (echo $(LOGS_DIR)/trace_hart_00000.txt | sed 's/\.txt/\.s/') |
           $(shell (echo $(LOGS_DIR)/trace_hart_00000.txt | sed 's/\.txt/\.diff/') || echo "")
 
 $(LOGS_DIR)/perf.csv: $(shell (ls $(LOGS_DIR)/trace_hart_*.dasm 2>/dev/null | sed 's/trace_hart/hart/' | sed 's/.dasm/_perf.json/')) \
-		  $(LOGS_DIR)/hart_00000_perf.json $(ROOT)/util/trace/perf_csv.py
-	$(PYTHON) $(ROOT)/util/trace/perf_csv.py -o $@ -i $(LOGS_DIR)/hart_*_perf.json
+		  $(LOGS_DIR)/hart_00000_perf.json $(SNITCH_ROOT)/util/trace/perf_csv.py
+	$(PYTHON) $(SNITCH_ROOT)/util/trace/perf_csv.py -o $@ -i $(LOGS_DIR)/hart_*_perf.json
 
 $(LOGS_DIR)/event.csv: $(shell (ls $(LOGS_DIR)/trace_hart_*.dasm 2>/dev/null | sed 's/trace_hart/hart/' | sed 's/.dasm/_perf.json/')) \
-		  $(LOGS_DIR)/hart_00000_perf.json $(ROOT)/util/trace/perf_csv.py
-	$(PYTHON) $(ROOT)/util/trace/perf_csv.py -o $@ -i $(LOGS_DIR)/hart_*_perf.json --filter tstart tend
+		  $(LOGS_DIR)/hart_00000_perf.json $(SNITCH_ROOT)/util/trace/perf_csv.py
+	$(PYTHON) $(SNITCH_ROOT)/util/trace/perf_csv.py -o $@ -i $(LOGS_DIR)/hart_*_perf.json --filter tstart tend
 
 #############
 # Verilator #
