@@ -5,7 +5,7 @@
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
 # Add user applications to APPS variable
-APPS = offload
+APPS = offload sndnn/gemm axpy
 
 TARGET ?= all
 
@@ -22,5 +22,8 @@ runtime:
 	$(MAKE) -C $@ $(TARGET)
 
 # Explicit dependency of apps on runtime
-$(APP_SUBDIRS): runtime
+$(APP_SUBDIRS): libraries/snDNN runtime
+	$(MAKE) -C $@ $(TARGET)
+
+libraries/snDNN: runtime
 	$(MAKE) -C $@ $(TARGET)

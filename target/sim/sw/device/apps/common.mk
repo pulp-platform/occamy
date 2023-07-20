@@ -4,18 +4,48 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-include ../../toolchain.mk
+# Usage of absolute paths is required to externally include
+# this Makefile from multiple different locations
+MK_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+include $(MK_DIR)/../toolchain.mk
 
 ###################
 # Build variables #
 ###################
 
+# Fixed paths in repository tree
+ROOT        = $(abspath $(MK_DIR)/../../../../..)
 # Directories
-BUILDDIR    = $(abspath build)
-APPSDIR     = $(abspath ../)
-RUNTIME_DIR = $(abspath ../../runtime)
+APPSDIR     = $(abspath $(MK_DIR)/)
+# RUNTIME_DIR = $(abspath ../../runtime)
+RUNTIME_DIR = $(abspath $(MK_DIR)/../runtime)
 SNRT_DIR    = $(shell bender path snitch_cluster)/sw/snRuntime
-SW_DIR      = $(abspath ../../../)
+# SW_DIR      = $(abspath ../../../)
+SW_DIR      = $(abspath $(MK_DIR)/../../)
+
+#################
+# SNDNN_LIBRARY #
+#################
+ifdef USE_SNDNN_LIBRARY
+SNDNN_DIR    := $(shell bender path snitch_cluster)/sw/snDNN
+SNDNN_LIB_DIR := $(abspath $(MK_DIR)/../libraries/snDNN)
+SNDNN_LIB_NAME = snDNN
+
+# Dependencies
+INCDIRS += $(SNDNN_LIB_DIR)/src
+INCDIRS += $(SNDNN_DIR)/src
+INCDIRS += $(SNDNN_DIR)/include
+# Linker script
+# RISCV_LDFLAGS += -L$(abspath $(SNDNN_LIB_DIR))
+# Link snRuntime library
+RISCV_LDFLAGS += -L$(abspath $(SNDNN_LIB_DIR)/build/)
+RISCV_LDFLAGS += -l$(SNDNN_LIB_NAME)
+BUILDDIR    = $(abspath $(MK_DIR)/sndnn/$(APP)/build)
+SNDNN_LIB   = $(realpath $(SNDNN_LIB_DIR)/build/lib$(SNDNN_LIB_NAME).a)
+LD_SRCS    += $(SNDNN_LIB)
+else
+BUILDDIR    = $(abspath $(MK_DIR)/$(APP)/build)
+endif
 
 # Dependencies
 INCDIRS += $(RUNTIME_DIR)/src
@@ -87,7 +117,7 @@ $(DEP): $(SRCS) | $(BUILDDIR)
 	$(RISCV_CC) $(RISCV_CFLAGS) -MM -MT '$(ELF)' $< > $@
 
 $(ELF): $(DEP) $(LD_SRCS) | $(BUILDDIR)
-	$(RISCV_CC) $(RISCV_CFLAGS) $(RISCV_LDFLAGS) $(SRCS) -o $@
+	$(RISCV_CC) $(RISCV_CFLAGS) $(SRCS) $(RISCV_LDFLAGS) -o $@
 
 $(BIN): $(ELF) | $(BUILDDIR)
 	$(RISCV_OBJCOPY) $(OBJCOPY_FLAGS) $< $@
