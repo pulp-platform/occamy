@@ -83,8 +83,8 @@ VSIM_FLAGS += -do "log -r /*; run -a"
 VSIM_FLAGS += -warning 8386
 
 VCS_FLAGS += +nospecify
-VCS_FLAGS += -Mdir=work-vcs
-VCS_FLAGS += -Mlib=work-vcs
+VCS_FLAGS += -Mdir=$(VCS_BUILDDIR)
+VCS_FLAGS += -Mlib=$(VCS_BUILDDIR)
 VCS_FLAGS += -full64
 # Multi-core
 VCS_FLAGS += -fgp
@@ -575,7 +575,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf Bender.lock .bender/ work/
+	rm -rf $(ROOT)/Bender.lock $(ROOT)/.bender/ work/
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/
