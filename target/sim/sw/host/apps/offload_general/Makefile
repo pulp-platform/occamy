@@ -10,7 +10,7 @@ SRCS = src/offload_general.c
 
 DEVICE_APPS = sndnn/gemm
 # DEVICE_APPS = gemm
-DEVICE_APPS += axpy
+# DEVICE_APPS += axpy
 # DEVICE_APPS += blas/gemm
 
 include ../common_general.mk

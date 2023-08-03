@@ -5,7 +5,7 @@
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
 # Add user applications to APPS variable
-APPS = offload sndnn/gemm axpy
+APPS = offload sndnn/gemm
 
 TARGET ?= all
 

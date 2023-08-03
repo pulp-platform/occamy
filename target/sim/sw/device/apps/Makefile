@@ -6,7 +6,7 @@
 
 SUBDIRS  = offload
 # SUBDIRS += gemm
-SUBDIRS += axpy
+# SUBDIRS += axpy
 # SUBDIRS += nop
 # SUBDIRS += blas/axpy
 # SUBDIRS += blas/gemm
