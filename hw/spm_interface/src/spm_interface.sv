@@ -5,7 +5,7 @@
 // Author: Tim Fischer <fischeti@iis.ee.ethz.ch>
 
 /// SPM Interface.
-interface SPM_BUS #(
+interface spm_bus_if #(
   /// The width of the address.
   parameter int  ADDR_WIDTH = -1,
   /// The width of the data.
@@ -42,7 +42,7 @@ interface SPM_BUS #(
 endinterface
 
 /// SPM Interface for verficiation purposes.
-interface SPM_BUS_DV #(
+interface spm_bus_dv_if #(
   /// The width of the address.
   parameter int  ADDR_WIDTH = -1,
   /// The width of the data.

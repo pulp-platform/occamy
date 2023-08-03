@@ -53,13 +53,13 @@ package spm_test;
     typedef req_t #(.AW(AW), .DW(DW)) req_t;
     typedef rsp_t #(.DW(DW)) rsp_t;
 
-    virtual SPM_BUS_DV #(
+    virtual spm_bus_dv_if #(
       .ADDR_WIDTH(AW),
       .DATA_WIDTH(DW)
     ) bus;
 
     function new(
-      virtual SPM_BUS_DV #(
+      virtual spm_bus_dv_if #(
         .ADDR_WIDTH(AW),
         .DATA_WIDTH(DW)
       ) bus
@@ -187,7 +187,7 @@ package spm_test;
     typedef spm_driver_t::req_t req_t;
     typedef spm_driver_t::rsp_t rsp_t;
 
-    function new(virtual SPM_BUS_DV #(
+    function new(virtual spm_bus_dv_if #(
       .ADDR_WIDTH (AW),
       .DATA_WIDTH (DW)
     ) bus);
@@ -227,7 +227,7 @@ package spm_test;
     endtask
 
     /// Constructor.
-    function new(virtual SPM_BUS_DV #(
+    function new(virtual spm_bus_dv_if #(
       .ADDR_WIDTH (AW),
       .DATA_WIDTH (DW)
     ) bus);
@@ -271,7 +271,7 @@ package spm_test;
     endtask
 
     /// Constructor.
-    function new(virtual SPM_BUS_DV #(
+    function new(virtual spm_bus_dv_if #(
       .ADDR_WIDTH (AW),
       .DATA_WIDTH (DW)
     ) bus);
@@ -311,7 +311,7 @@ package spm_test;
     mailbox req_mbx = new, rsp_mbx = new;
 
     /// Constructor.
-    function new(virtual SPM_BUS_DV #(
+    function new(virtual spm_bus_dv_if #(
       .ADDR_WIDTH (AW),
       .DATA_WIDTH (DW)
     ) bus);
