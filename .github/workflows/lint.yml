@@ -21,7 +21,7 @@ jobs:
           paths: |
             ./hw
           exclude_paths: |
-            .hw/vendor
+            ./hw/vendor
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
           reviewdog_reporter: github-check
@@ -60,8 +60,10 @@ jobs:
           match_regex: true
           exclude_paths: |
             sw/snRuntime/src/omp/interface.h
-            hw/vendor/openhwgroup_cva6
+            hw/vendor/openhwgroup_cva6/*
             util/solder/solder.*.tpl
+            target/sim/wave/all_cores.do
+            util/addrmap/addrmap.tex.tpl
 
   ##################
   # Lint YML Files #
