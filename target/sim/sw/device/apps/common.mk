@@ -92,7 +92,7 @@ $(DUMP): $(ELF) | $(BUILDDIR)
 	$(RISCV_OBJDUMP) -D $< > $@
 
 $(DWARF): $(ELF) | $(BUILDDIR)
-	$(RISCV_READELF) --debug-dump $< > $@
+	$(RISCV_DWARFDUMP) $< > $@
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)

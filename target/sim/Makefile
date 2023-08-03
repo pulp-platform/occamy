@@ -36,7 +36,7 @@ REGGEN     ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentita
 OCCAMYGEN  ?= $(ROOT)/util/occamygen/occamygen.py
 ADDRMAPGEN ?= $(ROOT)/util/addrmapgen.py
 
-CLANG_FORMAT ?= $(shell which clang-format-12.0.1)
+CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 
 VSIM = vsim
 VLOG = vlog
