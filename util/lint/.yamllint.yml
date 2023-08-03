@@ -23,3 +23,8 @@ rules:
   commas:
     ignore: |
       Bender.yml
+
+ignore:
+  - hw/vendor/openhwgroup_cva6/Bender.yml
+  - hw/vendor/openhwgroup_cva6/core/pmp/Bender.yml
+  - hw/vendor/pulp_platform_axi_tlb/Bender.yml

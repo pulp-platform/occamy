@@ -27,7 +27,9 @@ variables:
   # UBOOT_ITB: ${CVA6_SDK}/u-boot/u-boot.itb
   # LINUX_UIMAGE: ${CVA6_SDK}/uImage
   # RISCV_LLVM: /usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin/
+# yamllint disable rule:line-length
   # PATH: $RISCV_LLVM:$CI_PROJECT_DIR/.local/bin:${RISCV}/bin:/home/gitlabci/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/condor/bin:/usr/sepp/bin
+# yamllint enable rule:line-length
 
 before_script:
   - export SNITCH_CLUSTER_ROOT=$($BENDER path snitch_cluster)
@@ -91,7 +93,9 @@ stages:
 #     - ./.gitlab-ci.d/occamy_cfg_fpga.sh
 #     - make -C hw/system/occamy update-source
 #     # Package IPs and run test elaboration
+# yamllint disable rule:line-length
 #     - make -C hw/system/occamy/fpga/vivado_ips occamy_xilinx EXT_JTAG=0 DEBUG=0
+# yamllint enable rule:line-length
 #   artifacts:
 #     expire_in: 4 days
 #     paths:
@@ -119,14 +123,14 @@ stages:
 #         - util/regtool.py
 #   timeout: 11h 00m
 #   script:
-#     # yamllint disable rule:line-length
+# yamllint disable rule:line-length
 #     - |
 #       if ! $CI_PROJECT_DIR/.gitlab-ci.d/memora_retry.sh --ignore-uncommitted-changes lookup occamy_vcu128; then
 #         make -C hw/system/occamy/fpga occamy_vcu128 EXT_JTAG=0 DEBUG=0
 #         mkdir -p /usr/scratch2/dolent1/gitlabci/buildcache/snitch/snitch-incremental/
 #         $CI_PROJECT_DIR/.gitlab-ci.d/memora_retry.sh --ignore-uncommitted-changes insert occamy_vcu128
 #       fi
-#     # yamllint enable rule:line-length
+# yamllint enable rule:line-length
 #   artifacts:
 #     expire_in: 4 days
 #     paths: [hw/system/occamy/fpga, hw/system/occamy/src]
