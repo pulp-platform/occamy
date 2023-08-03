@@ -38,29 +38,29 @@
 // Memory map pointers
 //===============================================================
 
-#if SELECT_FLL == 0  // ETH FLL
-volatile uint32_t* const fll_system_base =
-    (volatile uint32_t*)FLL_SYSTEM_BASE_ADDR;
-volatile uint32_t* const fll_periph_base =
-    (volatile uint32_t*)FLL_PERIPH_BASE_ADDR;
-volatile uint32_t* const fll_hbm2e_base =
-    (volatile uint32_t*)FLL_HBM2E_BASE_ADDR;
-#elif SELECT_FLL == 1  // GF FLL
-volatile uint32_t* const fll_system_base =
-    (volatile uint32_t*)FLL_SYSTEM_BASE_ADDR + (0x200 >> 2);
-volatile uint32_t* const fll_periph_base =
-    (volatile uint32_t*)FLL_PERIPH_BASE_ADDR + (0x200 >> 2);
-volatile uint32_t* const fll_hbm2e_base =
-    (volatile uint32_t*)FLL_HBM2E_BASE_ADDR + (0x200 >> 2);
+#if SELECT_FLL == 0 // ETH FLL
+volatile uint32_t *const fll_system_base =
+    (volatile uint32_t *)FLL_SYSTEM_BASE_ADDR;
+volatile uint32_t *const fll_periph_base =
+    (volatile uint32_t *)FLL_PERIPH_BASE_ADDR;
+volatile uint32_t *const fll_hbm2e_base =
+    (volatile uint32_t *)FLL_HBM2E_BASE_ADDR;
+#elif SELECT_FLL == 1 // GF FLL
+volatile uint32_t *const fll_system_base =
+    (volatile uint32_t *)FLL_SYSTEM_BASE_ADDR + (0x200 >> 2);
+volatile uint32_t *const fll_periph_base =
+    (volatile uint32_t *)FLL_PERIPH_BASE_ADDR + (0x200 >> 2);
+volatile uint32_t *const fll_hbm2e_base =
+    (volatile uint32_t *)FLL_HBM2E_BASE_ADDR + (0x200 >> 2);
 #endif
 
 // volatile uint32_t* const fll_base[N_CLOCKS] = {fll_system_base,
 // fll_periph_base, fll_hbm2e_base};
 
-volatile uint64_t* const clint_mtime_ptr =
-    (volatile uint64_t*)(CLINT_BASE_ADDR + CLINT_MTIME_LOW_REG_OFFSET);
-volatile uint64_t* const clint_mtimecmp0_ptr =
-    (volatile uint64_t*)(CLINT_BASE_ADDR + CLINT_MTIMECMP_LOW0_REG_OFFSET);
+volatile uint64_t *const clint_mtime_ptr =
+    (volatile uint64_t *)(CLINT_BASE_ADDR + CLINT_MTIME_LOW_REG_OFFSET);
+volatile uint64_t *const clint_mtimecmp0_ptr =
+    (volatile uint64_t *)(CLINT_BASE_ADDR + CLINT_MTIMECMP_LOW0_REG_OFFSET);
 
 //===============================================================
 // Globals
@@ -81,24 +81,24 @@ static inline void set_sw_interrupts_unsafe(uint32_t base_hartid,
 //===============================================================
 
 void initialize_bss() {
-    extern volatile uint64_t __bss_start, __bss_end;
+  extern volatile uint64_t __bss_start, __bss_end;
 
-    for (uint64_t* p = (uint64_t*)(&__bss_start); p < (uint64_t*)(&__bss_end);
-         p++) {
-        *p = 0;
-    }
+  for (uint64_t *p = (uint64_t *)(&__bss_start); p < (uint64_t *)(&__bss_end);
+       p++) {
+    *p = 0;
+  }
 }
 
 void enable_fpu() {
-    uint64_t mstatus;
+  uint64_t mstatus;
 
-    asm volatile("csrr %[mstatus], mstatus" : [ mstatus ] "=r"(mstatus));
-    mstatus |= (1 << MSTATUS_FS_OFFSET);
-    asm volatile("csrw mstatus, %[mstatus]" : : [ mstatus ] "r"(mstatus));
+  asm volatile("csrr %[mstatus], mstatus" : [ mstatus ] "=r"(mstatus));
+  mstatus |= (1 << MSTATUS_FS_OFFSET);
+  asm volatile("csrw mstatus, %[mstatus]" : : [ mstatus ] "r"(mstatus));
 }
 
 void set_d_cache_enable(uint16_t ena) {
-    asm volatile("csrw 0x701, %0" ::"r"(ena));
+  asm volatile("csrw 0x701, %0" ::"r"(ena));
 }
 
 //===============================================================
@@ -112,15 +112,14 @@ static inline void fence() { asm volatile("fence" : : : "memory"); }
  * @details test-and-set (tas) implementation of a lock.
  *          Declare mutex with `static volatile uint32_t mtx = 0;`
  */
-void mutex_tas_acquire(volatile uint32_t* pmtx) {
-    asm volatile(
-        "li            x5,1          # x5 = 1\n"
-        "1:\n"
-        "  amoswap.w.aq  x5,x5,(%0)   # x5 = oldlock & lock = 1\n"
-        "  bnez          x5,1b      # Retry if previously set)\n"
-        : "+r"(pmtx)
-        :
-        : "x5");
+void mutex_tas_acquire(volatile uint32_t *pmtx) {
+  asm volatile("li            x5,1          # x5 = 1\n"
+               "1:\n"
+               "  amoswap.w.aq  x5,x5,(%0)   # x5 = oldlock & lock = 1\n"
+               "  bnez          x5,1b      # Retry if previously set)\n"
+               : "+r"(pmtx)
+               :
+               : "x5");
 }
 
 /**
@@ -128,26 +127,25 @@ void mutex_tas_acquire(volatile uint32_t* pmtx) {
  * @details test-and-test-and-set (ttas) implementation of a lock.
  *          Declare mutex with `static volatile uint32_t mtx = 0;`
  */
-static inline void mutex_ttas_acquire(volatile uint32_t* pmtx) {
-    asm volatile(
-        "1:\n"
-        "  lw x5, 0(%0)\n"
-        "  bnez x5, 1b\n"
-        "  li x5,1          # x5 = 1\n"
-        "2:\n"
-        "  amoswap.w.aq  x5,x5,(%0)   # x5 = oldlock & lock = 1\n"
-        "  bnez          x5,2b      # Retry if previously set)\n"
-        : "+r"(pmtx)
-        :
-        : "x5");
+static inline void mutex_ttas_acquire(volatile uint32_t *pmtx) {
+  asm volatile("1:\n"
+               "  lw x5, 0(%0)\n"
+               "  bnez x5, 1b\n"
+               "  li x5,1          # x5 = 1\n"
+               "2:\n"
+               "  amoswap.w.aq  x5,x5,(%0)   # x5 = oldlock & lock = 1\n"
+               "  bnez          x5,2b      # Retry if previously set)\n"
+               : "+r"(pmtx)
+               :
+               : "x5");
 }
 
 /**
  * @brief Release the mutex
  */
-static inline void mutex_release(volatile uint32_t* pmtx) {
-    asm volatile("amoswap.w.rl  x0,x0,(%0)   # Release lock by storing 0\n"
-                 : "+r"(pmtx));
+static inline void mutex_release(volatile uint32_t *pmtx) {
+  asm volatile("amoswap.w.rl  x0,x0,(%0)   # Release lock by storing 0\n"
+               : "+r"(pmtx));
 }
 
 //===============================================================
@@ -180,8 +178,8 @@ void wait_snitches_parked(uint32_t timeout) { delay_ns(100000); }
  *         with the address of the user binary.
  */
 static inline void program_snitches() {
-    *soc_ctrl_scratch_ptr(1) = (uintptr_t)snitch_main;
-    *soc_ctrl_scratch_ptr(2) = (uintptr_t)&comm_buffer;
+  *soc_ctrl_scratch_ptr(1) = (uintptr_t)snitch_main;
+  *soc_ctrl_scratch_ptr(2) = (uintptr_t)&comm_buffer;
 }
 
 /**
@@ -191,7 +189,7 @@ static inline void program_snitches() {
  */
 
 static inline void wakeup_cluster(uint32_t cluster_id) {
-    *(cluster_clint_set_ptr(cluster_id)) = 511;
+  *(cluster_clint_set_ptr(cluster_id)) = 511;
 }
 
 /**
@@ -202,11 +200,11 @@ static inline void wakeup_cluster(uint32_t cluster_id) {
  *         sends a SW interrupt to all Snitches.
  */
 void wakeup_snitches() {
-    volatile uint32_t* lock = get_shared_lock();
+  volatile uint32_t *lock = get_shared_lock();
 
-    mutex_ttas_acquire(lock);
-    set_sw_interrupts_unsafe(1, N_SNITCHES, 1);
-    mutex_release(lock);
+  mutex_ttas_acquire(lock);
+  set_sw_interrupts_unsafe(1, N_SNITCHES, 1);
+  mutex_release(lock);
 }
 
 /**
@@ -215,7 +213,8 @@ void wakeup_snitches() {
  * @detail Send a cluster interrupt to all Snitches
  */
 static inline void wakeup_snitches_cl() {
-    for (int i = 0; i < N_CLUSTERS; i++) wakeup_cluster(i);
+  for (int i = 0; i < N_CLUSTERS; i++)
+    wakeup_cluster(i);
 }
 
 /**
@@ -227,11 +226,11 @@ static inline void wakeup_snitches_cl() {
  */
 void wakeup_snitches_selective(uint32_t base_hartid, uint32_t num_harts,
                                uint32_t stride) {
-    volatile uint32_t* lock = get_shared_lock();
+  volatile uint32_t *lock = get_shared_lock();
 
-    mutex_ttas_acquire(lock);
-    set_sw_interrupts_unsafe(base_hartid, num_harts, stride);
-    mutex_release(lock);
+  mutex_ttas_acquire(lock);
+  set_sw_interrupts_unsafe(base_hartid, num_harts, stride);
+  mutex_release(lock);
 }
 
 /**
@@ -247,23 +246,23 @@ void wakeup_snitches_selective(uint32_t base_hartid, uint32_t num_harts,
  *         avoiding congestion.
  */
 void wakeup_master_snitches() {
-    volatile uint32_t* lock = get_shared_lock();
+  volatile uint32_t *lock = get_shared_lock();
 
-    mutex_ttas_acquire(lock);
-    set_sw_interrupts_unsafe(1, N_CLUSTERS, N_CORES_PER_CLUSTER);
-    mutex_release(lock);
+  mutex_ttas_acquire(lock);
+  set_sw_interrupts_unsafe(1, N_CLUSTERS, N_CORES_PER_CLUSTER);
+  mutex_release(lock);
 }
 
 /**
  * @brief Waits until snitches are done executing
  */
 static inline void wait_snitches_done() {
-    wait_sw_interrupt();
-    clear_sw_interrupt(0);
+  wait_sw_interrupt();
+  clear_sw_interrupt(0);
 }
 
-static inline volatile uint32_t* get_shared_lock() {
-    return &(comm_buffer.lock);
+static inline volatile uint32_t *get_shared_lock() {
+  return &(comm_buffer.lock);
 }
 
 //===============================================================
@@ -271,18 +270,18 @@ static inline volatile uint32_t* get_shared_lock() {
 //===============================================================
 
 static inline void set_clk_ena_quad(uint32_t quad_idx, uint32_t value) {
-    *quad_cfg_clk_ena_ptr(quad_idx) = value & 0x1;
+  *quad_cfg_clk_ena_ptr(quad_idx) = value & 0x1;
 }
 
 static inline void set_reset_n_quad(uint32_t quad_idx, uint32_t value) {
-    *quad_cfg_reset_n_ptr(quad_idx) = value & 0x1;
+  *quad_cfg_reset_n_ptr(quad_idx) = value & 0x1;
 }
 
 static inline void reset_and_ungate_quad(uint32_t quadrant_idx) {
-    set_clk_ena_quad(quadrant_idx, 0);
-    set_reset_n_quad(quadrant_idx, 0);
-    set_reset_n_quad(quadrant_idx, 1);
-    set_clk_ena_quad(quadrant_idx, 1);
+  set_clk_ena_quad(quadrant_idx, 0);
+  set_reset_n_quad(quadrant_idx, 0);
+  set_reset_n_quad(quadrant_idx, 1);
+  set_clk_ena_quad(quadrant_idx, 1);
 }
 
 //===============================================================
@@ -292,17 +291,17 @@ static inline void reset_and_ungate_quad(uint32_t quadrant_idx) {
 static inline void wfi() { asm volatile("wfi"); }
 
 static inline void enable_sw_interrupts() {
-    uint64_t mie;
+  uint64_t mie;
 
-    asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
-    mie |= (1 << MIE_MSIE_OFFSET);
-    asm volatile("csrw mie, %[mie]" : : [ mie ] "r"(mie));
+  asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
+  mie |= (1 << MIE_MSIE_OFFSET);
+  asm volatile("csrw mie, %[mie]" : : [ mie ] "r"(mie));
 }
 
 static inline uint32_t get_clint_msip_hart(uint32_t hartid) {
-    uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
-    return (*clint_msip_ptr(hartid) >> lsb_offset) & 1;
+  uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
+  uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
+  return (*clint_msip_ptr(hartid) >> lsb_offset) & 1;
 }
 
 /**
@@ -314,33 +313,33 @@ static inline uint32_t get_clint_msip_hart(uint32_t hartid) {
  *         interconnect and shared CLINT.
  */
 static inline uint32_t sw_interrupt_pending() {
-    uint64_t mip;
+  uint64_t mip;
 
-    asm volatile("csrr %[mip], mip" : [ mip ] "=r"(mip));
-    return mip & (1 << MIP_MSIP_OFFSET);
+  asm volatile("csrr %[mip], mip" : [ mip ] "=r"(mip));
+  return mip & (1 << MIP_MSIP_OFFSET);
 }
 
 // TODO: for portability to architectures where WFI is implemented as a NOP
 //       also sw_interrupts_enabled() should be checked
 static inline void wait_sw_interrupt() {
-    do
-        wfi();
-    while (!sw_interrupt_pending());
+  do
+    wfi();
+  while (!sw_interrupt_pending());
 }
 
 static inline void clear_sw_interrupt_unsafe(uint32_t hartid) {
-    uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
+  uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
+  uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
 
-    *clint_msip_ptr(hartid) &= ~(1 << lsb_offset);
+  *clint_msip_ptr(hartid) &= ~(1 << lsb_offset);
 }
 
 static inline void clear_sw_interrupt(uint32_t hartid) {
-    volatile uint32_t* shared_lock = get_shared_lock();
+  volatile uint32_t *shared_lock = get_shared_lock();
 
-    mutex_tas_acquire(shared_lock);
-    clear_sw_interrupt_unsafe(hartid);
-    mutex_release(shared_lock);
+  mutex_tas_acquire(shared_lock);
+  clear_sw_interrupt_unsafe(hartid);
+  mutex_release(shared_lock);
 }
 
 /**
@@ -352,119 +351,119 @@ static inline void clear_sw_interrupt(uint32_t hartid) {
  *         instead of the shared CLINT.
  */
 static inline uint32_t remote_sw_interrupt_pending(uint32_t hartid) {
-    return get_clint_msip_hart(hartid);
+  return get_clint_msip_hart(hartid);
 }
 
 static inline uint32_t timer_interrupts_enabled() {
-    uint64_t mie;
-    asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
-    return (mie >> MIE_MTIE_OFFSET) & 1;
+  uint64_t mie;
+  asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
+  return (mie >> MIE_MTIE_OFFSET) & 1;
 }
 
 static inline void set_sw_interrupt_unsafe(uint32_t hartid) {
-    uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
+  uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
+  uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
 
-    *clint_msip_ptr(hartid) |= (1 << lsb_offset);
+  *clint_msip_ptr(hartid) |= (1 << lsb_offset);
 }
 
 void set_sw_interrupt(uint32_t hartid) {
-    volatile uint32_t* shared_lock = get_shared_lock();
+  volatile uint32_t *shared_lock = get_shared_lock();
 
-    mutex_ttas_acquire(shared_lock);
-    set_sw_interrupt_unsafe(hartid);
-    mutex_release(shared_lock);
+  mutex_ttas_acquire(shared_lock);
+  set_sw_interrupt_unsafe(hartid);
+  mutex_release(shared_lock);
 }
 
 static inline void set_sw_interrupts_unsafe(uint32_t base_hartid,
                                             uint32_t num_harts,
                                             uint32_t stride) {
-    volatile uint32_t* ptr = clint_msip_ptr(base_hartid);
+  volatile uint32_t *ptr = clint_msip_ptr(base_hartid);
 
-    uint32_t num_fields = num_harts;
-    uint32_t field_idx = base_hartid;
-    uint32_t field_offset = field_idx % CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t reg_idx = field_idx / CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t prev_reg_idx = reg_idx;
-    uint32_t mask = 0;
-    uint32_t reg_jump;
-    uint32_t last_field = num_fields - 1;
+  uint32_t num_fields = num_harts;
+  uint32_t field_idx = base_hartid;
+  uint32_t field_offset = field_idx % CLINT_MSIP_P_FIELDS_PER_REG;
+  uint32_t reg_idx = field_idx / CLINT_MSIP_P_FIELDS_PER_REG;
+  uint32_t prev_reg_idx = reg_idx;
+  uint32_t mask = 0;
+  uint32_t reg_jump;
+  uint32_t last_field = num_fields - 1;
 
-    for (uint32_t i = 0; i < num_fields; i++) {
-        // put field in mask
-        mask |= 1 << field_offset;
+  for (uint32_t i = 0; i < num_fields; i++) {
+    // put field in mask
+    mask |= 1 << field_offset;
 
-        // calculate next field info
-        field_idx += stride;
-        field_offset = field_idx % CLINT_MSIP_P_FIELDS_PER_REG;
-        reg_idx = field_idx / CLINT_MSIP_P_FIELDS_PER_REG;
-        reg_jump = reg_idx - prev_reg_idx;
+    // calculate next field info
+    field_idx += stride;
+    field_offset = field_idx % CLINT_MSIP_P_FIELDS_PER_REG;
+    reg_idx = field_idx / CLINT_MSIP_P_FIELDS_PER_REG;
+    reg_jump = reg_idx - prev_reg_idx;
 
-        // if next value is in another register
-        if (i != last_field && reg_jump) {
-            // store mask
-            if (mask == (uint32_t)(-1))
-                *ptr = mask;
-            else
-                *ptr |= mask;
-            // update pointer and reset mask
-            ptr += reg_jump;
-            prev_reg_idx = reg_idx;
-            mask = 0;
-        }
+    // if next value is in another register
+    if (i != last_field && reg_jump) {
+      // store mask
+      if (mask == (uint32_t)(-1))
+        *ptr = mask;
+      else
+        *ptr |= mask;
+      // update pointer and reset mask
+      ptr += reg_jump;
+      prev_reg_idx = reg_idx;
+      mask = 0;
     }
+  }
 
-    // store last mask
-    *ptr |= mask;
+  // store last mask
+  *ptr |= mask;
 }
 
 void set_cluster_interrupt(uint32_t cluster_id, uint32_t core_id) {
-    *(cluster_clint_set_ptr(cluster_id)) = (1 << core_id);
+  *(cluster_clint_set_ptr(cluster_id)) = (1 << core_id);
 }
 
 static inline uint32_t timer_interrupt_pending() {
-    uint64_t mip;
+  uint64_t mip;
 
-    asm volatile("csrr %[mip], mip" : [ mip ] "=r"(mip));
-    return mip & (1 << MIP_MTIP_OFFSET);
+  asm volatile("csrr %[mip], mip" : [ mip ] "=r"(mip));
+  return mip & (1 << MIP_MTIP_OFFSET);
 }
 
 void wait_timer_interrupt() {
-    do
-        wfi();
-    while (!timer_interrupt_pending() && timer_interrupts_enabled());
+  do
+    wfi();
+  while (!timer_interrupt_pending() && timer_interrupts_enabled());
 }
 
 void enable_global_interrupts() {
-    uint64_t mstatus;
+  uint64_t mstatus;
 
-    asm volatile("csrr %[mstatus], mstatus" : [ mstatus ] "=r"(mstatus));
-    mstatus |= (1 << MSTATUS_MIE_OFFSET);
-    asm volatile("csrw mstatus, %[mstatus]" : : [ mstatus ] "r"(mstatus));
+  asm volatile("csrr %[mstatus], mstatus" : [ mstatus ] "=r"(mstatus));
+  mstatus |= (1 << MSTATUS_MIE_OFFSET);
+  asm volatile("csrw mstatus, %[mstatus]" : : [ mstatus ] "r"(mstatus));
 }
 
 void enable_timer_interrupts() {
-    uint64_t mie;
+  uint64_t mie;
 
-    asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
-    mie |= (1 << MIE_MTIE_OFFSET);
-    asm volatile("csrw mie, %[mie]" : : [ mie ] "r"(mie));
+  asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
+  mie |= (1 << MIE_MTIE_OFFSET);
+  asm volatile("csrw mie, %[mie]" : : [ mie ] "r"(mie));
 }
 
 void disable_timer_interrupts() {
-    uint64_t mie;
+  uint64_t mie;
 
-    asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
-    mie &= ~(1 << MIE_MTIE_OFFSET);
-    asm volatile("csrw mie, %[mie]" : : [ mie ] "r"(mie));
+  asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
+  mie &= ~(1 << MIE_MTIE_OFFSET);
+  asm volatile("csrw mie, %[mie]" : : [ mie ] "r"(mie));
 }
 
 void disable_sw_interrupts() {
-    uint64_t mie;
+  uint64_t mie;
 
-    asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
-    mie &= ~(1 << MIE_MSIE_OFFSET);
-    asm volatile("csrw mie, %[mie]" : : [ mie ] "r"(mie));
+  asm volatile("csrr %[mie], mie" : [ mie ] "=r"(mie));
+  mie &= ~(1 << MIE_MSIE_OFFSET);
+  asm volatile("csrw mie, %[mie]" : : [ mie ] "r"(mie));
 }
 
 /**
@@ -476,8 +475,8 @@ void disable_sw_interrupts() {
  *         interconnect and shared CLINT.
  */
 void wait_sw_interrupt_cleared() {
-    while (sw_interrupt_pending())
-        ;
+  while (sw_interrupt_pending())
+    ;
 }
 
 /**
@@ -489,30 +488,30 @@ void wait_sw_interrupt_cleared() {
  *         of the shared CLINT.
  */
 void wait_remote_sw_interrupt_pending(uint32_t hartid) {
-    while (remote_sw_interrupt_pending(hartid))
-        ;
+  while (remote_sw_interrupt_pending(hartid))
+    ;
 }
 
 //===============================================================
 // Timers
 //===============================================================
 
-static const float rtc_period = 30517.58;  // ns
+static const float rtc_period = 30517.58; // ns
 
 static inline uint64_t mcycle() {
-    register uint64_t r;
-    asm volatile("csrr %0, mcycle" : "=r"(r));
-    return r;
+  register uint64_t r;
+  asm volatile("csrr %0, mcycle" : "=r"(r));
+  return r;
 }
 
 static inline uint64_t mtime() { return *clint_mtime_ptr; }
 
 void set_timer_interrupt(uint64_t interval_ns) {
-    // Convert ns to RTC unit
-    uint64_t rtc_interval = interval_ns / (int64_t)rtc_period;
+  // Convert ns to RTC unit
+  uint64_t rtc_interval = interval_ns / (int64_t)rtc_period;
 
-    // Offset interval by current time
-    *clint_mtimecmp0_ptr = mtime() + rtc_interval;
+  // Offset interval by current time
+  *clint_mtimecmp0_ptr = mtime() + rtc_interval;
 }
 
 /**
@@ -529,15 +528,15 @@ void clear_timer_interrupt() { *clint_mtimecmp0_ptr = mtime() + 1; }
 
 // Minimum delay is of one RTC period
 void delay_ns(uint64_t delay) {
-    set_timer_interrupt(delay);
+  set_timer_interrupt(delay);
 
-    // Wait for set_timer_interrupt() to have effect
-    fence();
-    enable_timer_interrupts();
+  // Wait for set_timer_interrupt() to have effect
+  fence();
+  enable_timer_interrupts();
 
-    wait_timer_interrupt();
-    disable_timer_interrupts();
-    clear_timer_interrupt();
+  wait_timer_interrupt();
+  disable_timer_interrupts();
+  clear_timer_interrupt();
 }
 
 //===============================================================
@@ -660,7 +659,7 @@ uint32_t const ISO_MASK_ALL = 0b1111;
 uint32_t const ISO_MASK_NONE = 0;
 
 static inline void deisolate_quad(uint32_t quad_idx, uint32_t iso_mask) {
-    *quad_cfg_isolate_ptr(quad_idx) &= ~iso_mask;
+  *quad_cfg_isolate_ptr(quad_idx) &= ~iso_mask;
 }
 
 /**
@@ -669,16 +668,17 @@ static inline void deisolate_quad(uint32_t quad_idx, uint32_t iso_mask) {
  * @return Masked register field realigned to start at LSB
  */
 static inline uint32_t get_quad_cfg_isolated(uint32_t quad_idx) {
-    return *quad_cfg_isolated_ptr(quad_idx) & ISO_MASK_ALL;
+  return *quad_cfg_isolated_ptr(quad_idx) & ISO_MASK_ALL;
 }
 
 void isolate_quad(uint32_t quad_idx, uint32_t iso_mask) {
-    *quad_cfg_isolate_ptr(quad_idx) |= iso_mask;
-    fence();
+  *quad_cfg_isolate_ptr(quad_idx) |= iso_mask;
+  fence();
 }
 
 static inline void deisolate_all() {
-    for (uint32_t i = 0; i < N_QUADS; ++i) deisolate_quad(i, ISO_MASK_ALL);
+  for (uint32_t i = 0; i < N_QUADS; ++i)
+    deisolate_quad(i, ISO_MASK_ALL);
 }
 
 /**
@@ -689,9 +689,10 @@ static inline void deisolate_all() {
  */
 uint32_t check_isolated_timeout(uint32_t max_tries, uint32_t quadrant_idx,
                                 uint32_t iso_mask) {
-    for (uint32_t i = 0; i < max_tries; ++i)
-        if (get_quad_cfg_isolated(quadrant_idx) == iso_mask) return 1;
-    return 0;
+  for (uint32_t i = 0; i < max_tries; ++i)
+    if (get_quad_cfg_isolated(quadrant_idx) == iso_mask)
+      return 1;
+  return 0;
 }
 
 //===============================================================
@@ -699,13 +700,13 @@ uint32_t check_isolated_timeout(uint32_t max_tries, uint32_t quadrant_idx,
 //===============================================================
 
 void activate_interleaved_mode_hbm() {
-    uint64_t addr =
-        OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
-    *((volatile uint32_t*)addr) = 1;
+  uint64_t addr =
+      OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
+  *((volatile uint32_t *)addr) = 1;
 }
 
 void deactivate_interleaved_mode_hbm() {
-    uint64_t addr =
-        OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
-    *((volatile uint32_t*)addr) = 1;
+  uint64_t addr =
+      OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
+  *((volatile uint32_t *)addr) = 1;
 }

@@ -4,7 +4,7 @@
 
 extern void post_wakeup_cl();
 
-extern comm_buffer_t* get_communication_buffer();
+extern comm_buffer_t *get_communication_buffer();
 
 extern uint32_t elect_director(uint32_t num_participants);
 

@@ -8,8 +8,8 @@
 #define PERIPH_FREQ 1000000000
 
 int main() {
-    init_uart(PERIPH_FREQ, 115200);
-    asm volatile("fence" : : : "memory");
-    print_uart("Hello world!\r\n");
-    return 0;
+  init_uart(PERIPH_FREQ, 115200);
+  asm volatile("fence" : : : "memory");
+  print_uart("Hello world!\r\n");
+  return 0;
 }

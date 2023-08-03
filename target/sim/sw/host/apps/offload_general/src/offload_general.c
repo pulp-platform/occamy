@@ -12,38 +12,38 @@
 #define N_JOBS 1
 
 int main() {
-    // Reset and ungate quadrant 0, deisolate
-    reset_and_ungate_quad(0);
-    deisolate_quad(0, ISO_MASK_ALL);
+  // Reset and ungate quadrant 0, deisolate
+  reset_and_ungate_quad(0);
+  deisolate_quad(0, ISO_MASK_ALL);
 
-    // Enable interrupts to receive notice of job termination
-    enable_sw_interrupts();
+  // Enable interrupts to receive notice of job termination
+  enable_sw_interrupts();
 
-    // Program Snitch entry point and communication buffer
-    program_snitches();
+  // Program Snitch entry point and communication buffer
+  program_snitches();
 
-    // Wakeup Snitches for snRuntime initialization
-    wakeup_snitches_cl();
+  // Wakeup Snitches for snRuntime initialization
+  wakeup_snitches_cl();
 
-    int32_t snitch_return_value = -1;
+  int32_t snitch_return_value = -1;
 
-    // Wait for snRuntime initialization to be over
-    wait_snitches_done();
+  // Wait for snRuntime initialization to be over
+  wait_snitches_done();
 
-    // Send jobs
-    // for (int i = 0; i < N_JOBS; i++) {
-        // Start Snitches
-        // mcycle();
-        wakeup_snitches_cl();
+  // Send jobs
+  // for (int i = 0; i < N_JOBS; i++) {
+  // Start Snitches
+  // mcycle();
+  wakeup_snitches_cl();
 
-        // Wait for job done
-        wait_sw_interrupt();
-        // Clear interrupt
-        clear_sw_interrupt(0);
-        // wait_snitches_done();
-        snitch_return_value = ((int32_t)comm_buffer.usr_data_ptr);
-    // }
-    // Exit routine
-    // mcycle();
-    return snitch_return_value;
+  // Wait for job done
+  wait_sw_interrupt();
+  // Clear interrupt
+  clear_sw_interrupt(0);
+  // wait_snitches_done();
+  snitch_return_value = ((int32_t)comm_buffer.usr_data_ptr);
+  // }
+  // Exit routine
+  // mcycle();
+  return snitch_return_value;
 }

@@ -39,29 +39,29 @@ extern "C" {
 #define IDMA_REG64_FRONTEND_DONE_REG_OFFSET 0x30
 
 #ifdef __cplusplus
-}  // extern "C"
+} // extern "C"
 #endif
-#endif  // _IDMA_REG64_FRONTEND_REG_DEFS_
+#endif // _IDMA_REG64_FRONTEND_REG_DEFS_
 // End generated register defines for idma_reg64_frontend
 
 #include <stdint.h>
 
 #include "occamy_addrmap.h"
 
-#define IDMA_SRC_ADDR \
-    (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_SRC_ADDR_REG_OFFSET)
-#define IDMA_DST_ADDR \
-    (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_DST_ADDR_REG_OFFSET)
-#define IDMA_NUMBYTES_ADDR \
-    (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_NUM_BYTES_REG_OFFSET)
-#define IDMA_CONF_ADDR \
-    (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_CONF_REG_OFFSET)
-#define IDMA_STATUS_ADDR \
-    (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_STATUS_REG_OFFSET)
-#define IDMA_NEXTID_ADDR \
-    (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_NEXT_ID_REG_OFFSET)
-#define IDMA_DONE_ADDR \
-    (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_DONE_REG_OFFSET)
+#define IDMA_SRC_ADDR                                                          \
+  (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_SRC_ADDR_REG_OFFSET)
+#define IDMA_DST_ADDR                                                          \
+  (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_DST_ADDR_REG_OFFSET)
+#define IDMA_NUMBYTES_ADDR                                                     \
+  (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_NUM_BYTES_REG_OFFSET)
+#define IDMA_CONF_ADDR                                                         \
+  (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_CONF_REG_OFFSET)
+#define IDMA_STATUS_ADDR                                                       \
+  (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_STATUS_REG_OFFSET)
+#define IDMA_NEXTID_ADDR                                                       \
+  (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_NEXT_ID_REG_OFFSET)
+#define IDMA_DONE_ADDR                                                         \
+  (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_DONE_REG_OFFSET)
 
 #define IDMA_CONF_DECOUPLE 0
 #define IDMA_CONF_DEBURST 0
@@ -77,20 +77,20 @@ volatile uint64_t *dma_done = (volatile uint64_t *)IDMA_DONE_ADDR;
 
 static inline uint64_t sys_dma_memcpy(uint64_t dst, uint64_t src,
                                       uint64_t size) {
-    *dma_src = (uint64_t)src;
-    *dma_dst = (uint64_t)dst;
-    *dma_num_bytes = size;
-    *dma_conf = (IDMA_CONF_DECOUPLE << IDMA_REG64_FRONTEND_CONF_DECOUPLE_BIT) |
-                (IDMA_CONF_DEBURST << IDMA_REG64_FRONTEND_CONF_DEBURST_BIT) |
-                (IDMA_CONF_SERIALIZE << IDMA_REG64_FRONTEND_CONF_SERIALIZE_BIT);
-    return *dma_nextid;
+  *dma_src = (uint64_t)src;
+  *dma_dst = (uint64_t)dst;
+  *dma_num_bytes = size;
+  *dma_conf = (IDMA_CONF_DECOUPLE << IDMA_REG64_FRONTEND_CONF_DECOUPLE_BIT) |
+              (IDMA_CONF_DEBURST << IDMA_REG64_FRONTEND_CONF_DEBURST_BIT) |
+              (IDMA_CONF_SERIALIZE << IDMA_REG64_FRONTEND_CONF_SERIALIZE_BIT);
+  return *dma_nextid;
 }
 
 static inline void sys_dma_blk_memcpy(uint64_t dst, uint64_t src,
                                       uint64_t size) {
-    volatile uint64_t tf_id = sys_dma_memcpy(dst, src, size);
+  volatile uint64_t tf_id = sys_dma_memcpy(dst, src, size);
 
-    while (*dma_done != tf_id) {
-        asm volatile("nop");
-    }
+  while (*dma_done != tf_id) {
+    asm volatile("nop");
+  }
 }

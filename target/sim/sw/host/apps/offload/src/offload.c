@@ -20,37 +20,37 @@ const job_t axpy = {J_AXPY, args};
 job_t jobs[N_JOBS] = {axpy};
 
 int main() {
-    // Reset and ungate quadrant 0, deisolate
-    reset_and_ungate_quad(0);
-    deisolate_quad(0, ISO_MASK_ALL);
+  // Reset and ungate quadrant 0, deisolate
+  reset_and_ungate_quad(0);
+  deisolate_quad(0, ISO_MASK_ALL);
 
-    // Enable interrupts to receive notice of job termination
-    enable_sw_interrupts();
+  // Enable interrupts to receive notice of job termination
+  enable_sw_interrupts();
 
-    // Program Snitch entry point and communication buffer
-    program_snitches();
+  // Program Snitch entry point and communication buffer
+  program_snitches();
 
-    // Wakeup Snitches for snRuntime initialization
-    wakeup_snitches_cl();
+  // Wakeup Snitches for snRuntime initialization
+  wakeup_snitches_cl();
 
-    // Wait for snRuntime initialization to be over
-    wait_snitches_done();
+  // Wait for snRuntime initialization to be over
+  wait_snitches_done();
 
-    // Send jobs
-    for (int i = 0; i < N_JOBS; i++) {
-        // Communicate job
-        mcycle();
-        comm_buffer.usr_data_ptr = (uint32_t)(uint64_t) & (jobs[i]);
-        // Start Snitches
-        mcycle();
-        wakeup_snitches_cl();
-        // Wait for job done
-        mcycle();
-        wait_sw_interrupt();
-        // Clear interrupt
-        mcycle();
-        clear_sw_interrupt(0);
-    }
-    // Exit routine
+  // Send jobs
+  for (int i = 0; i < N_JOBS; i++) {
+    // Communicate job
     mcycle();
+    comm_buffer.usr_data_ptr = (uint32_t)(uint64_t) & (jobs[i]);
+    // Start Snitches
+    mcycle();
+    wakeup_snitches_cl();
+    // Wait for job done
+    mcycle();
+    wait_sw_interrupt();
+    // Clear interrupt
+    mcycle();
+    clear_sw_interrupt(0);
+  }
+  // Exit routine
+  mcycle();
 }

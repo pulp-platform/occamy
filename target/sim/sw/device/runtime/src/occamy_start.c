@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 static inline void snrt_crt0_callback3() {
-    _snrt_cluster_hw_barrier = cluster_hw_barrier_addr(snrt_cluster_idx());
+  _snrt_cluster_hw_barrier = cluster_hw_barrier_addr(snrt_cluster_idx());
 }
 
 #define SNRT_INIT_TLS

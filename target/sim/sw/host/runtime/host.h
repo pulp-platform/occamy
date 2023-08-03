@@ -8,7 +8,7 @@ static inline void set_sw_interrupt(uint32_t hartid);
 
 void delay_ns(uint64_t delay);
 
-static inline volatile uint32_t* get_shared_lock();
+static inline volatile uint32_t *get_shared_lock();
 
 static inline void wait_sw_interrupt();
 

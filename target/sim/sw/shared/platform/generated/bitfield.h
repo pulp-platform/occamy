@@ -10,7 +10,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif  // __cplusplus
+#endif // __cplusplus
 
 /**
  * @file
@@ -37,10 +37,10 @@ extern "C" {
  * 31.
  */
 typedef struct bitfield_field32 {
-    /** The field mask. Usually all ones. */
-    uint32_t mask;
-    /** The field position in the bitfield, counting from the zero-bit. */
-    uint32_t index;
+  /** The field mask. Usually all ones. */
+  uint32_t mask;
+  /** The field position in the bitfield, counting from the zero-bit. */
+  uint32_t index;
 } bitfield_field32_t;
 
 /**
@@ -57,7 +57,7 @@ typedef struct bitfield_field32 {
 BITFIELD_WARN_UNUSED_RESULT
 inline uint32_t bitfield_field32_read(uint32_t bitfield,
                                       bitfield_field32_t field) {
-    return (bitfield >> field.index) & field.mask;
+  return (bitfield >> field.index) & field.mask;
 }
 
 /**
@@ -76,9 +76,9 @@ BITFIELD_WARN_UNUSED_RESULT
 inline uint32_t bitfield_field32_write(uint32_t bitfield,
                                        bitfield_field32_t field,
                                        uint32_t value) {
-    bitfield &= ~(field.mask << field.index);
-    bitfield |= (value & field.mask) << field.index;
-    return bitfield;
+  bitfield &= ~(field.mask << field.index);
+  bitfield |= (value & field.mask) << field.index;
+  return bitfield;
 }
 
 /**
@@ -104,12 +104,12 @@ typedef uint32_t bitfield_bit32_index_t;
  * @return A 1-bit field that corresponds to `bit_index`.
  */
 BITFIELD_WARN_UNUSED_RESULT
-inline bitfield_field32_t bitfield_bit32_to_field32(
-    bitfield_bit32_index_t bit_index) {
-    return (bitfield_field32_t){
-        .mask = 0x1,
-        .index = bit_index,
-    };
+inline bitfield_field32_t
+bitfield_bit32_to_field32(bitfield_bit32_index_t bit_index) {
+  return (bitfield_field32_t){
+      .mask = 0x1,
+      .index = bit_index,
+  };
 }
 
 /**
@@ -122,8 +122,8 @@ inline bitfield_field32_t bitfield_bit32_to_field32(
 BITFIELD_WARN_UNUSED_RESULT
 inline bool bitfield_bit32_read(uint32_t bitfield,
                                 bitfield_bit32_index_t bit_index) {
-    return bitfield_field32_read(bitfield,
-                                 bitfield_bit32_to_field32(bit_index)) == 0x1u;
+  return bitfield_field32_read(bitfield,
+                               bitfield_bit32_to_field32(bit_index)) == 0x1u;
 }
 
 /**
@@ -138,8 +138,8 @@ BITFIELD_WARN_UNUSED_RESULT
 inline uint32_t bitfield_bit32_write(uint32_t bitfield,
                                      bitfield_bit32_index_t bit_index,
                                      bool value) {
-    return bitfield_field32_write(
-        bitfield, bitfield_bit32_to_field32(bit_index), value ? 0x1u : 0x0u);
+  return bitfield_field32_write(bitfield, bitfield_bit32_to_field32(bit_index),
+                                value ? 0x1u : 0x0u);
 }
 
 /**
@@ -161,7 +161,7 @@ inline uint32_t bitfield_bit32_write(uint32_t bitfield,
  */
 BITFIELD_WARN_UNUSED_RESULT
 inline int32_t bitfield_find_first_set32(int32_t bitfield) {
-    return __builtin_ffs(bitfield);
+  return __builtin_ffs(bitfield);
 }
 
 /**
@@ -185,7 +185,7 @@ inline int32_t bitfield_find_first_set32(int32_t bitfield) {
  */
 BITFIELD_WARN_UNUSED_RESULT
 inline int32_t bitfield_count_leading_zeroes32(uint32_t bitfield) {
-    return (bitfield != 0) ? __builtin_clz(bitfield) : 32;
+  return (bitfield != 0) ? __builtin_clz(bitfield) : 32;
 }
 
 /**
@@ -209,7 +209,7 @@ inline int32_t bitfield_count_leading_zeroes32(uint32_t bitfield) {
  */
 BITFIELD_WARN_UNUSED_RESULT
 inline int32_t bitfield_count_trailing_zeroes32(uint32_t bitfield) {
-    return (bitfield != 0) ? __builtin_ctz(bitfield) : 32;
+  return (bitfield != 0) ? __builtin_ctz(bitfield) : 32;
 }
 
 /**
@@ -231,7 +231,7 @@ inline int32_t bitfield_count_trailing_zeroes32(uint32_t bitfield) {
  */
 BITFIELD_WARN_UNUSED_RESULT
 inline int32_t bitfield_popcount32(uint32_t bitfield) {
-    return __builtin_popcount(bitfield);
+  return __builtin_popcount(bitfield);
 }
 
 /**
@@ -253,7 +253,7 @@ inline int32_t bitfield_popcount32(uint32_t bitfield) {
  */
 BITFIELD_WARN_UNUSED_RESULT
 inline int32_t bitfield_parity32(uint32_t bitfield) {
-    return __builtin_parity(bitfield);
+  return __builtin_parity(bitfield);
 }
 
 /**
@@ -276,11 +276,11 @@ inline int32_t bitfield_parity32(uint32_t bitfield) {
  */
 BITFIELD_WARN_UNUSED_RESULT
 inline uint32_t bitfield_byteswap32(uint32_t bitfield) {
-    return __builtin_bswap32(bitfield);
+  return __builtin_bswap32(bitfield);
 }
 
 #ifdef __cplusplus
-}  // extern "C"
-#endif  // __cplusplus
+} // extern "C"
+#endif // __cplusplus
 
-#endif  // OPENTITAN_SW_DEVICE_LIB_BASE_BITFIELD_H_
+#endif // OPENTITAN_SW_DEVICE_LIB_BASE_BITFIELD_H_
