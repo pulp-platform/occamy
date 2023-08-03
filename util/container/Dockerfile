@@ -48,12 +48,6 @@ WORKDIR /tools
 # RUN git clone https://github.com/pulp-platform/banshee.git /tmp/banshee --recurse-submodules
 # RUN cargo install --path /tmp/banshee
 
-# Install Python requirements
-COPY $SNITCH_CLUSTER_ROOT/python-requirements.txt /tmp/python-requirements.txt
-COPY $SNITCH_CLUSTER_ROOT/docs/requirements.txt /tmp/docs/requirements.txt
-# COPY SNITCH_CLUSTER_ROOT/sw/snDNN/requirements.txt /tmp/sw/snDNN/requirements.txt
-RUN pip3 install -r /tmp/python-requirements.txt
-
 
 # 2. Stage
 FROM ubuntu:18.04 AS occamy
@@ -92,6 +86,11 @@ RUN echo 'deb http://download.opensuse.org/repositories/home:/phiwag:/edatools/x
     apt-get update && apt-get install -y verilator-${VERILATOR_VERSION} && \
     apt-get clean ; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
+
+# Install Python requirements
+COPY python-requirements.txt /tmp/python-requirements.txt
+COPY docs/requirements.txt /tmp/docs/requirements.txt
+RUN pip3 install -r /tmp/python-requirements.txt
 
 # Get the precompiled LLVM toolchain
 RUN latest_tag=`curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/pulp-platform/llvm-project/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'` && \

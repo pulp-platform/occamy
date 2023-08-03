@@ -1,0 +1,129 @@
+# Copyright 2020 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Run functional regression checks
+name: ci
+on: [push, pull_request]
+jobs:
+
+  ########
+  # Docs #
+  ########
+
+  # docs:
+  #   name: Build documentation
+  #   runs-on: ubuntu-22.04
+  #   container:
+  #     image: ghcr.io/pulp-platform/occamy
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Build docs
+  #       run: mkdocs build
+
+  ######################################
+  # Simulate SW on Occamy w/ Verilator #
+  ######################################
+
+  sw-occamy-vlt:
+    name: Simulate SW on Occamy w/ Verilator
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/pulp-platform/occamy
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      # - name: Build MUSL dependency
+      #   run: |
+      #     cd sw/deps
+      #     mkdir install
+      #     cd musl
+      #     CC=$LLVM_BINROOT/clang ./configure --disable-shared \
+      #     --prefix=../install/ --enable-wrapper=all \
+      #     CFLAGS="-mcpu=snitch -menable-experimental-extensions"
+      #     make -j4
+      #     make install
+      #     cd ../../../
+      - name: Get Bender dependencies
+        run: |
+          bender
+      - name: Build Single cluster Occamy
+        run: |
+          make -C target/sim CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+      - name: Build Software
+        run: |
+          make -C target/sim sw
+      - name: Build Hardware
+        run: |
+          make -C target/sim bin/occamy_top.vlt
+      # - name: Run Unit Tests
+      #   working-directory: target/sim
+      #   run: |-
+      #     ./sw/tests/run.py sw/tests/passing-apps.list --simulator verilator \
+      #     2>&1 | tee tests.log
+      # - name: Run Test Applications
+      #   working-directory: target/sim
+      #   env:
+      #     SNITCH_LOG: info
+      #   run: |-
+      #     ./sw/apps/run.py sw/apps/passing-apps.list --simulator verilator \
+      #     2>&1 | tee apps.log
+      # - name: Check Unit Tests
+      #   working-directory: target/sim
+      #   run: |-
+      #     grep -zoP 'All tests passed' tests.log
+      # - name: Check Test Applications
+      #   working-directory: target/sim
+      #   run: |-
+      #     grep -zoP 'All tests passed' apps.log
+
+  ############################################
+  # Build SW on Snitch Cluster w/ Banshee #
+  ############################################
+
+  # sw-snitch-cluster-banshee:
+  #   name: Simulate SW on Snitch Cluster w/ Banshee
+  #   runs-on: ubuntu-22.04
+  #   container:
+  #     image: ghcr.io/pulp-platform/occamy
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: 'recursive'
+  #     - name: Build MUSL dependency
+  #       run: |
+  #         cd sw/deps
+  #         mkdir install
+  #         cd musl
+  #         CC=$LLVM_BINROOT/clang ./configure --disable-shared \
+  #         --prefix=../install/ --enable-wrapper=all \
+  #         CFLAGS="-mcpu=snitch -menable-experimental-extensions"
+  #         make -j4
+  #         make install
+  #         cd ../../../
+  #     - name: Build Software
+  #       run: |
+  #         make -C target/snitch_cluster SELECT_RUNTIME=banshee sw
+  #     - name: Run Unit Tests
+  #       working-directory: target/snitch_cluster
+  #       env:
+  #         SNITCH_LOG: info
+  #       run: |-
+  #         ./sw/tests/run.py sw/tests/banshee-apps.list --simulator banshee \
+  #         2>&1 | tee tests.log
+  #     - name: Run Test Applications
+  #       working-directory: target/snitch_cluster
+  #       env:
+  #         SNITCH_LOG: info
+  #       run: |-
+  #         ./sw/apps/run.py sw/apps/passing-apps.list --simulator banshee \
+  #         2>&1 | tee  apps.log
+  #     - name: Check Unit Tests
+  #       working-directory: target/snitch_cluster
+  #       run: |-
+  #         grep -zoP 'All tests passed' tests.log
+  #     - name: Check Test Applications
+  #       working-directory: target/snitch_cluster
+  #       run: |-
+  #         grep -zoP 'All tests passed' apps.log

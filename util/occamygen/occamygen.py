@@ -18,7 +18,7 @@ from occamy import Occamy
 from mako.template import Template
 
 sys.path.append(str(pathlib.Path(__file__).parent / '../'))
-from solder import solder, device_tree, util
+from solder import solder, device_tree, util  # noqa: E402
 
 # Compile a regex to trim trailing whitespaces on lines.
 re_trailws = re.compile(r'[ \t\r]+$', re.MULTILINE)
@@ -32,7 +32,8 @@ def write_template(tpl_path, outdir, fname=None, **kwargs):
         tpl_path = pathlib.Path(tpl_path).absolute()
         if tpl_path.exists():
             tpl = Template(filename=str(tpl_path))
-            fname = tpl_path.with_suffix("").name.replace("occamy", kwargs['args'].name) if not fname else fname
+            fname = tpl_path.with_suffix("").name.replace("occamy", kwargs['args'].name) \
+                if not fname else fname
             with open(outdir / fname, "w") as file:
                 code = tpl.render_unicode(**kwargs)
                 code = re_trailws.sub("", code)
@@ -359,8 +360,10 @@ def main():
     cluster_zero_mem_size = occamy.cfg["cluster"]["zero_mem_size"] * 1024
 
     # assert memory region allocation
-    error_str = "ERROR: cluster peripherals, zero memory and tcdm do not fit into the allocated memory region!!!"
-    assert (cluster_tcdm_size + cluster_periph_size + cluster_zero_mem_size) <= cluster_base_offset, error_str
+    error_str = "ERROR: cluster peripherals, zero memory and tcdm \
+                do not fit into the allocated memory region!!!"
+    assert (cluster_tcdm_size + cluster_periph_size + cluster_zero_mem_size) <= \
+           cluster_base_offset, error_str
 
     cluster_base_addr = occamy.cfg["cluster"]["cluster_base_addr"]
     quadrant_size = cluster_base_offset * nr_s1_clusters
@@ -417,7 +420,8 @@ def main():
         am.new_leaf(
                 "quad_{}_cfg".format(i),
                 occamy.cfg["s1_quadrant"]["cfg_base_offset"],
-                occamy.cfg["s1_quadrant"]["cfg_base_addr"] + i * occamy.cfg["s1_quadrant"]["cfg_base_offset"]
+                occamy.cfg["s1_quadrant"]["cfg_base_addr"] +
+                i * occamy.cfg["s1_quadrant"]["cfg_base_offset"]
             ).attach_to(
                 am_narrow_xbar_quadrant_s1[i]
             ).attach_to(
@@ -866,7 +870,8 @@ def main():
         "apb_hbm_cfg": apb_hbm_cfg,
         "cfg": occamy.cfg,
         "cores": nr_s1_quadrants * nr_s1_clusters * nr_cluster_cores + nr_remote_cores + 1,
-        "lcl_cores": nr_s1_quadrants * nr_s1_clusters * nr_cluster_cores + (0 if is_remote_quadrant else 1),
+        "lcl_cores": nr_s1_quadrants * nr_s1_clusters * nr_cluster_cores +
+        (0 if is_remote_quadrant else 1),
         "remote_quadrants": occamy.cfg["remote_quadrants"],
         "is_remote_quadrant": occamy.cfg["is_remote_quadrant"],
         "nr_s1_quadrants": nr_s1_quadrants,
