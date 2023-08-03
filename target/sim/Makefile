@@ -219,7 +219,7 @@ $(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
 		--quadrant-s1-ctrl $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1_ctrl.sv.tpl \
 		--xilinx-sv        $(SOURCE_OCCAMY_DIR)/occamy_xilinx.sv.tpl \
 		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
-	@verible-verilog-format --inplace $(MISC_OCCAMYGEN_SV_TARGETS)
+	@$(VERIBLE_FMT) --inplace $(MISC_OCCAMYGEN_SV_TARGETS)
 	@touch $@
 
 tb: test/testharness.sv
@@ -229,7 +229,7 @@ clean-tb:
 test/testharness.sv: test/testharness.sv.tpl $(CFG)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir test --testharness-sv $<
-	@verible-verilog-format --inplace $@
+	@$(VERIBLE_FMT) --inplace $@
 
 # TODO
 # 	@$(OCCAMYGEN) --cfg $(CFG) \
@@ -256,12 +256,12 @@ $(TARGET_CLINT_DIR)/clint.%: $(CLINTROOT)/data/clint.%.tpl $(CFG) | $(TARGET_CLI
 # $(CLINT_REGGEN_TARGETS) &: $(TARGET_CLINT_DIR)/clint.hjson | $(TARGET_CLINT_DIR)
 # 	@echo "[REGGEN] Generate $(CLINT_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_CLINT_DIR) $<
-# 	@verible-verilog-format --inplace $(CLINT_REGGEN_TARGETS)
+# 	@$(VERIBLE_FMT) --inplace $(CLINT_REGGEN_TARGETS)
 $(CLINT_REGGEN_TARGETS): .clint_reggen_targets_group
 .clint_reggen_targets_group: $(TARGET_CLINT_DIR)/clint.hjson | $(TARGET_CLINT_DIR)
 	@echo "[REGGEN] Generate $(CLINT_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_CLINT_DIR) $<
-	@verible-verilog-format --inplace $(CLINT_REGGEN_TARGETS)
+	@$(VERIBLE_FMT) --inplace $(CLINT_REGGEN_TARGETS)
 	@touch $@
 
 PLICROOT = $(ROOT)/hw/vendor/pulp_platform_opentitan_peripherals/src/rv_plic
@@ -281,12 +281,12 @@ $(TARGET_PLIC_DIR)/rv_plic.%: $(PLICROOT)/data/rv_plic.%.tpl | $(TARGET_PLIC_DIR
 # $(PLIC_REGGEN_TARGETS) &: $(TARGET_PLIC_DIR)/rv_plic.hjson | $(TARGET_PLIC_DIR)
 # 	@echo "[REGGEN] Generate $(PLIC_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_PLIC_DIR) $<
-# 	@verible-verilog-format --inplace $(PLIC_REGGEN_TARGETS)
+# 	@$(VERIBLE_FMT) --inplace $(PLIC_REGGEN_TARGETS)
 $(PLIC_REGGEN_TARGETS): .plic_reggen_targets_group
 .plic_reggen_targets_group: $(TARGET_PLIC_DIR)/rv_plic.hjson | $(TARGET_PLIC_DIR)
 	@echo "[REGGEN] Generate $(PLIC_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_PLIC_DIR) $<
-	@verible-verilog-format --inplace $(PLIC_REGGEN_TARGETS)
+	@$(VERIBLE_FMT) --inplace $(PLIC_REGGEN_TARGETS)
 	@touch $@
 
 SOCCTRL_OCCAMYGEN_TARGETS = $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson
@@ -304,12 +304,12 @@ $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson: $(SOURCE_SOCCTRL_DIR)/occamy_soc_reg
 # $(SOCCTRL_REGGEN_TARGETS) &: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson | $(TARGET_SOCCTRL_DIR)
 # 	@echo "[REGGEN] Generate $(SOCCTRL_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_SOCCTRL_DIR) $<
-# 	@verible-verilog-format --inplace $(SOCCTRL_REGGEN_TARGETS)
+# 	@$(VERIBLE_FMT) --inplace $(SOCCTRL_REGGEN_TARGETS)
 $(SOCCTRL_REGGEN_TARGETS): .socctrl_reggen_targets_group
 .socctrl_reggen_targets_group: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson | $(TARGET_SOCCTRL_DIR)
 	@echo "[REGGEN] Generate $(SOCCTRL_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_SOCCTRL_DIR) $<
-	@verible-verilog-format --inplace $(SOCCTRL_REGGEN_TARGETS)
+	@$(VERIBLE_FMT) --inplace $(SOCCTRL_REGGEN_TARGETS)
 	@touch $@
 
 HBMCTRL_OCCAMYGEN_TARGETS = $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
@@ -327,12 +327,12 @@ $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson: $(SOURCE_HBMCTRL_DIR)/occamy_hb
 # $(HBMCTRL_REGGEN_TARGETS) &: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson | $(TARGET_HBMCTRL_DIR)
 # 	@echo "[REGGEN] Generate $(HBMCTRL_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_HBMCTRL_DIR) $<
-# 	@verible-verilog-format --inplace $(HBMCTRL_REGGEN_TARGETS)
+# 	@$(VERIBLE_FMT) --inplace $(HBMCTRL_REGGEN_TARGETS)
 $(HBMCTRL_REGGEN_TARGETS): .hbmctrl_reggen_targets_group
 .hbmctrl_reggen_targets_group: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson | $(TARGET_HBMCTRL_DIR)
 	@echo "[REGGEN] Generate $(HBMCTRL_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_HBMCTRL_DIR) $<
-	@verible-verilog-format --inplace $(HBMCTRL_REGGEN_TARGETS)
+	@$(VERIBLE_FMT) --inplace $(HBMCTRL_REGGEN_TARGETS)
 	@touch $@
 
 QUADCTRL_OCCAMYGEN_TARGETS = $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson
@@ -350,12 +350,12 @@ $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson: $(SOURCE_QUADCTRL_DIR)/occa
 # $(QUADCTRL_REGGEN_TARGETS) &: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson | $(TARGET_QUADCTRL_DIR)
 # 	@echo "[REGGEN] Generate $(QUADCTRL_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_QUADCTRL_DIR) $<
-# 	@verible-verilog-format --inplace $(QUADCTRL_REGGEN_TARGETS)
+# 	@$(VERIBLE_FMT) --inplace $(QUADCTRL_REGGEN_TARGETS)
 $(QUADCTRL_REGGEN_TARGETS): .quadctrl_reggen_targets_group
 .quadctrl_reggen_targets_group: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson | $(TARGET_QUADCTRL_DIR)
 	@echo "[REGGEN] Generate $(QUADCTRL_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_QUADCTRL_DIR) $<
-	@verible-verilog-format --inplace $(QUADCTRL_REGGEN_TARGETS)
+	@$(VERIBLE_FMT) --inplace $(QUADCTRL_REGGEN_TARGETS)
 	@touch $@
 
 ###############
