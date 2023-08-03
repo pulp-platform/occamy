@@ -1,0 +1,42 @@
+# Copyright 2023 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Run functional regression checks
+name: ci
+on: [push, pull_request]
+jobs:
+
+  #######################
+  # Build SW for Occamy #
+  #######################
+
+  occamy-sw:
+    name: Build SW for Occamy
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/pulp-platform/occamy
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: Build Software
+        run: |
+          make -C target/sim sw
+
+  ###############################
+  # Generate Occamy RTL sources #
+  ###############################
+
+  occamy-rtl:
+    name: Generate Occamy RTL sources
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/pulp-platform/occamy
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: Generate single-cluster Occamy RTL sources
+        run: |
+          make -C target/sim CFG_OVERRIDE=cfg/single-cluster.hjson rtl

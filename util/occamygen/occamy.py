@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent / '../../deps/snitch_cluster/util/clustergen'))
-from cluster import Generator, PMA, PMACfg, SnitchCluster, clog2
+from cluster import Generator, PMA, PMACfg, SnitchCluster, clog2  # noqa: E402
 
 
 class Occamy(Generator):
