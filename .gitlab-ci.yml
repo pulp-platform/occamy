@@ -1,0 +1,239 @@
+# Copyright 2022 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+variables:
+  GIT_STRATEGY: clone
+  GIT_SUBMODULE_STRATEGY: recursive
+  PYTHON: /usr/local/anaconda3-2022.05/bin/python3
+  BENDER: bender-0.27.1
+  CC: gcc-9.2.0
+  CXX: g++-9.2.0
+  VCS: vcs-2020.12
+  VERILATOR: verilator-4.110
+  QUESTA: questa-2022.3
+  LLVM_BINROOT: /usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin
+  CLANG: /usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin/clang
+  CLANG_FORMAT: /usr/sepp/bin/clang-format-12.0.1
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: /usr/pack/gcc-9.2.0-af/linux-x64/bin/gcc
+  LLVM_SYS_120_PREFIX: /usr/pack/llvm-12.0.1-af
+  SNITCH_LOG: info
+  CMAKE: cmake-3.18.1
+  # VIVADO: vitis-2020.2 vivado
+  VERIBLE_FMT: $CI_PROJECT_DIR/.local/bin/verible-verilog-format
+  # CVA6_SDK: /usr/scratch2/dolent1/gitlabci/tmp/cva6-sdk
+  # RISCV: ${CVA6_SDK}/install
+  # UBOOT_SPL_BIN: ${CVA6_SDK}/u-boot/spl/u-boot-spl.bin
+  # UBOOT_ITB: ${CVA6_SDK}/u-boot/u-boot.itb
+  # LINUX_UIMAGE: ${CVA6_SDK}/uImage
+  # RISCV_LLVM: /usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin/
+  # PATH: $RISCV_LLVM:$CI_PROJECT_DIR/.local/bin:${RISCV}/bin:/home/gitlabci/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/condor/bin:/usr/sepp/bin
+
+before_script:
+  - export SNITCH_CLUSTER_ROOT=$($BENDER path snitch_cluster)
+  - $PYTHON -m venv .venv
+  - source .venv/bin/activate
+  - pip install -r $SNITCH_CLUSTER_ROOT/python-requirements.txt
+  # yamllint disable rule:line-length
+  - cd $CI_PROJECT_DIR && mkdir -p .local
+  - curl -L https://github.com/chipsalliance/verible/releases/download/v0.0-3318-g8d254167/verible-v0.0-3318-g8d254167-CentOS-7.9.2009-Core-x86_64.tar.gz | tar xz -C .local --strip-components=1
+  - $VERIBLE_FMT --version
+  # yamllint enable rule:line-length
+  # - >
+  #   if ! $CI_PROJECT_DIR/.gitlab-ci.d/memora_retry.sh get python; then
+  #     $CI_PROJECT_DIR/.gitlab-ci.d/build-python.sh $CI_PROJECT_DIR
+  #     $CI_PROJECT_DIR/.gitlab-ci.d/memora_retry.sh insert python
+  #   fi
+  # yamllint enable rule:line-length
+stages:
+  - occamy-sw
+  - occamy-sim
+  # - linux_prepare
+  # - build_fpga
+  # - linux_boot
+
+# # CVA6 SDK
+# get_toolchain:
+#   stage: linux_prepare
+#   script:
+#     - |
+#       if [[ ! -d ${CVA6_SDK} ]]; then
+#         git clone git@github.com:openhwgroup/cva6-sdk.git $CVA6_SDK
+#         cd $CVA6_SDK && git checkout occamy
+#         git submodule update --init --recursive
+#       fi
+#     - |
+#       if [[ ! -f ${RISCV}/bin/riscv64-unknown-linux-gnu-gcc ]]; then
+#         cd $CVA6_SDK && make all
+#       fi
+#   timeout: 2h 00m
+# get_linux:
+#   stage: linux_prepare
+#   script:
+#     - |
+#       if [[ ! -f ${UBOOT_ITB} ]]; then
+#         cd $CVA6_SDK && make u-boot/u-boot.itb
+#       fi
+#     - |
+#       if [[ ! -f ${LINUX_UIMAGE} ]]; then
+#         ln -s /home/cykoenig/bin/ld $CI_PROJECT_DIR/.local/bin/ld && hash -r
+#         cd $CVA6_SDK && make uImage LD_LIBRARY_PATH=/home/cykoenig/lib64
+#       fi
+#   needs: [get_toolchain]
+#   timeout: 2h 00m
+
+# # Packages and elaborates the vivado IPs where occamy is part of. This ensures
+# # that the occamy xilinx IP can be elaborated
+# occamy_vivado_ip:
+#   stage: build_fpga
+#   script:
+#     # Make Occamy system smaller to fit on FPGA
+#     - ./.gitlab-ci.d/occamy_cfg_fpga.sh
+#     - make -C hw/system/occamy update-source
+#     # Package IPs and run test elaboration
+#     - make -C hw/system/occamy/fpga/vivado_ips occamy_xilinx EXT_JTAG=0 DEBUG=0
+#   artifacts:
+#     expire_in: 4 days
+#     paths:
+#       - hw/system/occamy/src
+#       - hw/system/occamy/test
+#       - sw/snRuntime/include/occamy_base_addr.h
+
+# # The occamy on vcu128 design
+# occamy_vcu128:
+#   stage: build_fpga
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "web"
+#     - if: $CI_PIPELINE_SOURCE != "web"
+#       when: manual
+#       changes:
+#         - .gitlab-ci.d/occamy_cfg_fpga.sh
+#         - hw/ip/**/*
+#         - hw/vendor/**/*
+#         - hw/system/occamy/**/*
+#         - util/occamygen.py
+#         - util/clustergen/**/*
+#         - util/solder/**/*
+#         - util/Makefrag
+#         - util/reggen
+#         - util/regtool.py
+#   timeout: 11h 00m
+#   script:
+#     # yamllint disable rule:line-length
+#     - |
+#       if ! $CI_PROJECT_DIR/.gitlab-ci.d/memora_retry.sh --ignore-uncommitted-changes lookup occamy_vcu128; then
+#         make -C hw/system/occamy/fpga occamy_vcu128 EXT_JTAG=0 DEBUG=0
+#         mkdir -p /usr/scratch2/dolent1/gitlabci/buildcache/snitch/snitch-incremental/
+#         $CI_PROJECT_DIR/.gitlab-ci.d/memora_retry.sh --ignore-uncommitted-changes insert occamy_vcu128
+#       fi
+#     # yamllint enable rule:line-length
+#   artifacts:
+#     expire_in: 4 days
+#     paths: [hw/system/occamy/fpga, hw/system/occamy/src]
+#   needs: [get_toolchain, get_linux, occamy_vivado_ip]
+
+# # Boot Linux on the VCU128 FPGA and check for prompt (disabled for now)
+# occamy_vcu128_fpga:
+#   stage: linux_boot
+#   when: manual
+#   only:
+#     changes:
+#       - .gitlab-ci.d/occamy_cfg_fpga.sh
+#       - .gitlab-ci.d/occamy_fpga_nightly.sh
+#       # Only run if changes were made to anything related to Occamy
+#       - hw/ip/**/*
+#       - hw/vendor/**/*
+#       - hw/system/occamy/**/*
+#   script:
+#     # We need the bitstream, bootrom (tracked in the repo) and linux binaries
+#     - $CI_PROJECT_DIR/.gitlab-ci.d/memora_retry.sh \
+#       --ignore-uncommitted-changes get occamy_vcu128
+#     # Todo get linux distrib from hero and flash it
+#     - .gitlab-ci.d/occamy_fpga_nightly.sh
+#   artifacts:
+#     expire_in: 4 days
+#     paths: [console.log]
+#   needs: [occamy_vcu128]
+
+#########################
+# Build Occamy Software #
+#########################
+
+occamy-single-cluster-sw:
+  # needs: [occamy-sw-musl]
+  stage: occamy-sw
+  script:
+    - cd target/sim
+    - make CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+    - riscv -riscv64-gcc-12.2.0 make DEBUG=ON sw
+  artifacts:
+    paths:
+      - target/sim/sw/**/build/*.elf
+    expire_in: 1 day
+
+#####################################
+# Test Snitch Cluster on IIS system #
+#####################################
+# Verilator
+occamy-single-cluster-vlt:
+  # needs: [occamy-single-cluster-sw]
+  stage: occamy-sim
+  # yamllint disable rule:line-length
+  script:
+    - cd target/sim
+    - make CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+    - $VERILATOR make bin/occamy_top.vlt
+  #   - $VERILATOR ./sw/tests/run.py sw/tests/passing-apps.list --simulator verilator 2>&1 | tee tests.log
+  #   - $VERILATOR ./sw/apps/run.py sw/apps/passing-apps.list --simulator verilator 2>&1 | tee apps.log
+  #   - grep -zoP 'All tests passed' tests.log
+  #   - grep -zoP 'All tests passed' apps.log
+  # # yamllint enable rule:line-length
+  # artifacts:
+  #   when: on_failure
+  #   paths:
+  #     - target/sim/tests.log
+  #     - target/sim/apps.log
+  #   expire_in: 1 day
+
+# VCS
+occamy-single-cluster-vcs:
+  # needs: [occamy-single-cluster-sw]
+  stage: occamy-sim
+  # yamllint disable rule:line-length
+  script:
+    - cd target/sim
+    - make CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+    - $VCS make bin/occamy_top.vcs
+  #   - $VCS ./sw/tests/run.py sw/tests/passing-apps.list --simulator vcs 2>&1 | tee tests.log
+  #   - $VCS ./sw/apps/run.py sw/apps/passing-apps.list --simulator vcs 2>&1 | tee apps.log
+  #   - grep -zoP 'All tests passed' tests.log
+  #   - grep -zoP 'All tests passed' apps.log
+  # yamllint enable rule:line-length
+  artifacts:
+    when: on_failure
+    paths:
+      - target/sim/work-vcs/compile.log
+      # - target/sim/tests.log
+      # - target/sim/apps.log
+    expire_in: 1 day
+
+# Questa
+occamy-single-cluster-vsim:
+  # needs: [occamy-single-cluster-sw]
+  stage: occamy-sim
+  # yamllint disable rule:line-length
+  script:
+    - cd target/sim
+    - make CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+    - $QUESTA make bin/occamy_top.vsim
+  #   - $QUESTA ./sw/tests/run.py sw/tests/passing-apps.list --simulator vsim 2>&1 | tee tests.log
+  #   - $QUESTA ./sw/apps/run.py sw/apps/passing-apps.list --simulator vsim 2>&1 | tee apps.log
+  #   - grep -zoP 'All tests passed' tests.log
+  #   - grep -zoP 'All tests passed' apps.log
+  # # yamllint enable rule:line-length
+  # artifacts:
+  #   when: on_failure
+  #   paths:
+  #     - target/sim/tests.log
+  #     - target/sim/apps.log
+  #   expire_in: 1 day
