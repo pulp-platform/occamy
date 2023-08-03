@@ -35,6 +35,7 @@ ifeq ($(RISCV_CC), riscv32-unknown-elf-gcc)
 RISCV_CFLAGS += -march=rv32imafd
 RISCV_CFLAGS += -mno-fdiv
 else
+RISCV_LDFLAGS += -fuse-ld=lld
 RISCV_CFLAGS += -mcpu=snitch
 RISCV_CFLAGS += -menable-experimental-extensions
 endif
