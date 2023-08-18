@@ -4,6 +4,9 @@
 
 extends: default
 
+ignore:
+  - hw/vendor/
+
 rules:
   document-start: disable
   comments:
