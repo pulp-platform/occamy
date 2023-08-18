@@ -23,22 +23,22 @@ module tb_spm_rmw_adapter #(
 
   logic clk, rst_n;
 
-  SPM_BUS #(
+  spm_bus_if #(
     .ADDR_WIDTH ( AddrWidth ),
     .DATA_WIDTH ( DataWidth )
   ) spm_bus_master ();
 
-  SPM_BUS_DV #(
+  spm_bus_dv_if #(
     .ADDR_WIDTH ( AddrWidth ),
     .DATA_WIDTH ( DataWidth )
   ) spm_bus_master_dv (clk);
 
-  SPM_BUS #(
+  spm_bus_if #(
     .ADDR_WIDTH ( AddrWidth ),
     .DATA_WIDTH ( DataWidth )
   ) spm_bus_slave ();
 
-  SPM_BUS_DV #(
+  spm_bus_dv_if #(
     .ADDR_WIDTH ( AddrWidth ),
     .DATA_WIDTH ( DataWidth )
   ) spm_bus_slave_dv ( clk );

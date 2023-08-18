@@ -21,7 +21,7 @@ jobs:
           paths: |
             ./hw
           exclude_paths: |
-            .hw/vendor
+            ./hw/vendor
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
           reviewdog_reporter: github-check
