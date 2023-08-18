@@ -59,8 +59,10 @@ jobs:
           # yamllint enable rule:line-length
           match_regex: true
           exclude_paths: |
-            hw/vendor/
+            hw/vendor/*
             util/solder/solder.*.tpl
+            target/sim/wave/all_cores.do
+            util/addrmap/addrmap.tex.tpl
 
   ##################
   # Lint YML Files #
