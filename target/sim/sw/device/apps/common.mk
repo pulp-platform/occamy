@@ -36,10 +36,6 @@ SNRT_LIB_NAME = snRuntime
 SNRT_LIB      = $(realpath $(SNRT_LIB_DIR)/lib$(SNRT_LIB_NAME).a)
 LD_SRCS       = $(BASE_LD) $(MEMORY_LD) $(ORIGIN_LD) $(SNRT_LIB)
 
-# Linker flags
-RISCV_LDFLAGS += -nostartfiles
-RISCV_LDFLAGS += -lm
-RISCV_LDFLAGS += -lgcc
 # Linker script
 RISCV_LDFLAGS += -L$(APPSDIR)
 RISCV_LDFLAGS += -L$(BUILDDIR)

@@ -37,7 +37,7 @@ void axpy_job_dm_core(job_t* job) {
     // Get local job pointer as next free slot in l1 alloc
     axpy_local_job_t* axpy_job = (axpy_local_job_t*)snrt_l1_next();
 
-    mcycle();
+    snrt_mcycle();
 
     // Copy job info
     snrt_dma_start_1d(axpy_job, job, sizeof(axpy_job_t));
@@ -48,7 +48,7 @@ void axpy_job_dm_core(job_t* job) {
     // Wait for job info transfer to complete
     snrt_dma_wait_all();
 
-    mcycle();
+    snrt_mcycle();
 
     // Copy operand x
     size_t size = axpy_job->args.l * 8 * 8;
@@ -75,26 +75,26 @@ void axpy_job_dm_core(job_t* job) {
     // Wait for DMA transfers to complete
     snrt_dma_wait_all();
 
-    mcycle();
+    snrt_mcycle();
 
     // Synchronize with compute cores to make sure the data
     // is available before they can start computing on it
     snrt_cluster_hw_barrier();
 
-    mcycle();
+    snrt_mcycle();
 
     // Synchronize cores to make sure results are available before
     // DMA starts transfer to L3
     snrt_cluster_hw_barrier();
 
-    mcycle();
+    snrt_mcycle();
 
     // Transfer data out
     snrt_dma_start_1d((void*)(uint32_t)axpy_job->args.z_l3_ptr,
                       axpy_job->args.z, size);
     snrt_dma_wait_all();
 
-    mcycle();
+    snrt_mcycle();
 }
 
 void axpy_job_compute_core(job_t* job) {
@@ -109,24 +109,24 @@ void axpy_job_compute_core(job_t* job) {
     double* y = args.y;
     double* z = args.z;
 
-    mcycle();
+    snrt_mcycle();
 
     // Synchronize with DM core to wait for operands
     // to be fully transferred in L1
     snrt_cluster_hw_barrier();
 
-    mcycle();
+    snrt_mcycle();
 
     // Run kernel
     axpy(l, a, x, y, z);
 
-    mcycle();
+    snrt_mcycle();
 
     // Synchronize with DM core to make sure results are available
     // before DMA starts transfer to L3
     snrt_cluster_hw_barrier();
 
-    mcycle();
+    snrt_mcycle();
 }
 
 static inline void run_job() {
@@ -156,14 +156,14 @@ run_job_compute_core:;
     // Get pointer to local copy of job
     job_t* job_local = (job_t*)(snrt_l1_next());
 
-    mcycle();
+    snrt_mcycle();
 
     // Synchronize with DM core such that it knows
     // it can update the l1 alloc pointer, and we know
     // job information is locally available
     snrt_cluster_hw_barrier();
 
-    mcycle();
+    snrt_mcycle();
 
     // Invoke job
     jobs_compute_core[job_local->id](job_local);
@@ -191,15 +191,15 @@ int main() {
     // Job loop
     while (1) {
         // Reset state after wakeup
-        mcycle();
+        snrt_mcycle();
         post_wakeup_cl();
 
         // Execute job
-        mcycle();
+        snrt_mcycle();
         run_job();
 
         // Go to sleep until next job
-        mcycle();
+        snrt_mcycle();
         snrt_wfi();
     }
 }

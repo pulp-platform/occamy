@@ -24,7 +24,7 @@ clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vsim clean-
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := $(MKFILE_DIR)../..
-SNITCH_ROOT := $(shell $(BENDER) path snitch_cluster)
+SNITCH_ROOT := $(ROOT)/deps/snitch_cluster
 
 include $(SNITCH_ROOT)/target/common/common.mk
 
