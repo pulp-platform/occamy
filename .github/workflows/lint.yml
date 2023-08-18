@@ -102,9 +102,16 @@ jobs:
   clangfmt:
     name: Lint C/C++ Sources
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/pulp-platform/occamy
     steps:
-      - uses: actions/checkout@v3
-      - uses: DoozyX/clang-format-lint-action@v0.16.2
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Get snitch_cluster dependency
+        run: |
+          bender update
+      - name: Lint C sources
+        uses: DoozyX/clang-format-lint-action@v0.16.2
         with:
           clangFormatVersion: 10
 
