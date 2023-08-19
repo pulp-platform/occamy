@@ -1,0 +1,25 @@
+# Copyright 2023 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+name: publish-docs
+on:
+  push:
+    branches: [init]
+  workflow_dispatch:
+jobs:
+  deploy:
+    name: Deploy documentation
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - name: bender install
+        uses: pulp-platform/pulp-actions/bender-install@v2
+        with:
+          version: 0.27.1
+      - run: bender update
+      - run: pip install -r deps/snitch_cluster/docs/requirements.txt
+      - run: mkdocs gh-deploy --force

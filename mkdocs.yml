@@ -1,0 +1,46 @@
+# Copyright 2020 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+site_name: Occamy
+theme:
+  name: material
+
+  icon:
+    repo: fontawesome/brands/github
+
+repo_url: https://github.com/pulp-platform/occamy
+repo_name: pulp-platform/occamy
+
+markdown_extensions:
+  - admonition
+  - def_list
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+plugins:
+  - include-markdown
+  - macros
+use_directory_urls: false
+extra:
+  repo: occamy
+  branch: init
+nav:
+  - Home: index.md
+  - User Guide:
+      - Getting Started: ug/getting_started.md
+      # - Repository Structure: ug/directory_structure.md
+      - Tutorial: ug/tutorial.md
+      - Documentation: ug/documentation.md
+  - Reference Manual:
+      - Architecture:
+          - Overview: rm/1_overview.md
+          - Address Map: rm/2_addrmap.md
+          - System Components: rm/3_system_components.md
+          - Clocking: rm/4_clocking.md
+          - Interrupts and Synchronization: rm/5_interrupts_and_synchronization.md
+      - Schema: schema-doc/occamy.md
+  - Publications: publications.md

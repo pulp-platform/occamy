@@ -7,6 +7,20 @@ name: ci
 on: [push, pull_request]
 jobs:
 
+  ########
+  # Docs #
+  ########
+
+  docs:
+    name: Build documentation
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/pulp-platform/occamy
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build docs
+        run: mkdocs build
+
   #######################
   # Build SW for Occamy #
   #######################
