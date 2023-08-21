@@ -1,0 +1,8 @@
+# These owners will be the default owners for everything in the repo.
+# Unless a later match takes precedence, global owners below will be
+# requested for review when someone opens a pull request.
+
+* @GiannaP @colluca @paulsc96
+
+target/sim/sw @colluca @viv-eth
+target/fpga @niwis @CyrilKoe
