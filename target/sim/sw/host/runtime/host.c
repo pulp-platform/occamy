@@ -6,6 +6,7 @@
 
 #include "heterogeneous_runtime.h"
 #include "occamy.h"
+#include "sys_dma.h"
 #include "uart.h"
 
 // Handle multireg degeneration to single register
@@ -83,10 +84,10 @@ static inline void set_sw_interrupts_unsafe(uint32_t base_hartid,
 void initialize_bss() {
     extern volatile uint64_t __bss_start, __bss_end;
 
-    for (uint64_t* p = (uint64_t*)(&__bss_start); p < (uint64_t*)(&__bss_end);
-         p++) {
-        *p = 0;
-    }
+    size_t bss_size = (size_t)(&__bss_end) - (size_t)(&__bss_start);
+    if (bss_size)
+        sys_dma_blk_memcpy((uint64_t)(&__bss_start), WIDE_ZERO_MEM_BASE_ADDR,
+                           bss_size);
 }
 
 void enable_fpu() {
@@ -259,7 +260,7 @@ void wakeup_master_snitches() {
  */
 static inline void wait_snitches_done() {
     wait_sw_interrupt();
-    clear_sw_interrupt(0);
+    clear_host_sw_interrupt();
 }
 
 static inline volatile uint32_t* get_shared_lock() {
@@ -279,10 +280,14 @@ static inline void set_reset_n_quad(uint32_t quad_idx, uint32_t value) {
 }
 
 static inline void reset_and_ungate_quad(uint32_t quadrant_idx) {
-    set_clk_ena_quad(quadrant_idx, 0);
     set_reset_n_quad(quadrant_idx, 0);
+    set_clk_ena_quad(quadrant_idx, 0);
     set_reset_n_quad(quadrant_idx, 1);
     set_clk_ena_quad(quadrant_idx, 1);
+}
+
+static inline void reset_and_ungate_quadrants() {
+    for (int i = 0; i < N_QUADS; i++) reset_and_ungate_quad(i);
 }
 
 //===============================================================
