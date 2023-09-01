@@ -151,7 +151,7 @@ inline uintptr_t soc_ctrl_scratch_addr(uint32_t reg_idx) {
 }
 
 inline uintptr_t clint_msip_addr(uint32_t hartid) {
-    return clint_msip_base + (hartid / CLINT_MSIP_P_FIELDS_PER_REG) * 4;
+    return clint_msip_base + hartid * (CLINT_PARAM_REG_WIDTH / 8);
 }
 
 //===============================================================
