@@ -5,7 +5,8 @@
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
 # Add user applications to APPS variable
-APPS  = blas/axpy
+APPS  = sanity
+APPS += blas/axpy
 APPS += blas/gemm
 
 TARGET ?= all

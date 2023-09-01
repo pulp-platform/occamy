@@ -16,7 +16,8 @@ DEBUG ?= OFF # ON to turn on debugging symbols
 
 APP  = offload
 SRCS = src/offload.c
-DEVICE_APPS  = blas/axpy
+DEVICE_APPS  = sanity
+DEVICE_APPS += blas/axpy
 DEVICE_APPS += blas/gemm
 
 # Compiler toolchain
