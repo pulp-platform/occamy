@@ -70,14 +70,6 @@ volatile uint64_t* const clint_mtimecmp0_ptr =
 volatile comm_buffer_t comm_buffer __attribute__((aligned(8)));
 
 //===============================================================
-// Anticipated function declarations
-//===============================================================
-
-static inline void set_sw_interrupts_unsafe(uint32_t base_hartid,
-                                            uint32_t num_harts,
-                                            uint32_t stride);
-
-//===============================================================
 // Initialization
 //===============================================================
 
@@ -213,11 +205,7 @@ static inline void wakeup_cluster(uint32_t cluster_id) {
  *         sends a SW interrupt to all Snitches.
  */
 void wakeup_snitches() {
-    volatile uint32_t* lock = get_shared_lock();
-
-    mutex_ttas_acquire(lock);
-    set_sw_interrupts_unsafe(1, N_SNITCHES, 1);
-    mutex_release(lock);
+    for (int i = 0; i < N_CLUSTERS; i++) set_sw_interrupt(i);
 }
 
 /**
@@ -227,42 +215,6 @@ void wakeup_snitches() {
  */
 static inline void wakeup_snitches_cl() {
     for (int i = 0; i < N_CLUSTERS; i++) wakeup_cluster(i);
-}
-
-/**
- * @brief Wake-up Snitches
- *
- * @detail All Snitches are "parked" in a WFI. A SW interrupt
- *         must be issued to "unpark" every Snitch. This function
- *         sends a SW interrupt to a given range of Snitches.
- */
-void wakeup_snitches_selective(uint32_t base_hartid, uint32_t num_harts,
-                               uint32_t stride) {
-    volatile uint32_t* lock = get_shared_lock();
-
-    mutex_ttas_acquire(lock);
-    set_sw_interrupts_unsafe(base_hartid, num_harts, stride);
-    mutex_release(lock);
-}
-
-/**
- * @brief Wake-up Snitches
- *
- * @detail All Snitches are "parked" in a WFI. A SW interrupt
- *         must be issued to "unpark" every Snitch. This function
- *         sends a SW interrupt to one Snitch in every cluster,
- *         the so called "master" of the cluster. The "master" is
- *         then expected to wake-up all the other Snitches in its
- *         cluster. The "master" Snitches can use the cluster-local
- *         CLINTs without sending requests outside the cluster,
- *         avoiding congestion.
- */
-void wakeup_master_snitches() {
-    volatile uint32_t* lock = get_shared_lock();
-
-    mutex_ttas_acquire(lock);
-    set_sw_interrupts_unsafe(1, N_CLUSTERS, N_CORES_PER_CLUSTER);
-    mutex_release(lock);
 }
 
 /**
@@ -321,9 +273,7 @@ static inline void enable_sw_interrupts() {
 }
 
 static inline uint32_t get_clint_msip_hart(uint32_t hartid) {
-    uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
-    return (*clint_msip_ptr(hartid) >> lsb_offset) & 1;
+    return *clint_msip_ptr(hartid) & 1;
 }
 
 /**
@@ -349,19 +299,8 @@ static inline void wait_sw_interrupt() {
     while (!sw_interrupt_pending());
 }
 
-static inline void clear_sw_interrupt_unsafe(uint32_t hartid) {
-    uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
-
-    *clint_msip_ptr(hartid) &= ~(1 << lsb_offset);
-}
-
 static inline void clear_sw_interrupt(uint32_t hartid) {
-    volatile uint32_t* shared_lock = get_shared_lock();
-
-    mutex_tas_acquire(shared_lock);
-    clear_sw_interrupt_unsafe(hartid);
-    mutex_release(shared_lock);
+    *clint_msip_ptr(hartid) = 0;
 }
 
 /**
@@ -382,62 +321,7 @@ static inline uint32_t timer_interrupts_enabled() {
     return (mie >> MIE_MTIE_OFFSET) & 1;
 }
 
-static inline void set_sw_interrupt_unsafe(uint32_t hartid) {
-    uint32_t field_offset = hartid % CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t lsb_offset = field_offset * CLINT_MSIP_P_FIELD_WIDTH;
-
-    *clint_msip_ptr(hartid) |= (1 << lsb_offset);
-}
-
-void set_sw_interrupt(uint32_t hartid) {
-    volatile uint32_t* shared_lock = get_shared_lock();
-
-    mutex_ttas_acquire(shared_lock);
-    set_sw_interrupt_unsafe(hartid);
-    mutex_release(shared_lock);
-}
-
-static inline void set_sw_interrupts_unsafe(uint32_t base_hartid,
-                                            uint32_t num_harts,
-                                            uint32_t stride) {
-    volatile uint32_t* ptr = clint_msip_ptr(base_hartid);
-
-    uint32_t num_fields = num_harts;
-    uint32_t field_idx = base_hartid;
-    uint32_t field_offset = field_idx % CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t reg_idx = field_idx / CLINT_MSIP_P_FIELDS_PER_REG;
-    uint32_t prev_reg_idx = reg_idx;
-    uint32_t mask = 0;
-    uint32_t reg_jump;
-    uint32_t last_field = num_fields - 1;
-
-    for (uint32_t i = 0; i < num_fields; i++) {
-        // put field in mask
-        mask |= 1 << field_offset;
-
-        // calculate next field info
-        field_idx += stride;
-        field_offset = field_idx % CLINT_MSIP_P_FIELDS_PER_REG;
-        reg_idx = field_idx / CLINT_MSIP_P_FIELDS_PER_REG;
-        reg_jump = reg_idx - prev_reg_idx;
-
-        // if next value is in another register
-        if (i != last_field && reg_jump) {
-            // store mask
-            if (mask == (uint32_t)(-1))
-                *ptr = mask;
-            else
-                *ptr |= mask;
-            // update pointer and reset mask
-            ptr += reg_jump;
-            prev_reg_idx = reg_idx;
-            mask = 0;
-        }
-    }
-
-    // store last mask
-    *ptr |= mask;
-}
+void set_sw_interrupt(uint32_t hartid) { *clint_msip_ptr(hartid) = 1; }
 
 void set_cluster_interrupt(uint32_t cluster_id, uint32_t core_id) {
     *(cluster_clint_set_ptr(cluster_id)) = (1 << core_id);
