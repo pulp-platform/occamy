@@ -10,9 +10,12 @@
 #define SNRT_CRT0_PRE_BARRIER
 #define SNRT_INVOKE_MAIN
 #define SNRT_CRT0_POST_BARRIER
+#define SNRT_CRT0_CALLBACK7
 
 static inline void snrt_crt0_callback3() {
     _snrt_cluster_hw_barrier = cluster_hw_barrier_addr(snrt_cluster_idx());
 }
+
+static inline void snrt_crt0_callback7() { return_to_cva6(SYNC_CLUSTERS); }
 
 #include "start.c"

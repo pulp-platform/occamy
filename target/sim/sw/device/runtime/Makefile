@@ -11,10 +11,11 @@ include ../toolchain.mk
 ###################
 
 # Directories
-BUILDDIR = $(abspath build/)
-SRC_DIR  = $(abspath src/)
-SW_DIR   = $(abspath ../../)
-SNRT_DIR = $(shell bender path snitch_cluster)/sw/snRuntime
+SNITCH_ROOT = $(shell bender path snitch_cluster)
+BUILDDIR    = $(abspath build/)
+SRC_DIR     = $(abspath src/)
+SW_DIR      = $(abspath ../../)
+SNRT_DIR    = $(SNITCH_ROOT)/sw/snRuntime
 
 # Dependencies
 INCDIRS += $(SNRT_DIR)/src
@@ -23,6 +24,8 @@ INCDIRS += $(SNRT_DIR)/vendor/riscv-opcodes
 INCDIRS += $(SW_DIR)/shared/platform
 INCDIRS += $(SW_DIR)/shared/platform/generated
 INCDIRS += $(SW_DIR)/shared/runtime
+
+# Sources
 SRCS += $(SRC_DIR)/occamy_start.S
 SRCS += $(SRC_DIR)/snrt.c
 
@@ -41,7 +44,7 @@ ALL_OUTPUTS = $(DEPS) $(LIB) $(DUMP)
 #########
 
 .PHONY: all
-all: $(ALL_OUTPUTS)
+all: math $(ALL_OUTPUTS)
 
 .PHONY: clean
 clean:
@@ -64,6 +67,11 @@ $(LIB): $(OBJS) | $(BUILDDIR)
 
 $(DUMP): $(LIB) | $(BUILDDIR)
 	$(RISCV_OBJDUMP) -D $< > $@
+
+# Build math library sources
+.PHONY: math
+math:
+	make -C $(SNITCH_ROOT)/sw/math all
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)

@@ -12,5 +12,8 @@
 #include "occamy_device.c"
 #include "occamy_memory.c"
 #include "occamy_start.c"
+#include "printf.c"
+#include "putchar.c"
 #include "sync.c"
+#include "sys_dma.c"
 #include "team.c"

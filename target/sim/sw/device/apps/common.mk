@@ -4,7 +4,10 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-include ../../toolchain.mk
+# Usage of absolute paths is required to externally include
+# this Makefile from multiple different locations
+MK_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+include $(MK_DIR)/../toolchain.mk
 
 ###################
 # Build variables #
@@ -12,10 +15,11 @@ include ../../toolchain.mk
 
 # Directories
 BUILDDIR    = $(abspath build)
-APPSDIR     = $(abspath ../)
-RUNTIME_DIR = $(abspath ../../runtime)
-SNRT_DIR    = $(shell bender path snitch_cluster)/sw/snRuntime
-SW_DIR      = $(abspath ../../../)
+APPSDIR     = $(abspath $(MK_DIR))
+RUNTIME_DIR = $(abspath $(MK_DIR)/../runtime)
+SNITCH_ROOT = $(shell bender path snitch_cluster)
+SNRT_DIR    = $(SNITCH_ROOT)/sw/snRuntime
+SW_DIR      = $(abspath $(MK_DIR)/../../)
 
 # Dependencies
 INCDIRS += $(RUNTIME_DIR)/src
@@ -25,6 +29,14 @@ INCDIRS += $(SNRT_DIR)/vendor/riscv-opcodes
 INCDIRS += $(SW_DIR)/shared/platform/generated
 INCDIRS += $(SW_DIR)/shared/platform
 INCDIRS += $(SW_DIR)/shared/runtime
+
+# Math library override
+INCDIRS += $(SNITCH_ROOT)/sw/math/arch/riscv64/bits/
+INCDIRS += $(SNITCH_ROOT)/sw/math/arch/generic
+INCDIRS += $(SNITCH_ROOT)/sw/math/src/include
+INCDIRS += $(SNITCH_ROOT)/sw/math/src/internal
+INCDIRS += $(SNITCH_ROOT)/sw/math/include/bits
+INCDIRS += $(SNITCH_ROOT)/sw/math/include
 
 # Linking sources
 BASE_LD       = $(abspath $(SNRT_DIR)/base.ld)

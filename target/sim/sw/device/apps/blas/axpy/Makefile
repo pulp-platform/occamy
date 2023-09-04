@@ -4,8 +4,7 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-APP     = offload
-SRCS    = src/offload.c
-INCDIRS = ../../../host/apps/offload/src
+include ../../../../../../../deps/snitch_cluster/sw/blas/axpy/Makefile
+include ../../common.mk
 
-include ../common.mk
+$(DEP): $(DATA_H)
