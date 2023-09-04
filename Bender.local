@@ -3,4 +3,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
 overrides:
-  axi: {git: https://github.com/pulp-platform/axi.git, rev: 45cfe01040d3db5d4aece8cc0e439e4e4ff13672}
+  axi:          { git: https://github.com/pulp-platform/axi.git,          version: 0.39.0-beta.4 }
+  common_cells: { git: https://github.com/pulp-platform/common_cells.git, version: 1.31.1 }
