@@ -22,7 +22,7 @@ dependencies:
   apb:                    { git:  https://github.com/pulp-platform/apb.git,                version: 0.2.0 }
   apb_timer:              { git:  https://github.com/pulp-platform/apb_timer.git,          rev:     0cbc6cbc26c94b8e3bf27cc058c48ef89ea3d4c3 }
   apb_uart:               { git:  https://github.com/pulp-platform/apb_uart.git,           rev:     b6145341df79137ac584c83e9c081f80a7a40440 }
-  axi:                    { git:  https://github.com/pulp-platform/axi.git,                rev:     d2f98d691594c1a8dd1af5bedd5d37d965027535 }
+  axi:                    { git:  https://github.com/pulp-platform/axi.git,                version: 0.39.0  }
   axi_tlb:                { path: hw/vendor/pulp_platform_axi_tlb                                           }
   clint:                  { git:  https://github.com/pulp-platform/clint.git,              rev:     v0.1.0  }
   common_cells:           { git:  https://github.com/pulp-platform/common_cells.git,       rev:     v1.28.0 }
