@@ -46,6 +46,8 @@
     (QUADRANT_0_CLUSTER_0_PERIPH_BASE_ADDR + \
      SNITCH_CLUSTER_PERIPHERAL_HW_BARRIER_REG_OFFSET)
 
+#define cluster_zero_memory_base QUADRANT_0_CLUSTER_0_ZERO_MEM_BASE_ADDR
+
 #define quad_cfg_reset_n_base \
     (QUAD_0_CFG_BASE_ADDR + OCCAMY_QUADRANT_S1_RESET_N_REG_OFFSET)
 
@@ -113,6 +115,10 @@ inline uintptr_t cluster_hw_barrier_addr(uint32_t cluster_idx) {
     return translate_cluster_address(cluster_hw_barrier_base, cluster_idx);
 }
 
+inline uintptr_t cluster_zero_memory_addr(uint32_t cluster_idx) {
+    return translate_cluster_address(cluster_zero_memory_base, cluster_idx);
+}
+
 inline uintptr_t quad_cfg_reset_n_addr(uint32_t quadrant_idx) {
     return translate_quadrant_cfg_address(quad_cfg_reset_n_base, quadrant_idx);
 }
@@ -173,6 +179,10 @@ inline volatile uint32_t* cluster_clint_set_ptr(uint32_t cluster_idx) {
 
 inline volatile uint32_t* cluster_hw_barrier_ptr(uint32_t cluster_idx) {
     return (volatile uint32_t*)cluster_hw_barrier_addr(cluster_idx);
+}
+
+inline volatile uint32_t* cluster_zero_memory_ptr(uint32_t cluster_idx) {
+    return (volatile uint32_t*)cluster_zero_memory_addr(cluster_idx);
 }
 
 inline volatile uint32_t* clint_msip_ptr(uint32_t hartid) {

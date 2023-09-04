@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+#include <stddef.h>
 #include <stdint.h>
 
 static inline void set_sw_interrupt(uint32_t hartid);

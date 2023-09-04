@@ -42,27 +42,32 @@ docs:
   script:
     - mkdocs build
 
-#########################
-# Build Occamy software #
-#########################
-
-occamy-single-cluster-sw:
-  script:
-    - cd target/sim
-    - make CFG_OVERRIDE=cfg/single-cluster.hjson sw
-  artifacts:
-    paths:
-      - target/sim/sw/**/build/*.elf
-    expire_in: 1 day
-
 ###############################
 # Single-cluster Occamy tests #
 ###############################
 
 # Questa
 occamy-single-cluster-vsim:
-  needs: [occamy-single-cluster-sw]
   script:
     - cd target/sim
     - make CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+    - make sw
     - $QUESTA make bin/occamy_top.vsim
+    - $QUESTA ../../deps/snitch_cluster/util/sim/simulate.py
+        sw/run-single-cluster.yaml --simulator vsim
+        --sim-bin bin/occamy_top.vsim
+
+#####################
+# Full Occamy tests #
+#####################
+
+# Questa
+occamy-full-vsim:
+  script:
+    - cd target/sim
+    - make CFG_OVERRIDE=cfg/full.hjson rtl
+    - make LENGTH=384 sw
+    - $QUESTA make bin/occamy_top.vsim
+    - $QUESTA ../../deps/snitch_cluster/util/sim/simulate.py
+        sw/run-full-occamy.yaml --simulator vsim
+        --sim-bin bin/occamy_top.vsim

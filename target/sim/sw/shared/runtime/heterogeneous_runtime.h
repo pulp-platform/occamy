@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 
+#include "occamy.h"
 #include "occamy_memory_map.h"
 
 // *Note*: to ensure that the usr_data field is at the same offset
@@ -13,6 +14,24 @@ typedef struct {
     volatile uint32_t lock;
     volatile uint32_t usr_data_ptr;
 } comm_buffer_t;
+
+/**************/
+/* Interrupts */
+/**************/
+
+inline void set_host_sw_interrupt() { *clint_msip_ptr(0) = 1; }
+
+inline void clear_host_sw_interrupt_unsafe() { *clint_msip_ptr(0) = 0; }
+
+inline void wait_host_sw_interrupt_clear() {
+    while (*clint_msip_ptr(0))
+        ;
+}
+
+inline void clear_host_sw_interrupt() {
+    clear_host_sw_interrupt_unsafe();
+    wait_host_sw_interrupt_clear();
+}
 
 /**************************/
 /* Quadrant configuration */

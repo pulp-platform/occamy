@@ -114,7 +114,9 @@ VLT_FLAGS += --prof-cfuncs # Enable code profiling
 # C testbench #
 ###############
 
-TB_CC_SOURCES  = $(SNITCH_TEST_DIR)/rtl_lib.cc
+TB_CC_SOURCES  = $(SNITCH_TEST_DIR)/bootrom.cc
+TB_CC_SOURCES += $(SNITCH_TEST_DIR)/ipc.cc
+TB_CC_SOURCES += $(SNITCH_TEST_DIR)/rtl_lib.cc
 TB_CC_SOURCES += $(SNITCH_TEST_DIR)/common_lib.cc
 TB_CC_SOURCES += $(TARGET_TEST_DIR)/bootdata.cc
 TB_CC_SOURCES += $(TARGET_TEST_DIR)/uartdpi/uartdpi.c
@@ -127,7 +129,9 @@ TB_CC_FLAGS +=-I$(SNITCH_TEST_DIR)
 TB_CC_FLAGS +=-I$(TARGET_TEST_DIR)/uartdpi
 
 # Required C sources for the verilator TB that are linked against the verilated model
-VLT_COBJ  = $(VLT_BUILDDIR)/tb/common_lib.o
+VLT_COBJ  = $(VLT_BUILDDIR)/tb/bootrom.o
+VLT_COBJ += $(VLT_BUILDDIR)/tb/ipc.o
+VLT_COBJ += $(VLT_BUILDDIR)/tb/common_lib.o
 VLT_COBJ += $(VLT_BUILDDIR)/tb/verilator_lib.o
 VLT_COBJ += $(VLT_BUILDDIR)/tb/tb_bin.o
 VLT_COBJ += $(VLT_BUILDDIR)/test/uartdpi/uartdpi.o
@@ -450,21 +454,16 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 # Traces #
 ##########
 
-# CVA6 trace should use binary written in logs/.rtlbinary
-# which is retrieved by the Makefrag in the BINARY variable,
-# but the Snitch traces use another binary which is expected to
-# be passed on the command-line, overriding the BINARY variable.
-# So we define a new variable to store the CVA6 binary
 CVA6_BINARY ?= $(shell cat $(LOGS_DIR)/.rtlbinary)
 
-$(LOGS_DIR)/hart_00000_perf.json: $(LOGS_DIR)/trace_hart_00000.txt $(ROOT)/util/trace/events.py
-	$(PYTHON) $(ROOT)/util/trace/events.py -f cva6 $< -o $@
+$(LOGS_DIR)/hart_00000_perf.json: $(LOGS_DIR)/trace_hart_00000.txt $(EVENTS_PY)
+	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
 
-$(LOGS_DIR)/trace_hart_00000.s: $(LOGS_DIR)/trace_hart_00000.txt ${ANNOTATE}
-	$(PYTHON) ${ANNOTATE} ${ANNOTATE_FLAGS} -o $@ $(CVA6_BINARY) $<
+$(LOGS_DIR)/trace_hart_00000.s: $(LOGS_DIR)/trace_hart_00000.txt $(ANNOTATE_PY)
+	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $<
 
-$(LOGS_DIR)/trace_hart_00000.diff: $(LOGS_DIR)/trace_hart_00000.txt ${ANNOTATE}
-	$(PYTHON) ${ANNOTATE} ${ANNOTATE_FLAGS} -o $@ $(CVA6_BINARY) $< -d
+$(LOGS_DIR)/trace_hart_00000.diff: $(LOGS_DIR)/trace_hart_00000.txt $(ANNOTATE_PY)
+	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $< -d
 
 traces: $(LOGS_DIR)/hart_00000_perf.json
 
@@ -472,12 +471,12 @@ annotate: $(shell (echo $(LOGS_DIR)/trace_hart_00000.txt | sed 's/\.txt/\.s/') |
           $(shell (echo $(LOGS_DIR)/trace_hart_00000.txt | sed 's/\.txt/\.diff/') || echo "")
 
 $(LOGS_DIR)/perf.csv: $(shell (ls $(LOGS_DIR)/trace_hart_*.dasm 2>/dev/null | sed 's/trace_hart/hart/' | sed 's/.dasm/_perf.json/')) \
-		  $(LOGS_DIR)/hart_00000_perf.json $(ROOT)/util/trace/perf_csv.py
-	$(PYTHON) $(ROOT)/util/trace/perf_csv.py -o $@ -i $(LOGS_DIR)/hart_*_perf.json
+		  $(LOGS_DIR)/hart_00000_perf.json $(PERF_CSV_PY)
+	$(PYTHON) $(PERF_CSV_PY) -o $@ -i $(LOGS_DIR)/hart_*_perf.json
 
 $(LOGS_DIR)/event.csv: $(shell (ls $(LOGS_DIR)/trace_hart_*.dasm 2>/dev/null | sed 's/trace_hart/hart/' | sed 's/.dasm/_perf.json/')) \
-		  $(LOGS_DIR)/hart_00000_perf.json $(ROOT)/util/trace/perf_csv.py
-	$(PYTHON) $(ROOT)/util/trace/perf_csv.py -o $@ -i $(LOGS_DIR)/hart_*_perf.json --filter tstart tend
+		  $(LOGS_DIR)/hart_00000_perf.json $(PERF_CSV_PY)
+	$(PYTHON) $(PERF_CSV_PY) -o $@ -i $(LOGS_DIR)/hart_*_perf.json --filter tstart tend
 
 #############
 # Verilator #
@@ -575,7 +574,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf Bender.lock .bender/ work/
+	rm -rf $(ROOT)/Bender.lock $(ROOT)/.bender/ $(ROOT)/deps
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/

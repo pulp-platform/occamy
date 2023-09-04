@@ -46,7 +46,7 @@ extern "C" {
 
 #include <stdint.h>
 
-#include "occamy_addrmap.h"
+#include "occamy_memory_map.h"
 
 #define IDMA_SRC_ADDR \
     (SYS_IDMA_CFG_BASE_ADDR + IDMA_REG64_FRONTEND_SRC_ADDR_REG_OFFSET)
@@ -67,30 +67,43 @@ extern "C" {
 #define IDMA_CONF_DEBURST 0
 #define IDMA_CONF_SERIALIZE 0
 
-volatile uint64_t *dma_src = (volatile uint64_t *)IDMA_SRC_ADDR;
-volatile uint64_t *dma_dst = (volatile uint64_t *)IDMA_DST_ADDR;
-volatile uint64_t *dma_num_bytes = (volatile uint64_t *)IDMA_NUMBYTES_ADDR;
-volatile uint64_t *dma_conf = (volatile uint64_t *)IDMA_CONF_ADDR;
-volatile uint64_t *dma_status = (volatile uint64_t *)IDMA_STATUS_ADDR;
-volatile uint64_t *dma_nextid = (volatile uint64_t *)IDMA_NEXTID_ADDR;
-volatile uint64_t *dma_done = (volatile uint64_t *)IDMA_DONE_ADDR;
-
-static inline uint64_t sys_dma_memcpy(uint64_t dst, uint64_t src,
-                                      uint64_t size) {
-    *dma_src = (uint64_t)src;
-    *dma_dst = (uint64_t)dst;
-    *dma_num_bytes = size;
-    *dma_conf = (IDMA_CONF_DECOUPLE << IDMA_REG64_FRONTEND_CONF_DECOUPLE_BIT) |
-                (IDMA_CONF_DEBURST << IDMA_REG64_FRONTEND_CONF_DEBURST_BIT) |
-                (IDMA_CONF_SERIALIZE << IDMA_REG64_FRONTEND_CONF_SERIALIZE_BIT);
-    return *dma_nextid;
+inline volatile uint64_t *sys_dma_src_ptr(void) {
+    return (volatile uint64_t *)IDMA_SRC_ADDR;
+}
+inline volatile uint64_t *sys_dma_dst_ptr(void) {
+    return (volatile uint64_t *)IDMA_DST_ADDR;
+}
+inline volatile uint64_t *sys_dma_num_bytes_ptr(void) {
+    return (volatile uint64_t *)IDMA_NUMBYTES_ADDR;
+}
+inline volatile uint64_t *sys_dma_conf_ptr(void) {
+    return (volatile uint64_t *)IDMA_CONF_ADDR;
+}
+inline volatile uint64_t *sys_dma_status_ptr(void) {
+    return (volatile uint64_t *)IDMA_STATUS_ADDR;
+}
+inline volatile uint64_t *sys_dma_nextid_ptr(void) {
+    return (volatile uint64_t *)IDMA_NEXTID_ADDR;
+}
+inline volatile uint64_t *sys_dma_done_ptr(void) {
+    return (volatile uint64_t *)IDMA_DONE_ADDR;
 }
 
-static inline void sys_dma_blk_memcpy(uint64_t dst, uint64_t src,
-                                      uint64_t size) {
+inline uint64_t sys_dma_memcpy(uint64_t dst, uint64_t src, uint64_t size) {
+    *(sys_dma_src_ptr()) = (uint64_t)src;
+    *(sys_dma_dst_ptr()) = (uint64_t)dst;
+    *(sys_dma_num_bytes_ptr()) = size;
+    *(sys_dma_conf_ptr()) =
+        (IDMA_CONF_DECOUPLE << IDMA_REG64_FRONTEND_CONF_DECOUPLE_BIT) |
+        (IDMA_CONF_DEBURST << IDMA_REG64_FRONTEND_CONF_DEBURST_BIT) |
+        (IDMA_CONF_SERIALIZE << IDMA_REG64_FRONTEND_CONF_SERIALIZE_BIT);
+    return *(sys_dma_nextid_ptr());
+}
+
+inline void sys_dma_blk_memcpy(uint64_t dst, uint64_t src, uint64_t size) {
     volatile uint64_t tf_id = sys_dma_memcpy(dst, src, size);
 
-    while (*dma_done != tf_id) {
+    while (*(sys_dma_done_ptr()) != tf_id) {
         asm volatile("nop");
     }
 }

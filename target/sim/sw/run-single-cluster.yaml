@@ -1,0 +1,12 @@
+# Copyright 2023 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+runs:
+  - elf: host/apps/offload/build/offload-axpy.elf
+    cmd: ../../deps/snitch_cluster/sw/blas/axpy/verify.py {sim_bin} {elf}
+          --symbols-bin ./sw/device/apps/blas/axpy/build/axpy.elf
+  - elf: host/apps/offload/build/offload-gemm.elf
+    cmd: ../../deps/snitch_cluster/sw/blas/gemm/verify.py {sim_bin} {elf}
+          --symbols-bin ./sw/device/apps/blas/gemm/build/gemm.elf
+  - elf: host/apps/hello_world/build/hello_world.elf
