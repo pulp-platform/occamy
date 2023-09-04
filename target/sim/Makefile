@@ -101,7 +101,6 @@ VLOG_FLAGS += -suppress 2583
 VLOG_FLAGS += -suppress 13314
 VLOG_FLAGS += ${QUESTA_64BIT}
 VLOG_FLAGS += -timescale 1ns/1ps
-VLOG_FLAGS += +define+WT_DCACHE
 
 # Verilated and compiled Occamy system
 VLT_AR     = ${VLT_BUILDDIR}/Vtestharness__ALL.a
