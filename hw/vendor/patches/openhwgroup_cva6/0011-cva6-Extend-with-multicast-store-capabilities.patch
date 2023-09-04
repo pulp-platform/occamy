@@ -1,0 +1,472 @@
+From 7ad36c81976fd85d29ce37ebe0e96bdfec99a9ee Mon Sep 17 00:00:00 2001
+From: Luca Colagrande <luca.colagrande3@gmail.com>
+Date: Mon, 4 Sep 2023 18:55:11 +0200
+Subject: [PATCH] cva6: Extend with multicast store capabilities
+
+---
+ core/cache_subsystem/cache_ctrl.sv   |  3 +++
+ core/cache_subsystem/miss_handler.sv |  8 ++++++++
+ core/csr_regfile.sv                  |  9 +++++++++
+ core/cva6.sv                         |  3 +++
+ core/ex_stage.sv                     |  2 ++
+ core/include/ariane_pkg.sv           |  1 +
+ core/include/riscv_pkg.sv            |  2 ++
+ core/include/std_cache_pkg.sv        |  2 ++
+ core/load_store_unit.sv              |  2 ++
+ core/load_unit.sv                    |  1 +
+ core/mmu_sv32/cva6_ptw_sv32.sv       |  1 +
+ core/mmu_sv39/ptw.sv                 |  1 +
+ core/store_buffer.sv                 | 20 +++++++++++++++++---
+ core/store_unit.sv                   |  2 ++
+ corev_apu/tb/axi_adapter.sv          | 11 +++++++----
+ 15 files changed, 61 insertions(+), 7 deletions(-)
+
+diff --git a/core/cache_subsystem/cache_ctrl.sv b/core/cache_subsystem/cache_ctrl.sv
+index c45bd19..158bb09 100644
+--- a/core/cache_subsystem/cache_ctrl.sv
++++ b/core/cache_subsystem/cache_ctrl.sv
+@@ -79,6 +79,7 @@ module cache_ctrl import ariane_pkg::*; import std_cache_pkg::*; #(
+         logic [63:0]            wdata;
+         logic                   bypass;
+         logic                   killed;
++        logic [riscv::PLEN-1:0] mcast_mask;
+     } mem_req_t;
+ 
+     logic [DCACHE_SET_ASSOC-1:0] hit_way_d, hit_way_q;
+@@ -142,6 +143,7 @@ module cache_ctrl import ariane_pkg::*; import std_cache_pkg::*; #(
+                     mem_req_d.we    = req_port_i.data_we;
+                     mem_req_d.wdata = req_port_i.data_wdata;
+                     mem_req_d.killed = req_port_i.kill_req;
++                    mem_req_d.mcast_mask = req_port_i.mcast_mask;
+ 
+                     // Bypass mode, check for uncacheable address here as well
+                     if (bypass_i) begin
+@@ -350,6 +352,7 @@ module cache_ctrl import ariane_pkg::*; import std_cache_pkg::*; #(
+                 miss_req_o.size = mem_req_q.size;
+                 miss_req_o.we = mem_req_q.we;
+                 miss_req_o.wdata = mem_req_q.wdata;
++                miss_req_o.mcast_mask = mem_req_q.mcast_mask;
+ 
+                 // got a grant so go to valid
+                 if (bypass_gnt_i) begin
+diff --git a/core/cache_subsystem/miss_handler.sv b/core/cache_subsystem/miss_handler.sv
+index 2acce58..a31263b 100644
+--- a/core/cache_subsystem/miss_handler.sv
++++ b/core/cache_subsystem/miss_handler.sv
+@@ -106,6 +106,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
+     logic [NR_PORTS-1:0]                    miss_req_we;
+     logic [NR_PORTS-1:0][7:0]               miss_req_be;
+     logic [NR_PORTS-1:0][1:0]               miss_req_size;
++    logic [NR_PORTS-1:0][riscv::PLEN-1:0]   miss_req_mcast_mask;
+ 
+     // Bypass AMO port
+     bypass_req_t amo_bypass_req;
+@@ -191,6 +192,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
+         amo_bypass_req.be      = '0;
+         amo_bypass_req.size    = 2'b11;
+         amo_bypass_req.id      = 4'b1011;
++        amo_bypass_req.mcast_mask = '0;
+         // core
+         flush_ack_o         = 1'b0;
+         miss_o              = 1'b0; // to performance counter
+@@ -545,6 +547,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
+             bypass_ports_req[id].we      = miss_req_we[id];
+             bypass_ports_req[id].be      = miss_req_be[id];
+             bypass_ports_req[id].size    = miss_req_size[id];
++            bypass_ports_req[id].mcast_mask = miss_req_mcast_mask[id];
+ 
+             bypass_gnt_o[id]   = bypass_ports_rsp[id].gnt;
+             bypass_valid_o[id] = bypass_ports_rsp[id].valid;
+@@ -553,6 +556,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
+ 
+         // AMO port has lowest priority
+         bypass_ports_req[id] = amo_bypass_req;
++
+         amo_bypass_rsp       = bypass_ports_rsp[id];
+     end
+ 
+@@ -580,7 +584,9 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
+     // ----------------------
+     // Cast bypass_adapter_req.addr to axi_adapter port size
+     logic [riscv::XLEN-1:0] bypass_addr;
++    logic [riscv::XLEN-1:0] bypass_mcast_mask;
+     assign bypass_addr = bypass_adapter_req.addr;
++    assign bypass_mcast_mask = bypass_adapter_req.mcast_mask;
+ 
+     axi_adapter #(
+         .DATA_WIDTH            ( 64                 ),
+@@ -602,6 +608,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
+         .id_i                 (({{AXI_ID_WIDTH-4{1'b0}}, bypass_adapter_req.id})),
+         .user_i               (hart_id_i[AXI_USER_WIDTH-1:0] + 1'b1),
+         .addr_i               (bypass_addr),
++        .mcast_mask_i         (bypass_mcast_mask),
+         .wdata_i              (bypass_adapter_req.wdata),
+         .we_i                 (bypass_adapter_req.we),
+         .be_i                 (bypass_adapter_req.be),
+@@ -682,6 +689,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
+             miss_req_we     [i]  = miss_req.we;
+             miss_req_be     [i]  = miss_req.be;
+             miss_req_size   [i]  = miss_req.size;
++            miss_req_mcast_mask[i] = miss_req.mcast_mask;
+         end
+     end
+ endmodule
+diff --git a/core/csr_regfile.sv b/core/csr_regfile.sv
+index 5ebb537..de3de5e 100644
+--- a/core/csr_regfile.sv
++++ b/core/csr_regfile.sv
+@@ -82,6 +82,8 @@ module csr_regfile import ariane_pkg::*; #(
+     output logic [31:0]           fence_t_pad_o,              // Padding time of fence.t relative to time interrupt
+     output logic                  fence_t_src_sel_o,          // Pad relative to selected source
+     input  logic [31:0]           fence_t_ceil_i,
++    // Multicast
++    output logic[riscv::XLEN-1:0] mcast_mask_o,               // Multicast store mask
+     // Performance Counter
+     output logic  [4:0]           perf_addr_o,                // read/write address to performance counter module (up to 29 aux counters possible in riscv encoding.h)
+     output logic[riscv::XLEN-1:0] perf_data_o,                // write data to performance counter module
+@@ -142,6 +144,7 @@ module csr_regfile import ariane_pkg::*; #(
+     riscv::xlen_t icache_q,    icache_d;
+     riscv::xlen_t fence_t_pad_q, fence_t_pad_d;
+     riscv::xlen_t fence_t_ceil_q, fence_t_ceil_d;
++    riscv::xlen_t mcast_mask_q, mcast_mask_d;
+ 
+     logic        wfi_d,       wfi_q;
+ 
+@@ -295,6 +298,7 @@ module csr_regfile import ariane_pkg::*; #(
+                 riscv::CSR_ICACHE:           csr_rdata = icache_q;
+                 riscv::CSR_FENCE_T_PAD:      csr_rdata = fence_t_pad_q;
+                 riscv::CSR_FENCE_T_CEIL:     csr_rdata = fence_t_ceil_q;
++                riscv::CSR_MCAST_MASK:       csr_rdata = mcast_mask_q;
+                 // PMPs
+                 riscv::CSR_PMPCFG0:          csr_rdata = pmpcfg_q[riscv::XLEN/8-1:0];
+                 riscv::CSR_PMPCFG1:          if (riscv::XLEN == 32) csr_rdata = pmpcfg_q[7:4]; else read_access_exception = 1'b1;
+@@ -404,6 +408,7 @@ module csr_regfile import ariane_pkg::*; #(
+         icache_d                = icache_q;
+         fence_t_pad_d           = fence_t_pad_q;
+         fence_t_ceil_d          = {fence_t_ceil_q[63:32], (fence_t_ceil_i > fence_t_ceil_q[31:0]) ? fence_t_ceil_i : fence_t_ceil_q[31:0]};
++        mcast_mask_d            = mcast_mask_q;
+ 
+         sepc_d                  = sepc_q;
+         scause_d                = scause_q;
+@@ -623,6 +628,7 @@ module csr_regfile import ariane_pkg::*; #(
+                 riscv::CSR_ICACHE:             icache_d    = {{riscv::XLEN-1{1'b0}}, csr_wdata[0]}; // enable bit
+                 riscv::CSR_FENCE_T_PAD:        fence_t_pad_d = {{riscv::XLEN-32{1'b0}}, csr_wdata[31:0]};
+                 riscv::CSR_FENCE_T_CEIL:       fence_t_ceil_d = {{riscv::XLEN-31{1'b0}}, csr_wdata[32:0]};
++                riscv::CSR_MCAST_MASK:         mcast_mask_d = csr_wdata;
+                 // PMP locked logic
+                 // 1. refuse to update any locked entry
+                 // 2. also refuse to update the entry below a locked TOR entry
+@@ -1100,6 +1106,7 @@ module csr_regfile import ariane_pkg::*; #(
+     assign dcache_en_o      = dcache_q[0];
+     assign fence_t_pad_o    = fence_t_pad_q;
+     assign fence_t_src_sel_o= fence_t_ceil_q[32];
++    assign mcast_mask_o     = mcast_mask_q;
+ 
+     // determine if mprv needs to be considered if in debug mode
+     assign mprv             = (debug_mode_q && !dcsr_q.mprven) ? 1'b0 : mstatus_q.mprv;
+@@ -1142,6 +1149,7 @@ module csr_regfile import ariane_pkg::*; #(
+             icache_q               <= {{riscv::XLEN-1{1'b0}}, 1'b1};
+             fence_t_pad_q          <= {riscv::XLEN{1'b0}};
+             fence_t_ceil_q         <= {riscv::XLEN{1'b0}};
++            mcast_mask_q           <= {riscv::XLEN{1'b0}};
+             // supervisor mode registers
+             sepc_q                 <= {riscv::XLEN{1'b0}};
+             scause_q               <= {riscv::XLEN{1'b0}};
+@@ -1187,6 +1195,7 @@ module csr_regfile import ariane_pkg::*; #(
+             icache_q               <= icache_d;
+             fence_t_pad_q          <= fence_t_pad_d;
+             fence_t_ceil_q         <= fence_t_ceil_d;
++            mcast_mask_q           <= mcast_mask_d;
+             // supervisor mode registers
+             sepc_q                 <= sepc_d;
+             scause_q               <= scause_d;
+diff --git a/core/cva6.sv b/core/cva6.sv
+index 50f5589..ce470be 100644
+--- a/core/cva6.sv
++++ b/core/cva6.sv
+@@ -217,6 +217,7 @@ module cva6 import ariane_pkg::*; #(
+   logic [31:0]              fence_t_pad_csr_ctrl;
+   logic                     fence_t_src_sel_csr_ctrl;
+   logic [31:0]              fence_t_ceil_csr_ctrl;
++  riscv::xlen_t             mcast_mask;
+   logic                     debug_mode;
+   logic                     single_step_csr_commit;
+   riscv::pmpcfg_t [15:0]    pmpcfg;
+@@ -470,6 +471,7 @@ module cva6 import ariane_pkg::*; #(
+     // MULT
+     .mult_valid_i           ( mult_valid_id_ex            ),
+     // LSU
++    .mcast_mask_i           ( mcast_mask                  ),
+     .lsu_ready_o            ( lsu_ready_ex_id             ),
+     .lsu_valid_i            ( lsu_valid_id_ex             ),
+ 
+@@ -639,6 +641,7 @@ module cva6 import ariane_pkg::*; #(
+     .fence_t_pad_o          ( fence_t_pad_csr_ctrl          ),
+     .fence_t_src_sel_o      ( fence_t_src_sel_csr_ctrl      ),
+     .fence_t_ceil_i         ( fence_t_ceil_csr_ctrl         ),
++    .mcast_mask_o           ( mcast_mask                    ),
+     .perf_addr_o            ( addr_csr_perf                 ),
+     .perf_data_o            ( data_csr_perf                 ),
+     .perf_data_i            ( data_perf_csr                 ),
+diff --git a/core/ex_stage.sv b/core/ex_stage.sv
+index 2020471..473085d 100644
+--- a/core/ex_stage.sv
++++ b/core/ex_stage.sv
+@@ -50,6 +50,7 @@ module ex_stage import ariane_pkg::*; #(
+     // MULT
+     input  logic                                   mult_valid_i,      // Output is valid
+     // LSU
++    input  riscv::xlen_t                           mcast_mask_i,
+     output logic                                   lsu_ready_o,        // FU is ready
+     input  logic                                   lsu_valid_i,        // Input is valid
+ 
+@@ -298,6 +299,7 @@ module ex_stage import ariane_pkg::*; #(
+         .flush_i,
+         .no_st_pending_o,
+         .fu_data_i             ( lsu_data ),
++        .mcast_mask_i,
+         .lsu_ready_o,
+         .lsu_valid_i,
+         .load_trans_id_o,
+diff --git a/core/include/ariane_pkg.sv b/core/include/ariane_pkg.sv
+index d3f4463..df5faf4 100644
+--- a/core/include/ariane_pkg.sv
++++ b/core/include/ariane_pkg.sv
+@@ -812,6 +812,7 @@ package ariane_pkg;
+         logic [DCACHE_TID_WIDTH-1:0]   data_id;
+         logic                          kill_req;
+         logic                          tag_valid;
++        logic [riscv::PLEN-1:0]        mcast_mask;
+     } dcache_req_i_t;
+ 
+     typedef struct packed {
+diff --git a/core/include/riscv_pkg.sv b/core/include/riscv_pkg.sv
+index 6fe37fe..f8f9f43 100644
+--- a/core/include/riscv_pkg.sv
++++ b/core/include/riscv_pkg.sv
+@@ -447,6 +447,8 @@ package riscv;
+         CSR_DPC            = 12'h7b1,
+         CSR_DSCRATCH0      = 12'h7b2, // optional
+         CSR_DSCRATCH1      = 12'h7b3, // optional
++        // Custom (Machine Mode - R/W)
++        CSR_MCAST_MASK     = 12'h7C0,
+         // Counters and Timers (User Mode - R/O Shadows)
+         CSR_CYCLE          = 12'hC00,
+         CSR_CYCLEH         = 12'hC80,
+diff --git a/core/include/std_cache_pkg.sv b/core/include/std_cache_pkg.sv
+index 3da4ba8..b04b414 100644
+--- a/core/include/std_cache_pkg.sv
++++ b/core/include/std_cache_pkg.sv
+@@ -40,6 +40,7 @@ package std_cache_pkg;
+         logic         we;
+         logic [63:0]  wdata;
+         logic         bypass;
++        logic [riscv::PLEN-1:0] mcast_mask;
+     } miss_req_t;
+ 
+     typedef struct packed {
+@@ -52,6 +53,7 @@ package std_cache_pkg;
+         logic                we;
+         logic [7:0]          be;
+         logic [1:0]          size;
++        logic [riscv::PLEN-1:0] mcast_mask;
+     } bypass_req_t;
+ 
+     typedef struct packed {
+diff --git a/core/load_store_unit.sv b/core/load_store_unit.sv
+index 51872b5..6c22285 100644
+--- a/core/load_store_unit.sv
++++ b/core/load_store_unit.sv
+@@ -24,6 +24,7 @@ module load_store_unit import ariane_pkg::*; #(
+     input  logic                     amo_valid_commit_i,
+ 
+     input  fu_data_t                 fu_data_i,
++    input  riscv::xlen_t             mcast_mask_i,
+     output logic                     lsu_ready_o,              // FU is ready e.g. not busy
+     input  logic                     lsu_valid_i,              // Input is valid
+ 
+@@ -239,6 +240,7 @@ module load_store_unit import ariane_pkg::*; #(
+         .flush_i,
+         .no_st_pending_o,
+         .store_buffer_empty_o  ( store_buffer_empty   ),
++        .mcast_mask_i          ( mcast_mask_i         ),
+ 
+         .valid_i               ( st_valid_i           ),
+         .lsu_ctrl_i            ( lsu_ctrl             ),
+diff --git a/core/load_unit.sv b/core/load_unit.sv
+index d8e9eea..a88c1e2 100644
+--- a/core/load_unit.sv
++++ b/core/load_unit.sv
+@@ -98,6 +98,7 @@ module load_unit import ariane_pkg::*; #(
+         load_data_d          = load_data_q;
+         translation_req_o    = 1'b0;
+         req_port_o.data_req  = 1'b0;
++        req_port_o.mcast_mask = '0;
+         // tag control
+         req_port_o.kill_req  = 1'b0;
+         req_port_o.tag_valid = 1'b0;
+diff --git a/core/mmu_sv32/cva6_ptw_sv32.sv b/core/mmu_sv32/cva6_ptw_sv32.sv
+index 0c2fd77..06dcc50 100644
+--- a/core/mmu_sv32/cva6_ptw_sv32.sv
++++ b/core/mmu_sv32/cva6_ptw_sv32.sv
+@@ -191,6 +191,7 @@ module cva6_ptw_sv32 import ariane_pkg::*; #(
+         req_port_o.data_req       = 1'b0;
+         req_port_o.data_size      = 2'b10;
+         req_port_o.data_we        = 1'b0;
++        req_port_o.mcast_mask     = '0;
+         ptw_error_o               = 1'b0;
+         ptw_access_exception_o    = 1'b0;
+         shared_tlb_update_o.valid = 1'b0;
+diff --git a/core/mmu_sv39/ptw.sv b/core/mmu_sv39/ptw.sv
+index 45331d2..7b3686c 100644
+--- a/core/mmu_sv39/ptw.sv
++++ b/core/mmu_sv39/ptw.sv
+@@ -184,6 +184,7 @@ module ptw import ariane_pkg::*; #(
+         req_port_o.data_be     = 8'hFF;
+         req_port_o.data_size   = 2'b11;
+         req_port_o.data_we     = 1'b0;
++        req_port_o.mcast_mask  = '0;
+         ptw_error_o            = 1'b0;
+         ptw_access_exception_o = 1'b0;
+         itlb_update_o.valid    = 1'b0;
+diff --git a/core/store_buffer.sv b/core/store_buffer.sv
+index 17e088a..b92f8da 100644
+--- a/core/store_buffer.sv
++++ b/core/store_buffer.sv
+@@ -21,6 +21,7 @@ module store_buffer import ariane_pkg::*; (
+                                           // otherwise we will run in a deadlock with the memory arbiter
+     output logic         no_st_pending_o, // non-speculative queue is empty (e.g.: everything is committed to the memory hierarchy)
+     output logic         store_buffer_empty_o, // there is no store pending in neither the speculative unit or the non-speculative queue
++    input  riscv::xlen_t mcast_mask_i,    // Multicast mask
+ 
+     input  logic [11:0]  page_offset_i,         // check for the page offset (the last 12 bit if the current load matches them)
+     output logic         page_offset_matches_o, // the above input page offset matches -> let the store buffer drain
+@@ -53,8 +54,15 @@ module store_buffer import ariane_pkg::*; (
+         logic [(riscv::XLEN/8)-1:0]  be;
+         logic [1:0]                  data_size;
+         logic                        valid;     // this entry is valid, we need this for checking if the address offset matches
+-    } speculative_queue_n [DEPTH_SPEC-1:0], speculative_queue_q [DEPTH_SPEC-1:0],
+-      commit_queue_n [DEPTH_COMMIT-1:0],    commit_queue_q [DEPTH_COMMIT-1:0];
++    } speculative_queue_n [DEPTH_SPEC-1:0], speculative_queue_q [DEPTH_SPEC-1:0];
++    struct packed {
++        logic [riscv::PLEN-1:0]      address;
++        riscv::xlen_t                data;
++        logic [(riscv::XLEN/8)-1:0]  be;
++        logic [1:0]                  data_size;
++        logic                        valid;     // this entry is valid, we need this for checking if the address offset matches
++        logic [riscv::PLEN-1:0]      mcast_mask;
++    } commit_queue_n [DEPTH_COMMIT-1:0], commit_queue_q [DEPTH_COMMIT-1:0];
+ 
+     // keep a status count for both buffers
+     logic [$clog2(DEPTH_SPEC):0] speculative_status_cnt_n, speculative_status_cnt_q;
+@@ -139,6 +147,7 @@ module store_buffer import ariane_pkg::*; (
+     assign req_port_o.data_wdata    = commit_queue_q[commit_read_pointer_q].data;
+     assign req_port_o.data_be       = commit_queue_q[commit_read_pointer_q].be;
+     assign req_port_o.data_size     = commit_queue_q[commit_read_pointer_q].data_size;
++    assign req_port_o.mcast_mask    = commit_queue_q[commit_read_pointer_q].mcast_mask;
+ 
+     assign mem_paddr_o              = commit_queue_n[commit_read_pointer_n].address;
+ 
+@@ -174,7 +183,12 @@ module store_buffer import ariane_pkg::*; (
+ 
+         // shift the store request from the speculative buffer to the non-speculative
+         if (commit_i) begin
+-            commit_queue_n[commit_write_pointer_q] = speculative_queue_q[speculative_read_pointer_q];
++            commit_queue_n[commit_write_pointer_q].address    = speculative_queue_q[speculative_read_pointer_q].address;
++            commit_queue_n[commit_write_pointer_q].data       = speculative_queue_q[speculative_read_pointer_q].data;
++            commit_queue_n[commit_write_pointer_q].be         = speculative_queue_q[speculative_read_pointer_q].be;
++            commit_queue_n[commit_write_pointer_q].data_size  = speculative_queue_q[speculative_read_pointer_q].data_size;
++            commit_queue_n[commit_write_pointer_q].valid      = speculative_queue_q[speculative_read_pointer_q].valid;
++            commit_queue_n[commit_write_pointer_q].mcast_mask = mcast_mask_i[riscv::PLEN-1:0];
+             commit_write_pointer_n = commit_write_pointer_n + 1'b1;
+             commit_status_cnt++;
+         end
+diff --git a/core/store_unit.sv b/core/store_unit.sv
+index e6b5204..b929601 100644
+--- a/core/store_unit.sv
++++ b/core/store_unit.sv
+@@ -19,6 +19,7 @@ module store_unit import ariane_pkg::*; (
+     input  logic                     flush_i,
+     output logic                     no_st_pending_o,
+     output logic                     store_buffer_empty_o,
++    input  riscv::xlen_t             mcast_mask_i,
+     // store unit input port
+     input  logic                     valid_i,
+     input  lsu_ctrl_t                lsu_ctrl_i,
+@@ -219,6 +220,7 @@ module store_unit import ariane_pkg::*; (
+         .flush_i,
+         .no_st_pending_o,
+         .store_buffer_empty_o,
++        .mcast_mask_i,
+         .page_offset_i,
+         .page_offset_matches_o,
+         .commit_i,
+diff --git a/corev_apu/tb/axi_adapter.sv b/corev_apu/tb/axi_adapter.sv
+index 89e665b..fb3f55b 100644
+--- a/corev_apu/tb/axi_adapter.sv
++++ b/corev_apu/tb/axi_adapter.sv
+@@ -37,6 +37,7 @@ module axi_adapter #(
+   input  ariane_pkg::amo_t                 amo_i,
+   output logic                             gnt_o,
+   input  logic [riscv::XLEN-1:0]           addr_i,
++  input  logic [riscv::XLEN-1:0]           mcast_mask_i,
+   input  logic                             we_i,
+   input  logic [(DATA_WIDTH/AXI_DATA_WIDTH)-1:0][AXI_DATA_WIDTH-1:0]      wdata_i,
+   input  logic [(DATA_WIDTH/AXI_DATA_WIDTH)-1:0][(AXI_DATA_WIDTH/8)-1:0]  be_i,
+@@ -99,7 +100,7 @@ module axi_adapter #(
+     axi_req_o.aw.qos    = 4'b0;
+     axi_req_o.aw.id     = id_i;
+     axi_req_o.aw.atop   = atop_from_amo(amo_i);
+-    axi_req_o.aw.user   = user_i;
++    axi_req_o.aw.user   = (mcast_mask_i << AXI_USER_WIDTH) | user_i;
+ 
+     axi_req_o.ar_valid  = 1'b0;
+     // Cast to AXI address width
+@@ -207,19 +208,19 @@ module axi_adapter #(
+                   default:;
+                 endcase
+               end
+-
+             end
+           // read
+           end else begin
+             // only multiple outstanding write transactions are allowed
+             if (!any_outstanding_aw) begin
++
+               axi_req_o.ar_valid = 1'b1;
+               // load-reserved requires exclusive access
+               axi_req_o.ar.lock = amo_i == ariane_pkg::AMO_LR;
+ 
+               gnt_o = axi_resp_i.ar_ready;
+               if (type_i != ariane_axi::SINGLE_REQ) begin
+-                assert (amo_i == ariane_pkg::AMO_NONE) 
++                assert (amo_i == ariane_pkg::AMO_NONE)
+                   else $fatal("Bursts of atomic operations are not supported");
+ 
+                 axi_req_o.ar.len = BURST_SIZE;
+@@ -230,6 +231,7 @@ module axi_adapter #(
+                 state_d = (type_i == ariane_axi::SINGLE_REQ) ? WAIT_R_VALID : WAIT_R_VALID_MULTIPLE;
+                 addr_offset_d = addr_i[ADDR_INDEX-1+3:3];
+               end
++
+             end
+           end
+         end
+@@ -242,6 +244,7 @@ module axi_adapter #(
+         if (axi_resp_i.aw_ready) begin
+           gnt_o   = 1'b1;
+           state_d = WAIT_B_VALID;
++          id_d    = id_i;
+           amo_d   = amo_i;
+           size_d  = size_i;
+         end
+@@ -496,4 +499,4 @@ module axi_adapter #(
+     return is_load || is_swap_or_cmp;
+   endfunction
+ 
+-endmodule
++endmodule
+\ No newline at end of file
+-- 
+2.28.0
+

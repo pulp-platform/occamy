@@ -79,6 +79,7 @@ module cache_ctrl import ariane_pkg::*; import std_cache_pkg::*; #(
         logic [63:0]            wdata;
         logic                   bypass;
         logic                   killed;
+        logic [riscv::PLEN-1:0] mcast_mask;
     } mem_req_t;
 
     logic [DCACHE_SET_ASSOC-1:0] hit_way_d, hit_way_q;
@@ -142,6 +143,7 @@ module cache_ctrl import ariane_pkg::*; import std_cache_pkg::*; #(
                     mem_req_d.we    = req_port_i.data_we;
                     mem_req_d.wdata = req_port_i.data_wdata;
                     mem_req_d.killed = req_port_i.kill_req;
+                    mem_req_d.mcast_mask = req_port_i.mcast_mask;
 
                     // Bypass mode, check for uncacheable address here as well
                     if (bypass_i) begin
@@ -350,6 +352,7 @@ module cache_ctrl import ariane_pkg::*; import std_cache_pkg::*; #(
                 miss_req_o.size = mem_req_q.size;
                 miss_req_o.we = mem_req_q.we;
                 miss_req_o.wdata = mem_req_q.wdata;
+                miss_req_o.mcast_mask = mem_req_q.mcast_mask;
 
                 // got a grant so go to valid
                 if (bypass_gnt_i) begin

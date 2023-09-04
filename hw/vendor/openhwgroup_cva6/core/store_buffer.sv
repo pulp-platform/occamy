@@ -21,6 +21,7 @@ module store_buffer import ariane_pkg::*; (
                                           // otherwise we will run in a deadlock with the memory arbiter
     output logic         no_st_pending_o, // non-speculative queue is empty (e.g.: everything is committed to the memory hierarchy)
     output logic         store_buffer_empty_o, // there is no store pending in neither the speculative unit or the non-speculative queue
+    input  riscv::xlen_t mcast_mask_i,    // Multicast mask
 
     input  logic [11:0]  page_offset_i,         // check for the page offset (the last 12 bit if the current load matches them)
     output logic         page_offset_matches_o, // the above input page offset matches -> let the store buffer drain
@@ -53,8 +54,15 @@ module store_buffer import ariane_pkg::*; (
         logic [(riscv::XLEN/8)-1:0]  be;
         logic [1:0]                  data_size;
         logic                        valid;     // this entry is valid, we need this for checking if the address offset matches
-    } speculative_queue_n [DEPTH_SPEC-1:0], speculative_queue_q [DEPTH_SPEC-1:0],
-      commit_queue_n [DEPTH_COMMIT-1:0],    commit_queue_q [DEPTH_COMMIT-1:0];
+    } speculative_queue_n [DEPTH_SPEC-1:0], speculative_queue_q [DEPTH_SPEC-1:0];
+    struct packed {
+        logic [riscv::PLEN-1:0]      address;
+        riscv::xlen_t                data;
+        logic [(riscv::XLEN/8)-1:0]  be;
+        logic [1:0]                  data_size;
+        logic                        valid;     // this entry is valid, we need this for checking if the address offset matches
+        logic [riscv::PLEN-1:0]      mcast_mask;
+    } commit_queue_n [DEPTH_COMMIT-1:0], commit_queue_q [DEPTH_COMMIT-1:0];
 
     // keep a status count for both buffers
     logic [$clog2(DEPTH_SPEC):0] speculative_status_cnt_n, speculative_status_cnt_q;
@@ -139,6 +147,7 @@ module store_buffer import ariane_pkg::*; (
     assign req_port_o.data_wdata    = commit_queue_q[commit_read_pointer_q].data;
     assign req_port_o.data_be       = commit_queue_q[commit_read_pointer_q].be;
     assign req_port_o.data_size     = commit_queue_q[commit_read_pointer_q].data_size;
+    assign req_port_o.mcast_mask    = commit_queue_q[commit_read_pointer_q].mcast_mask;
 
     assign mem_paddr_o              = commit_queue_n[commit_read_pointer_n].address;
 
@@ -174,7 +183,12 @@ module store_buffer import ariane_pkg::*; (
 
         // shift the store request from the speculative buffer to the non-speculative
         if (commit_i) begin
-            commit_queue_n[commit_write_pointer_q] = speculative_queue_q[speculative_read_pointer_q];
+            commit_queue_n[commit_write_pointer_q].address    = speculative_queue_q[speculative_read_pointer_q].address;
+            commit_queue_n[commit_write_pointer_q].data       = speculative_queue_q[speculative_read_pointer_q].data;
+            commit_queue_n[commit_write_pointer_q].be         = speculative_queue_q[speculative_read_pointer_q].be;
+            commit_queue_n[commit_write_pointer_q].data_size  = speculative_queue_q[speculative_read_pointer_q].data_size;
+            commit_queue_n[commit_write_pointer_q].valid      = speculative_queue_q[speculative_read_pointer_q].valid;
+            commit_queue_n[commit_write_pointer_q].mcast_mask = mcast_mask_i[riscv::PLEN-1:0];
             commit_write_pointer_n = commit_write_pointer_n + 1'b1;
             commit_status_cnt++;
         end

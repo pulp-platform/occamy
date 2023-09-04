@@ -812,6 +812,7 @@ package ariane_pkg;
         logic [DCACHE_TID_WIDTH-1:0]   data_id;
         logic                          kill_req;
         logic                          tag_valid;
+        logic [riscv::PLEN-1:0]        mcast_mask;
     } dcache_req_i_t;
 
     typedef struct packed {

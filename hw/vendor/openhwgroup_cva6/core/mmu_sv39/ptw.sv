@@ -184,6 +184,7 @@ module ptw import ariane_pkg::*; #(
         req_port_o.data_be     = 8'hFF;
         req_port_o.data_size   = 2'b11;
         req_port_o.data_we     = 1'b0;
+        req_port_o.mcast_mask  = '0;
         ptw_error_o            = 1'b0;
         ptw_access_exception_o = 1'b0;
         itlb_update_o.valid    = 1'b0;

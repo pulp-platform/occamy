@@ -24,6 +24,7 @@ module load_store_unit import ariane_pkg::*; #(
     input  logic                     amo_valid_commit_i,
 
     input  fu_data_t                 fu_data_i,
+    input  riscv::xlen_t             mcast_mask_i,
     output logic                     lsu_ready_o,              // FU is ready e.g. not busy
     input  logic                     lsu_valid_i,              // Input is valid
 
@@ -239,6 +240,7 @@ module load_store_unit import ariane_pkg::*; #(
         .flush_i,
         .no_st_pending_o,
         .store_buffer_empty_o  ( store_buffer_empty   ),
+        .mcast_mask_i          ( mcast_mask_i         ),
 
         .valid_i               ( st_valid_i           ),
         .lsu_ctrl_i            ( lsu_ctrl             ),

@@ -50,6 +50,7 @@ module ex_stage import ariane_pkg::*; #(
     // MULT
     input  logic                                   mult_valid_i,      // Output is valid
     // LSU
+    input  riscv::xlen_t                           mcast_mask_i,
     output logic                                   lsu_ready_o,        // FU is ready
     input  logic                                   lsu_valid_i,        // Input is valid
 
@@ -298,6 +299,7 @@ module ex_stage import ariane_pkg::*; #(
         .flush_i,
         .no_st_pending_o,
         .fu_data_i             ( lsu_data ),
+        .mcast_mask_i,
         .lsu_ready_o,
         .lsu_valid_i,
         .load_trans_id_o,

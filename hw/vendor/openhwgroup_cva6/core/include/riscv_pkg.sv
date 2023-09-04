@@ -447,6 +447,8 @@ package riscv;
         CSR_DPC            = 12'h7b1,
         CSR_DSCRATCH0      = 12'h7b2, // optional
         CSR_DSCRATCH1      = 12'h7b3, // optional
+        // Custom (Machine Mode - R/W)
+        CSR_MCAST_MASK     = 12'h7C0,
         // Counters and Timers (User Mode - R/O Shadows)
         CSR_CYCLE          = 12'hC00,
         CSR_CYCLEH         = 12'hC80,

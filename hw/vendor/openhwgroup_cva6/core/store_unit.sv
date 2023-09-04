@@ -19,6 +19,7 @@ module store_unit import ariane_pkg::*; (
     input  logic                     flush_i,
     output logic                     no_st_pending_o,
     output logic                     store_buffer_empty_o,
+    input  riscv::xlen_t             mcast_mask_i,
     // store unit input port
     input  logic                     valid_i,
     input  lsu_ctrl_t                lsu_ctrl_i,
@@ -219,6 +220,7 @@ module store_unit import ariane_pkg::*; (
         .flush_i,
         .no_st_pending_o,
         .store_buffer_empty_o,
+        .mcast_mask_i,
         .page_offset_i,
         .page_offset_matches_o,
         .commit_i,
