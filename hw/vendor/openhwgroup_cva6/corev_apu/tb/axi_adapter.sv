@@ -37,6 +37,7 @@ module axi_adapter #(
   input  ariane_pkg::amo_t                 amo_i,
   output logic                             gnt_o,
   input  logic [riscv::XLEN-1:0]           addr_i,
+  input  logic [riscv::XLEN-1:0]           mcast_mask_i,
   input  logic                             we_i,
   input  logic [(DATA_WIDTH/AXI_DATA_WIDTH)-1:0][AXI_DATA_WIDTH-1:0]      wdata_i,
   input  logic [(DATA_WIDTH/AXI_DATA_WIDTH)-1:0][(AXI_DATA_WIDTH/8)-1:0]  be_i,
@@ -99,7 +100,7 @@ module axi_adapter #(
     axi_req_o.aw.qos    = 4'b0;
     axi_req_o.aw.id     = id_i;
     axi_req_o.aw.atop   = atop_from_amo(amo_i);
-    axi_req_o.aw.user   = user_i;
+    axi_req_o.aw.user   = (mcast_mask_i << AXI_USER_WIDTH) | user_i;
 
     axi_req_o.ar_valid  = 1'b0;
     // Cast to AXI address width
@@ -207,19 +208,19 @@ module axi_adapter #(
                   default:;
                 endcase
               end
-
             end
           // read
           end else begin
             // only multiple outstanding write transactions are allowed
             if (!any_outstanding_aw) begin
+
               axi_req_o.ar_valid = 1'b1;
               // load-reserved requires exclusive access
               axi_req_o.ar.lock = amo_i == ariane_pkg::AMO_LR;
 
               gnt_o = axi_resp_i.ar_ready;
               if (type_i != ariane_axi::SINGLE_REQ) begin
-                assert (amo_i == ariane_pkg::AMO_NONE) 
+                assert (amo_i == ariane_pkg::AMO_NONE)
                   else $fatal("Bursts of atomic operations are not supported");
 
                 axi_req_o.ar.len = BURST_SIZE;
@@ -230,6 +231,7 @@ module axi_adapter #(
                 state_d = (type_i == ariane_axi::SINGLE_REQ) ? WAIT_R_VALID : WAIT_R_VALID_MULTIPLE;
                 addr_offset_d = addr_i[ADDR_INDEX-1+3:3];
               end
+
             end
           end
         end
@@ -242,6 +244,7 @@ module axi_adapter #(
         if (axi_resp_i.aw_ready) begin
           gnt_o   = 1'b1;
           state_d = WAIT_B_VALID;
+          id_d    = id_i;
           amo_d   = amo_i;
           size_d  = size_i;
         end

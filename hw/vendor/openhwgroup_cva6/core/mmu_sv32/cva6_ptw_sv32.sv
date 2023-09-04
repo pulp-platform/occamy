@@ -191,6 +191,7 @@ module cva6_ptw_sv32 import ariane_pkg::*; #(
         req_port_o.data_req       = 1'b0;
         req_port_o.data_size      = 2'b10;
         req_port_o.data_we        = 1'b0;
+        req_port_o.mcast_mask     = '0;
         ptw_error_o               = 1'b0;
         ptw_access_exception_o    = 1'b0;
         shared_tlb_update_o.valid = 1'b0;

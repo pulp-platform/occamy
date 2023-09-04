@@ -40,6 +40,7 @@ package std_cache_pkg;
         logic         we;
         logic [63:0]  wdata;
         logic         bypass;
+        logic [riscv::PLEN-1:0] mcast_mask;
     } miss_req_t;
 
     typedef struct packed {
@@ -52,6 +53,7 @@ package std_cache_pkg;
         logic                we;
         logic [7:0]          be;
         logic [1:0]          size;
+        logic [riscv::PLEN-1:0] mcast_mask;
     } bypass_req_t;
 
     typedef struct packed {

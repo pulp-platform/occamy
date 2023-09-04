@@ -98,6 +98,7 @@ module load_unit import ariane_pkg::*; #(
         load_data_d          = load_data_q;
         translation_req_o    = 1'b0;
         req_port_o.data_req  = 1'b0;
+        req_port_o.mcast_mask = '0;
         // tag control
         req_port_o.kill_req  = 1'b0;
         req_port_o.tag_valid = 1'b0;

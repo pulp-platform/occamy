@@ -106,6 +106,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
     logic [NR_PORTS-1:0]                    miss_req_we;
     logic [NR_PORTS-1:0][7:0]               miss_req_be;
     logic [NR_PORTS-1:0][1:0]               miss_req_size;
+    logic [NR_PORTS-1:0][riscv::PLEN-1:0]   miss_req_mcast_mask;
 
     // Bypass AMO port
     bypass_req_t amo_bypass_req;
@@ -191,6 +192,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
         amo_bypass_req.be      = '0;
         amo_bypass_req.size    = 2'b11;
         amo_bypass_req.id      = 4'b1011;
+        amo_bypass_req.mcast_mask = '0;
         // core
         flush_ack_o         = 1'b0;
         miss_o              = 1'b0; // to performance counter
@@ -545,6 +547,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
             bypass_ports_req[id].we      = miss_req_we[id];
             bypass_ports_req[id].be      = miss_req_be[id];
             bypass_ports_req[id].size    = miss_req_size[id];
+            bypass_ports_req[id].mcast_mask = miss_req_mcast_mask[id];
 
             bypass_gnt_o[id]   = bypass_ports_rsp[id].gnt;
             bypass_valid_o[id] = bypass_ports_rsp[id].valid;
@@ -553,6 +556,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
 
         // AMO port has lowest priority
         bypass_ports_req[id] = amo_bypass_req;
+
         amo_bypass_rsp       = bypass_ports_rsp[id];
     end
 
@@ -580,7 +584,9 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
     // ----------------------
     // Cast bypass_adapter_req.addr to axi_adapter port size
     logic [riscv::XLEN-1:0] bypass_addr;
+    logic [riscv::XLEN-1:0] bypass_mcast_mask;
     assign bypass_addr = bypass_adapter_req.addr;
+    assign bypass_mcast_mask = bypass_adapter_req.mcast_mask;
 
     axi_adapter #(
         .DATA_WIDTH            ( 64                 ),
@@ -602,6 +608,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
         .id_i                 (({{AXI_ID_WIDTH-4{1'b0}}, bypass_adapter_req.id})),
         .user_i               (hart_id_i[AXI_USER_WIDTH-1:0] + 1'b1),
         .addr_i               (bypass_addr),
+        .mcast_mask_i         (bypass_mcast_mask),
         .wdata_i              (bypass_adapter_req.wdata),
         .we_i                 (bypass_adapter_req.we),
         .be_i                 (bypass_adapter_req.be),
@@ -682,6 +689,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
             miss_req_we     [i]  = miss_req.we;
             miss_req_be     [i]  = miss_req.be;
             miss_req_size   [i]  = miss_req.size;
+            miss_req_mcast_mask[i] = miss_req.mcast_mask;
         end
     end
 endmodule
