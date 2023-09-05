@@ -1,5 +1,6 @@
 /bin/
 /logs/
+/addrmap/
 /work/
 /work-vsim/
 /*.log
