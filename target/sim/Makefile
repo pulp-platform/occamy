@@ -34,7 +34,7 @@ include $(SNITCH_ROOT)/target/common/common.mk
 
 REGGEN     ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
 OCCAMYGEN  ?= $(ROOT)/util/occamygen/occamygen.py
-ADDRMAPGEN ?= $(ROOT)/util/addrmapgen.py
+ADDRMAPGEN ?= $(ROOT)/util/addrmap/addrmapgen.py
 
 CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 
@@ -46,7 +46,9 @@ VLOG = vlog
 #########################
 
 PLATFORM_HEADERS_DIR ?= sw/shared/platform/generated
-ADDRMAP_DIR          ?= addrmap
+TARGET_ADDRMAP_DIR   ?= $(abspath addrmap)
+SOURCE_ADDRMAP_DIR   ?= $(ROOT)/util/addrmap
+DOCS_DIR             ?= $(ROOT)/docs
 TARGET_SRC_DIR       ?= src
 TARGET_PLIC_DIR      ?= src/rv_plic
 TARGET_CLINT_DIR     ?= src/clint
@@ -365,12 +367,20 @@ $(QUADCTRL_REGGEN_TARGETS): .quadctrl_reggen_targets_group
 # Address Map #
 ###############
 
-ADDRMAP_TARGETS  = $(ADDRMAP_DIR)/addrmap.dot
-ADDRMAP_TARGETS += $(ADDRMAP_DIR)/addrmap.csv
-ADDRMAP_TARGETS += $(ADDRMAP_DIR)/addrmap.tex
-ADDRMAP_TARGETS += $(ADDRMAP_DIR)/addrmap.md
-ADDRMAP_TARGETS += $(ADDRMAP_DIR)/addrmap.png
-ADDRMAP_TARGETS += $(ADDRMAP_DIR)/addrmap.pdf
+ADDRMAP_CSV     = $(TARGET_ADDRMAP_DIR)/addrmap.csv
+ADDRMAP_DOT     = $(TARGET_ADDRMAP_DIR)/addrmap.dot
+ADDRMAP_TEX     = $(TARGET_ADDRMAP_DIR)/addrmap.tex
+ADDRMAP_TEX_TPL = $(SOURCE_ADDRMAP_DIR)/addrmap.tex.tpl
+ADDRMAP_PNG     = $(TARGET_ADDRMAP_DIR)/addrmap.png
+ADDRMAP_MD      = $(DOCS_DIR)/rm/2_addrmap.md
+ADDRMAP_PDF     = $(TARGET_ADDRMAP_DIR)/addrmap.pdf
+
+ADDRMAP_TARGETS  = $(ADDRMAP_DOT)
+ADDRMAP_TARGETS += $(ADDRMAP_CSV)
+ADDRMAP_TARGETS += $(ADDRMAP_TEX)
+ADDRMAP_TARGETS += $(ADDRMAP_MD)
+ADDRMAP_TARGETS += $(ADDRMAP_PNG)
+ADDRMAP_TARGETS += $(ADDRMAP_PDF)
 
 .PHONY: addrmap clean-addrmap
 
@@ -378,33 +388,31 @@ ADDRMAP_TARGETS += $(ADDRMAP_DIR)/addrmap.pdf
 addrmap: $(ADDRMAP_TARGETS)
 
 clean-addrmap:
-	rm -rf $(ADDRMAP_TARGETS) .addrmap_occamygen_targets_group
-	# Delete intermediate Latex outputs
-	rm -rf addrmap/addrmap.aux
-	rm -rf addrmap/addrmap.fdb*
-	rm -rf addrmap/addrmap.fls
-	rm -rf addrmap/addrmap.log
+	rm -rf $(TARGET_ADDRMAP_DIR)
 
-ADDRMAP_OCCAMYGEN_TARGETS = $(ADDRMAP_DIR)/addrmap.dot $(ADDRMAP_DIR)/addrmap.csv
+$(TARGET_ADDRMAP_DIR):
+	mkdir $@
+
+ADDRMAP_OCCAMYGEN_TARGETS = $(ADDRMAP_DOT) $(ADDRMAP_CSV)
 $(ADDRMAP_OCCAMYGEN_TARGETS): .addrmap_occamygen_targets_group
-.addrmap_occamygen_targets_group: $(CFG)
+.addrmap_occamygen_targets_group: $(CFG) | $(TARGET_ADDRMAP_DIR)
 	@echo "[OCCAMYGEN] Generate $(ADDRMAP_OCCAMYGEN_TARGETS)"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(ADDRMAP_DIR) \
-		--graph  $(ADDRMAP_DIR)/addrmap.dot \
-		--am-csv $(ADDRMAP_DIR)/addrmap.csv
+	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_ADDRMAP_DIR) \
+		--graph  $(ADDRMAP_DOT) \
+		--am-csv $(ADDRMAP_CSV)
 	@touch $@
 
-addrmap.png:
-	dot -Tpng addrmap/addrmap.dot > addrmap/addrmap.png
+$(ADDRMAP_PNG): $(ADDRMAP_DOT) | $(TARGET_ADDRMAP_DIR)
+	dot -Tpng $(ADDRMAP_DOT) > $(ADDRMAP_PNG)
 
-addrmap.tex:
-	@$(ADDRMAPGEN) --file addrmap/addrmap.csv --outdir addrmap --tex addrmap/addrmap.tex.tpl
+$(ADDRMAP_TEX): $(ADDRMAP_CSV) $(ADDRMAP_TEX_TPL) | $(TARGET_ADDRMAP_DIR)
+	@$(ADDRMAPGEN) --file $(ADDRMAP_CSV) --outdir $(dir $@) --tex $(ADDRMAP_TEX_TPL)
 
-addrmap.md:
-	@$(ADDRMAPGEN) --file addrmap/addrmap.csv --outdir docs --md 2_addrmap.md
+$(ADDRMAP_MD): $(ADDRMAP_CSV) | $(TARGET_ADDRMAP_DIR)
+	@$(ADDRMAPGEN) --file $(ADDRMAP_CSV) --outdir $(dir $@) --md $(notdir $@)
 
-addrmap.pdf: addrmap.tex
-	cd addrmap && latexmk -quiet -pdf addrmap.tex
+$(ADDRMAP_PDF): $(ADDRMAP_TEX) | $(TARGET_ADDRMAP_DIR)
+	cd $(TARGET_ADDRMAP_DIR) && latexmk -quiet -pdf $(notdir $(ADDRMAP_TEX))
 
 ############
 # Software #
@@ -595,10 +603,6 @@ help:
 	@echo -e "${Blue}fpga           ${Black}Build a small Occamy version (CVA6 + 1xcluster) for the VCU128 FPGA board."
 	@echo -e ""
 	@echo -e "${Blue}addrmap        ${Black}Generate the addressmap in the following formats: MD, PNG, TEX, PDF."
-	@echo -e "${Blue}addrmap.tex    ${Black}Generate the TEX addrmap source."
-	@echo -e "${Blue}addrmap.md     ${Black}Generate the MD addrmap graphic."
-	@echo -e "${Blue}addrmap.png    ${Black}Generate the PNG addrmap graphic."
-	@echo -e "${Blue}addrmap.pdf    ${Black}Generate the PDF addrmap graphic."
 	@echo -e ""
 	@echo -e "${Blue}clean          ${Black}Clean everything except traces in logs directory."
 	@echo -e "${Blue}clean-bender   ${Black}Clean all Bender generated files."
