@@ -169,10 +169,13 @@ module testharness import occamy_pkg::*; (
     .pcie_axi_rsp_o ()
   );
 
+  // Must be the frequency of i_uart0.clk_i in Hz
+  localparam int unsigned UartDPIFreq = 1_000_000_000;
+
   uartdpi #(
     .BAUD ('d115_200),
     // Frequency shouldn't matter since we are sending with the same clock.
-    .FREQ ('d500_000),
+    .FREQ (UartDPIFreq),
     .NAME("uart0")
   ) i_uart0 (
     .clk_i (clk_i),

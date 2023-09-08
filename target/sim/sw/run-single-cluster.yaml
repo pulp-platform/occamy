@@ -10,3 +10,4 @@ runs:
     cmd: ../../deps/snitch_cluster/sw/blas/gemm/verify.py {sim_bin} {elf}
           --symbols-bin ./sw/device/apps/blas/gemm/build/gemm.elf
   - elf: host/apps/hello_world/build/hello_world.elf
+    cmd: sw/host/apps/hello_world/verify.py {simulator} {sim_bin} {elf}
