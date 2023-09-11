@@ -8,6 +8,8 @@
 import math
 import pathlib
 import logging
+import operator
+from termcolor import cprint
 
 from copy import copy
 from mako.lookup import TemplateLookup
@@ -321,17 +323,33 @@ class Param(object):
 class AxiStruct:
     configs = dict()
 
-    def emit(aw, dw, iw, uw):
+    def emit(aw, dw, iw, uw, enable_multicast=False):
         global code_package
-        key = (aw, dw, iw, uw)
+        key = (aw, dw, iw, uw, enable_multicast)
+        # Skip emission if struct was already emitted. Ensures the
+        # same type is not defined multiple times
         if key in AxiStruct.configs:
             return AxiStruct.configs[key]
-        name = "axi_a{}_d{}_i{}_u{}".format(*key)
-        code = "// AXI bus with {} bit address, {} bit data, {} bit IDs, \
-            and {} bit user data.\n".format(*key)
+        if enable_multicast:
+            name = "axi_a{}_d{}_i{}_u{}_mcast".format(*key[0:-1])
+        else:
+            name = "axi_a{}_d{}_i{}_u{}".format(*key[0:-1])
+        code = ("// AXI bus with {} bit address, {} bit data, {} bit IDs,"
+                "and {} bit user data.\n").format(*key[0:-1])
         code += "`AXI_TYPEDEF_ALL_CT({}, {}_req_t, {}_resp_t, ".format(name, name, name)
-        code += "logic [{}:0], logic [{}:0], logic [{}:0], logic [{}:0], logic [{}:0])\n".format(
-            aw - 1, iw - 1, dw - 1, (dw + 7) // 8 - 1, max(0, uw - 1))
+        code += f"logic [{aw - 1}:0],"
+        code += f"logic [{iw - 1}:0], "
+        code += f"logic [{dw - 1}:0], "
+        code += f"logic [{(dw + 7) // 8 - 1}:0], "
+        if enable_multicast:
+            user_t = "struct packed {"
+            user_t += f"logic [{max(0, aw - 1)}:0] mcast;"
+            if uw > aw:
+                user_t += f" logic [{max(0, uw - aw - 1)}:0] atomics_id;"
+            user_t += "}"
+        else:
+            user_t = f"logic [{max(0, uw - 1)}:0]"
+        code += f"{user_t})\n"
         code_package += "\n" + code
         AxiStruct.configs[key] = name
         return name
@@ -681,8 +699,8 @@ class AxiBus(Bus):
         assgn = "// Change UW\n"
         assgn += "`AXI_ASSIGN_REQ_STRUCT({lhs},{rhs})\n".format(lhs=bus.req_name(),
                                                                 rhs=self.req_name())
-        assgn += "`AXI_ASSIGN_RESP_STRUCT({lhs},{rhs})\n".format(lhs=self.rsp_name(),
-                                                                 rhs=bus.rsp_name())
+        assgn += "`AXI_ASSIGN_RESP_STRUCT({lhs},{rhs})\n\n".format(lhs=self.rsp_name(),
+                                                                   rhs=bus.rsp_name())
         context.write(assgn)
         return bus
 
@@ -1458,6 +1476,10 @@ class AxiXbar(Xbar):
                  atop_support=True,
                  latency_mode=None,
                  interleaved_ena=False,
+                 enable_multicast=False,
+                 forward_mcast=False,
+                 enable_default_mst_port=False,
+                 default_mst_port_idx=0,
                  **kwargs):
         super().__init__(**kwargs)
         self.aw = aw
@@ -1468,49 +1490,110 @@ class AxiXbar(Xbar):
         self.max_mst_trans = max_mst_trans
         self.fall_through = fall_through
         self.no_loopback = no_loopback
-        self.symbolic_addrmap = list()
-        self.symbolic_addrmap_multi = list()
         self.atop_support = atop_support
         self.interleaved_ena = interleaved_ena
+        self.enable_multicast = enable_multicast
+        if self.enable_multicast:
+            self.forward_mcast = True
+        else:
+            self.forward_mcast = forward_mcast
+        self.enable_default_mst_port = enable_default_mst_port
+        self.default_mst_port_idx = default_mst_port_idx
         self.addrmap = list()
         self.connections = dict()
         self.latency_mode = latency_mode or "axi_pkg::CUT_ALL_PORTS"
 
-    def add_input(self, name, outputs=None):
-        self.inputs.append(name)
+    def add_input(self, name, is_mcast_master=False, outputs=None):
+        self.inputs.append({'name': name, 'is_mcast_master': is_mcast_master})
         if outputs:
             self.connections[name] = outputs
 
-    def add_output(self, name, addrs, default=False):
+    def add_output(self, name, addrs, is_mcast_target=False, forward_mcast=False):
         idx = len(self.outputs)
         for lo, hi in addrs:
             if hi >> self.aw == 1:
                 hi -= 1
-            self.addrmap.append((idx, lo, hi))
-        self.outputs.append(name)
+            self.addrmap.append({'idx': idx,
+                                 'is_symbolic': False,
+                                 'is_mcast_rule': is_mcast_target,
+                                 'lo': lo,
+                                 'hi': hi})
+        self.outputs.append({'name': name,
+                             'is_mcast_target': is_mcast_target,
+                             'forward_mcast': forward_mcast})
 
-    def add_output_symbolic(self, name, base, length):
+    def add_output_symbolic(self, name, base, length, is_mcast_target=False, forward_mcast=False):
         idx = len(self.outputs)
-        self.symbolic_addrmap.append((idx, base, length))
-        self.outputs.append(name)
+        self.addrmap.append({'idx': idx,
+                             'is_symbolic': True,
+                             'is_mcast_rule': is_mcast_target,
+                             'base': base,
+                             'length': length})
+        self.outputs.append({'name': name,
+                             'is_mcast_target': is_mcast_target,
+                             'forward_mcast': forward_mcast})
 
-    def add_output_symbolic_multi(self, name, entries):
+    def add_output_symbolic_multi(self, name, entries, is_mcast_target=False, forward_mcast=False):
         idx = len(self.outputs)
-        self.symbolic_addrmap_multi.append((idx, entries))
-        self.outputs.append(name)
+        for base, length in entries:
+            self.addrmap.append({'idx': idx,
+                                 'is_symbolic': True,
+                                 'is_mcast_rule': is_mcast_target,
+                                 'base': base,
+                                 'length': length})
+        self.outputs.append({'name': name,
+                             'is_mcast_target': is_mcast_target,
+                             'forward_mcast': forward_mcast})
 
-    def add_output_entry(self, name, entry, range_mask=None):
+    def add_output_entry(self, name, entry, range_mask=None, is_mcast_target=False,
+                         forward_mcast=False):
         addrs = [(r.lo, r.hi) for r in self.node.get_routes() if r.port == entry]
         if range_mask is not None:
             addrs = filter(lambda r: r[0] >= range_mask[0] and r[1] < range_mask[1], addrs)
-        self.add_output(name, addrs)
+        self.add_output(name, addrs, is_mcast_target=is_mcast_target, forward_mcast=forward_mcast)
 
     def addr_map_len(self):
-        return len(self.addrmap) + len(self.symbolic_addrmap) + sum(
-            len(am[1]) for am in self.symbolic_addrmap_multi)
+        return len(self.addrmap)
+
+    def num_mcast_rules(self):
+        if self.enable_multicast:
+            return len([rule for rule in self.addrmap if rule['is_mcast_rule']])
+        else:
+            return 0
+
+    def num_mcast_ports(self):
+        if self.enable_multicast:
+            return len([output for output in self.outputs if output['is_mcast_target']])
+        else:
+            return 0
 
     def iw_out(self):
         return self.iw + int(math.ceil(math.log2(max(1, len(self.inputs)))))
+
+    def union_multicast_rules(self):
+        # Issue warning to manually check rules are ordered and contiguous
+        cprint(f"Warning: please ensure manually that following rules for the {self.name} XBAR"
+               " are contiguous and ordered (lower addresses first).", color="yellow")
+        for rule in self.addrmap[0:self.num_mcast_rules()]:
+            if rule['is_symbolic']:
+                cprint(f"{self.outputs[rule['idx']]['name']} [{rule['base']},"
+                       f" {rule['base']} + {rule['length']}]", color="yellow")
+            else:
+                cprint(f"{self.outputs[rule['idx']]['name']} [{rule['lo']}, {rule['hi']}]",
+                       color="yellow")
+        # Get start address of the first multicast rule in the addrmap
+        first_rule = self.addrmap[0]
+        if first_rule['is_symbolic']:
+            start_addr = first_rule['base']
+        else:
+            start_addr = first_rule['lo']
+        # Get end address of the last multicast rule in the addrmap
+        last_rule = self.addrmap[self.num_mcast_rules()-1]
+        if last_rule['is_symbolic']:
+            end_addr = last_rule['base'] + ' + ' + last_rule['length']
+        else:
+            end_addr = last_rule['hi']
+        return start_addr, end_addr
 
     def emit(self):
         global code_module
@@ -1522,14 +1605,35 @@ class AxiXbar(Xbar):
         # Compute the ID widths.
         iw_in = self.iw
         iw_out = self.iw_out()
+        # Compute the USER widths
+        uw = self.uw
+
+        # Multicast requirements
+        if self.enable_multicast:
+            # Check that multicast-targetable slaves are at lower indices.
+            # If a multicast-targetable slave follows a non multicast-targetable slave
+            # we have a violation of this rule.
+            violations = []
+            for i in range(len(self.outputs) - 1):
+                if not self.outputs[i]['is_mcast_target']:
+                    if self.outputs[i+1]['is_mcast_target']:
+                        violations.append(True)
+            assert (not violations), \
+                f'{self.name}: multicast-targetable slaves must be at lower indices'
+            # Sort address map rules by `is_multicast_rule` to ensure that
+            # multicast rules are at lower indices
+            self.addrmap.sort(key=operator.itemgetter('is_mcast_rule'), reverse=True)
+        if self.forward_mcast:
+            # Add multicast mask to USER signal
+            uw += self.aw
 
         # Emit the input enum into the package.
         input_enum_name = "{}_inputs_e".format(self.name)
         input_enum = "/// Inputs of the `{}` crossbar.\n".format(self.name)
         input_enum += "typedef enum int {\n"
         input_enums = list()
-        for name in self.inputs:
-            x = "{}_in_{}".format(self.name, name).upper()
+        for inp in self.inputs:
+            x = "{}_in_{}".format(self.name, inp['name']).upper()
             input_enums.append(x)
             input_enum += "  {},\n".format(x)
         input_enum += "  {}_NUM_INPUTS\n".format(self.name.upper())
@@ -1541,8 +1645,8 @@ class AxiXbar(Xbar):
         output_enum = "/// Outputs of the `{}` crossbar.\n".format(self.name)
         output_enum += "typedef enum int {\n"
         output_enums = list()
-        for name in self.outputs:
-            x = "{}_out_{}".format(self.name, name).upper()
+        for output in self.outputs:
+            x = "{}_out_{}".format(self.name, output['name']).upper()
             output_enums.append(x)
             output_enum += "  {},\n".format(x)
         output_enum += "  {}_NUM_OUTPUTS\n".format(self.name.upper())
@@ -1568,7 +1672,10 @@ class AxiXbar(Xbar):
         cfg += "  UniqueIds:          {},\n".format(0)
         cfg += "  AxiAddrWidth:       {},\n".format(self.aw)
         cfg += "  AxiDataWidth:       {},\n".format(self.dw)
-        cfg += "  NoAddrRules:        {}\n".format(self.addr_map_len())
+        cfg += "  NoAddrRules:        {},\n".format(self.addr_map_len())
+        cfg += "  NoMulticastRules:   {},\n".format(self.num_mcast_rules())
+        cfg += "  NoMulticastPorts:   {},\n".format(self.num_mcast_ports())
+        cfg += "  default:            '0\n"
         cfg += "};\n"
 
         code_package += "\n" + cfg
@@ -1581,36 +1688,68 @@ class AxiXbar(Xbar):
             self.addr_map_len() - 1, addrmap_name)
         addrmap += "assign {} = '{{\n".format(addrmap_name)
         addrmap_lines = []
-        for i in range(len(self.addrmap)):
-            addrmap_lines.append(
-                "  '{{ idx: {}, start_addr: {aw}'h{:08x}, end_addr: {aw}'h{:08x} }}".format(
-                    *self.addrmap[i], aw=self.aw))
-        for i, (idx, base, length) in enumerate(self.symbolic_addrmap):
-            addrmap_lines.append(
-                "  '{{ idx: {}, start_addr: {}[{i}], end_addr: {}[{i}] + {} }}".format(
-                    idx, base, base, length, i=i))
-        for i, (idx, entries) in enumerate(self.symbolic_addrmap_multi):
-            for base, length in entries:
-                addrmap_lines.append(
-                    "  '{{ idx: {}, start_addr: {}[{i}], end_addr: {}[{i}] + {} }}".format(
-                        idx, base, base, length, i=i))
+        # Invert order of rules in address map as lower indices come last in System Verilog
+        # array initializers
+        for rule in reversed(self.addrmap):
+            if rule['is_symbolic']:
+                line = "  '{{ idx: {}, start_addr: {}, end_addr: {} + {} }}".format(
+                    rule['idx'], rule['base'], rule['base'], rule['length'])
+            else:
+                line = "  '{{ idx: {}, start_addr: {aw}'h{:08x}, end_addr: {aw}'h{:08x} }}".format(
+                    rule['idx'], rule['lo'], rule['hi'], aw=self.aw)
+            addrmap_lines.append(line)
         addrmap += "{}\n}};\n".format(',\n'.join(addrmap_lines))
 
         code_module[self.context] += "\n" + addrmap
 
+        # Emit the default port definition
+        en_default_mst_port_i = f"'{int(self.enable_default_mst_port)}"
+        if self.enable_default_mst_port:
+            if self.enable_multicast:
+                union_start_addr, union_end_addr = self.union_multicast_rules()
+                default_port = "/// Default port of the `{}` crossbar.\n".format(self.name)
+                default_port += f"xbar_rule_{self.aw}_t {self.name}_default_port;\n"
+                default_port += f"assign {self.name}_default_port = '{{\n"
+                default_port += f"  idx: {self.default_mst_port_idx},\n"
+                default_port += f"  start_addr: {union_start_addr},\n"
+                default_port += f"  end_addr: {union_end_addr}\n"
+                default_port += "};\n"
+                code_module[self.context] += "\n" + default_port
+                default_mst_port_i = f"{{{len(self.inputs)}{{{self.name}_default_port}}}}"
+            else:
+                default_mst_port_idx_bits = (len(self.outputs)-1).bit_length()
+                default_port = f"{default_mst_port_idx_bits}" + \
+                               f"'b{self.default_mst_port_idx:b}"
+                default_mst_port_i = f"{{{len(self.inputs)}{{{default_port}}}}}"
+        else:
+            default_mst_port_i = "'0"
+
         # Emit the AXI structs into the package.
         self.input_struct = AxiStruct.emit(self.aw, self.dw, iw_in, self.uw)
         self.output_struct = AxiStruct.emit(self.aw, self.dw, iw_out, self.uw)
+        if self.forward_mcast:
+            self.input_struct_mcast = AxiStruct.emit(self.aw, self.dw, iw_in, uw,
+                                                     enable_multicast=True)
+            self.output_struct_mcast = AxiStruct.emit(self.aw, self.dw, iw_out, uw,
+                                                      enable_multicast=True)
 
+        # Rename (typedef) the generic AXI structs generated above to unique types
+        # for the input and output signals of this XBAR
         code_package += "\n"
         for tds in [
                 "req", "resp", "aw_chan", "w_chan", "b_chan", "ar_chan",
                 "r_chan"
         ]:
+            if self.forward_mcast:
+                input_struct = self.input_struct_mcast
+                output_struct = self.output_struct_mcast
+            else:
+                input_struct = self.input_struct
+                output_struct = self.output_struct
             code_package += "typedef {}_{tds}_t {}_in_{tds}_t;\n".format(
-                self.input_struct, self.name, tds=tds)
+                input_struct, self.name, tds=tds)
             code_package += "typedef {}_{tds}_t {}_out_{tds}_t;\n".format(
-                self.output_struct, self.name, tds=tds)
+                output_struct, self.name, tds=tds)
 
         # Emit the characteristics of the AXI plugs into the package.
         code_package += "\n"
@@ -1637,64 +1776,114 @@ class AxiXbar(Xbar):
             len(self.outputs) - 1, self.name)
         code_module[self.context] += "\n" + code
 
-        for name, enum in zip(self.inputs, input_enums):
-            bus = AxiBus(
-                self.clk,
-                self.rst,
-                self.aw,
-                self.dw,
-                iw_in,
-                self.uw,
-                "{}_in".format(self.name),
-                "[{}]".format(enum),
-                type_prefix=self.input_struct,
-                declared=True,
-            )
-            self.__dict__["in_" + name] = bus
+        # Generate the buses to connect to every input port
+        # Note: does not generate any code, but may be referenced by the templates
+        code = ""
+        for inp, enum in zip(self.inputs, input_enums):
+            if self.forward_mcast:
 
-        for name, enum in zip(self.outputs, output_enums):
-            bus = AxiBus(
-                self.clk,
-                self.rst,
-                self.aw,
-                self.dw,
-                iw_out,
-                self.uw,
-                "{}_out".format(self.name),
-                "[{}]".format(enum),
-                type_prefix=self.output_struct,
-                declared=True,
-            )
-            self.__dict__["out_" + name] = bus
+                if inp['is_mcast_master']:
+
+                    bus = AxiBus(
+                        self.clk,
+                        self.rst,
+                        self.aw,
+                        self.dw,
+                        iw_in,
+                        uw,
+                        "{}_in".format(self.name),
+                        "[{}]".format(enum),
+                        type_prefix=self.input_struct_mcast,
+                        declared=True,
+                    )
+                    self.__dict__["in_" + inp['name']] = bus
+
+                else:
+
+                    # If the XBAR supports multicast, for all input buses which
+                    # are not multicast masters, we need to change the
+                    # user width of the respective interfaces
+                    input_req = f"{self.name}_in_req[{enum}]"
+                    input_rsp = f"{self.name}_in_rsp[{enum}]"
+
+                    input_uwc = f"{self.name}_in_{inp['name']}_uwc"
+                    input_uwc_req = input_uwc + "_req"
+                    input_uwc_rsp = input_uwc + "_rsp"
+
+                    # Declare the intermediate interfaces first
+                    code += f"// Declare UWC input to {self.name}\n"
+                    code += f"  {self.input_struct + '_req_t'} {input_uwc_req};\n"
+                    code += f"  {self.input_struct + '_resp_t'} {input_uwc_rsp};\n\n"
+
+                    # And then change the user width
+                    code += "// Change UW\n"
+                    code += "`AXI_ASSIGN_REQ_STRUCT({lhs},{rhs})\n".format(lhs=input_req,
+                                                                           rhs=input_uwc_req)
+                    code += "`AXI_ASSIGN_RESP_STRUCT({lhs},{rhs})\n\n".format(lhs=input_uwc_rsp,
+                                                                              rhs=input_rsp)
+
+                    bus = AxiBus(
+                            self.clk,
+                            self.rst,
+                            self.aw,
+                            self.dw,
+                            iw_in,
+                            self.uw,
+                            input_uwc,
+                            type_prefix=self.input_struct,
+                            declared=True,
+                        )
+                    self.__dict__["in_" + inp['name']] = bus
+
+            else:
+                bus = AxiBus(
+                        self.clk,
+                        self.rst,
+                        self.aw,
+                        self.dw,
+                        iw_in,
+                        self.uw,
+                        "{}_in".format(self.name),
+                        "[{}]".format(enum),
+                        type_prefix=self.input_struct,
+                        declared=True,
+                    )
+                self.__dict__["in_" + inp['name']] = bus
+
+        code_module[self.context] += "\n" + code
 
         # Emit the crossbar instance itself.
-        if not self.interleaved_ena:
-            code = "axi_xbar #(\n"
-        else:
+        if self.interleaved_ena:
             code = "axi_interleaved_xbar #(\n"
+        elif self.enable_multicast:
+            code = "axi_mcast_xbar #(\n"
+        else:
+            code = "axi_xbar #(\n"
+        input_struct = self.input_struct_mcast if self.forward_mcast else self.input_struct
+        output_struct = self.output_struct_mcast if self.forward_mcast else self.output_struct
         code += "  .Cfg           ( {cfg_name} ),\n".format(
             cfg_name=self.cfg_name)
         code += "  .Connectivity  ( {} ), \n".format(self.connectivity())
         code += "  .ATOPs         ( {} ), \n".format(int(self.atop_support))
         code += "  .slv_aw_chan_t ( {}_aw_chan_t ),\n".format(
-            self.input_struct)
+            input_struct)
         code += "  .mst_aw_chan_t ( {}_aw_chan_t ),\n".format(
-            self.output_struct)
-        code += "  .w_chan_t      ( {}_w_chan_t ),\n".format(self.input_struct)
-        code += "  .slv_b_chan_t  ( {}_b_chan_t ),\n".format(self.input_struct)
+            output_struct)
+        code += "  .w_chan_t      ( {}_w_chan_t ),\n".format(input_struct)
+        code += "  .slv_b_chan_t  ( {}_b_chan_t ),\n".format(input_struct)
         code += "  .mst_b_chan_t  ( {}_b_chan_t ),\n".format(
-            self.output_struct)
+            output_struct)
         code += "  .slv_ar_chan_t ( {}_ar_chan_t ),\n".format(
-            self.input_struct)
+            input_struct)
         code += "  .mst_ar_chan_t ( {}_ar_chan_t ),\n".format(
-            self.output_struct)
-        code += "  .slv_r_chan_t  ( {}_r_chan_t ),\n".format(self.input_struct)
+            output_struct)
+        code += "  .slv_r_chan_t  ( {}_r_chan_t ),\n".format(input_struct)
         code += "  .mst_r_chan_t  ( {}_r_chan_t ),\n".format(
-            self.output_struct)
-        code += "  .slv_req_t     ( {}_req_t ),\n".format(self.input_struct)
-        code += "  .slv_resp_t    ( {}_resp_t ),\n".format(self.input_struct)
-        code += "  .mst_req_t     ( {}_req_t ),\n".format(self.output_struct)
-        code += "  .mst_resp_t    ( {}_resp_t ),\n".format(self.output_struct)
+            output_struct)
+        code += "  .slv_req_t     ( {}_req_t ),\n".format(input_struct)
+        code += "  .slv_resp_t    ( {}_resp_t ),\n".format(input_struct)
+        code += "  .mst_req_t     ( {}_req_t ),\n".format(output_struct)
+        code += "  .mst_resp_t    ( {}_resp_t ),\n".format(output_struct)
         code += "  .rule_t        ( xbar_rule_{}_t )\n".format(self.aw)
         code += ") i_{name} (\n".format(name=self.name)
         code += "  .clk_i  ( {clk} ),\n".format(clk=self.clk)
@@ -1713,9 +1902,83 @@ class AxiXbar(Xbar):
         if self.interleaved_ena:
             code += "  .interleaved_mode_ena_i ( {name}_interleaved_mode_ena ),\n".format(
                 name=self.name)
-        code += "  .en_default_mst_port_i ( '1 ),\n"
-        code += "  .default_mst_port_i    ( '0 )\n"
+        code += "  .en_default_mst_port_i ( {} ),\n".format(en_default_mst_port_i)
+        code += "  .default_mst_port_i    ( {} )\n".format(default_mst_port_i)
         code += ");\n"
+        code_module[self.context] += "\n" + code
+
+        # Generate the buses to connect to every output port
+        # Note: does not generate any code, but may be referenced by the templates
+        code = ""
+        for output, enum in zip(self.outputs, output_enums):
+
+            if self.forward_mcast:
+
+                if output['forward_mcast']:
+
+                    bus = AxiBus(
+                        self.clk,
+                        self.rst,
+                        self.aw,
+                        self.dw,
+                        iw_out,
+                        uw,
+                        "{}_out".format(self.name),
+                        "[{}]".format(enum),
+                        type_prefix=self.output_struct_mcast,
+                        declared=True,
+                    )
+                    self.__dict__["out_" + output['name']] = bus
+                else:
+                    # If the XBAR supports multicast, for all output buses which
+                    # do not forward the multicast signals, we need to change the
+                    # user width of the respective interfaces
+                    output_req = f"{self.name}_out_req[{enum}]"
+                    output_rsp = f"{self.name}_out_rsp[{enum}]"
+
+                    output_uwc = f"{self.name}_out_{output['name']}_uwc"
+                    output_uwc_req = output_uwc + "_req"
+                    output_uwc_rsp = output_uwc + "_rsp"
+
+                    # Declare the intermediate interfaces first
+                    code += f"// Declare UWC output from {self.name}\n"
+                    code += f"  {self.output_struct + '_req_t'} {output_uwc_req};\n"
+                    code += f"  {self.output_struct + '_resp_t'} {output_uwc_rsp};\n\n"
+
+                    # And then change the user width
+                    code += "// Change UW\n"
+                    code += "`AXI_ASSIGN_REQ_STRUCT({lhs},{rhs})\n".format(lhs=output_uwc_req,
+                                                                           rhs=output_req)
+                    code += "`AXI_ASSIGN_RESP_STRUCT({lhs},{rhs})\n\n".format(lhs=output_rsp,
+                                                                              rhs=output_uwc_rsp)
+
+                    bus = AxiBus(
+                        self.clk,
+                        self.rst,
+                        self.aw,
+                        self.dw,
+                        iw_out,
+                        self.uw,
+                        output_uwc,
+                        type_prefix=self.output_struct,
+                        declared=True,
+                    )
+                    self.__dict__["out_" + output['name']] = bus
+
+            else:
+                bus = AxiBus(
+                    self.clk,
+                    self.rst,
+                    self.aw,
+                    self.dw,
+                    iw_out,
+                    self.uw,
+                    "{}_out".format(self.name),
+                    "[{}]".format(enum),
+                    type_prefix=self.output_struct,
+                    declared=True,
+                )
+                self.__dict__["out_" + output['name']] = bus
 
         code_module[self.context] += "\n" + code
 
@@ -1726,8 +1989,9 @@ class AxiXbar(Xbar):
         for i in self.inputs:
             for o in self.outputs:
                 # Disable link only if connectivity specified for input or loopback disabled
-                connectivity += "0" if (((i in self.connections) and (o not in self.connections[i]))
-                                        or (self.no_loopback and i == o)) else "1"
+                connectivity += "0" if (((i['name'] in self.connections) and
+                                         (o['name'] not in self.connections[i['name']]))
+                                        or (self.no_loopback and i['name'] == o['name'])) else "1"
         connectivity = "{}'b{}".format(length, connectivity[::-1])
 
         return connectivity
@@ -2119,7 +2383,6 @@ class AxiLiteXbar(Xbar):
         self.max_mst_trans = max_mst_trans
         self.fall_through = fall_through
         self.symbolic_addrmap = list()
-        self.symbolic_addrmap_multi = list()
         self.addrmap = list()
         self.latency_mode = latency_mode or "axi_pkg::CUT_ALL_PORTS"
 
@@ -2147,12 +2410,12 @@ class AxiLiteXbar(Xbar):
 
     def add_output_symbolic_multi(self, name, entries):
         idx = len(self.outputs)
-        self.symbolic_addrmap_multi.append((idx, entries))
+        for base, length in entries:
+            self.symbolic_addrmap.append((idx, base, length))
         self.outputs.append(name)
 
     def addr_map_len(self):
-        return len(self.addrmap) + len(self.symbolic_addrmap) + sum(
-            len(am) for am in self.symbolic_addrmap_multi)
+        return len(self.addrmap) + len(self.symbolic_addrmap)
 
     def emit(self):
         global code_module
@@ -2178,11 +2441,6 @@ class AxiLiteXbar(Xbar):
             addrmap_lines.append(
                 "  '{{ idx: {}, start_addr: {}[{i}], end_addr: {}[{i}] + {} }}".format(
                     idx, base, base, length, i=i))
-        for i, (idx, entries) in enumerate(self.symbolic_addrmap_multi):
-            for base, length in entries:
-                addrmap_lines.append(
-                    "  '{{ idx: {}, start_addr: {}[{i}], end_addr: {}[{i}] + {} }}".format(
-                        idx, base, base, length, i=i))
         addrmap += "{}\n}};\n".format(',\n'.join(addrmap_lines))
 
         code_module[self.context] += "\n" + addrmap

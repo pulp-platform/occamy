@@ -44,7 +44,8 @@ localparam axi_pkg::xbar_cfg_t ${cfg_name} = '{
   UniqueIds:          0,
   AxiAddrWidth:       ${xbar.aw},
   AxiDataWidth:       ${xbar.dw},
-  NoAddrRules:        ${xbar.addr_map_len()}
+  NoAddrRules:        ${xbar.addr_map_len()},
+  default:            '0
 };
 
 // AXI plugs of the `${xbar.name}` crossbar.

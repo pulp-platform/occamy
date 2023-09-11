@@ -421,6 +421,7 @@ module ${name}_soc
     logic [${wide_in.aw-1}:0] num_bytes;
     axi_pkg::cache_t    cache_src, cache_dst;
     axi_pkg::burst_t    burst_src, burst_dst;
+    logic [${wide_in.uw-1}:0] user_src, user_dst;
     logic               decouple_rw;
     logic               deburst;
     logic               serialize;

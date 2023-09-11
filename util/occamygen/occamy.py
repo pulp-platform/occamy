@@ -57,6 +57,7 @@ class Occamy(Generator):
         self.cluster.cfg["boot_addr"] = self.cfg["peripherals"]["rom"]["address"]
 
         self.cluster.cfg['tie_ports'] = False
+        self.cluster.cfg['enable_multicast'] = cfg['enable_multicast']
 
         if "ro_cache_cfg" in self.cfg["s1_quadrant"]:
             ro_cache = self.cfg["s1_quadrant"]["ro_cache_cfg"]

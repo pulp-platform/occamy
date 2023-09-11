@@ -201,21 +201,14 @@ static inline void wakeup_cluster(uint32_t cluster_id) {
 /**
  * @brief Wake-up Snitches
  *
- * @detail All Snitches are "parked" in a WFI. A SW interrupt
- *         must be issued to "unpark" every Snitch. This function
- *         sends a SW interrupt to all Snitches.
- */
-void wakeup_snitches() {
-    for (int i = 0; i < N_CLUSTERS; i++) set_sw_interrupt(i);
-}
-
-/**
- * @brief Wake-up Snitches
- *
  * @detail Send a cluster interrupt to all Snitches
  */
-static inline void wakeup_snitches_cl() {
+static inline void wakeup_snitches() {
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
+    multicast_to_clusters(cluster_clint_set_addr(0), 511);
+#else
     for (int i = 0; i < N_CLUSTERS; i++) wakeup_cluster(i);
+#endif
 }
 
 /**
@@ -614,4 +607,27 @@ void deactivate_interleaved_mode_hbm() {
     uint64_t addr =
         OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
     *((volatile uint32_t*)addr) = 1;
+}
+
+//===============================================================
+// CVA6 extensions
+//===============================================================
+
+static inline void multicast(uint64_t addr, uint64_t mask, uint64_t value) {
+    enable_multicast(mask);
+    uint64_t* p = (uint64_t*)addr;
+    *p = value;
+    disable_multicast();
+}
+
+static inline void enable_multicast(uint64_t mask) {
+    asm volatile("csrw 0x7c0, %[mask]\n" : : [ mask ] "r"(mask) : "memory");
+}
+
+static inline void disable_multicast() {
+    asm volatile("csrw 0x7c0, 0" : : : "memory");
+}
+
+static inline void multicast_to_clusters(uint64_t addr, uint64_t value) {
+    multicast(addr, CLUSTER_BCAST_MASK, value);
 }
