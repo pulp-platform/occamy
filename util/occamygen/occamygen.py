@@ -261,10 +261,14 @@ def main():
         occamy.cfg["pcie"]["address_mm"]).attach_to(am_soc_narrow_xbar)
 
     # Connect narrow SPM to Narrow AXI
+    bases = []
+    bases.append(occamy.cfg["spm_narrow"]["address"])
+    if "uncached_alias" in occamy.cfg["spm_narrow"]:
+        bases.append(occamy.cfg["spm_narrow"]["uncached_alias"])
     am_spm_narrow = am.new_leaf(
         "spm_narrow",
         occamy.cfg["spm_narrow"]["length"],
-        occamy.cfg["spm_narrow"]["address"]).attach_to(am_soc_narrow_xbar)
+        *bases).attach_to(am_soc_narrow_xbar)
 
     # Connect wide SPM to Wide AXI
     am_spm_wide = am.new_leaf(
