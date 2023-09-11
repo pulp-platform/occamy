@@ -356,6 +356,8 @@
     spm_narrow: {
       address: 1879048192, // 0x7000_0000
       length: 524288, // 512 kiB 0x8_0000
+      # An uncached alias address space of the same length
+      uncached_alias: 1879572480, // 0x7008_0000
     },
     spm_wide: {
       address: 1895825408, // 0x7100_0000

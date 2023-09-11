@@ -67,7 +67,8 @@ volatile uint64_t* const clint_mtimecmp0_ptr =
 // Globals
 //===============================================================
 
-volatile comm_buffer_t comm_buffer __attribute__((aligned(8)));
+comm_buffer_t comm_buffer __attribute__((aligned(8)))
+__attribute__((section(".nc_spm")));
 
 //===============================================================
 // Initialization
