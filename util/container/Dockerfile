@@ -5,7 +5,7 @@
 # Docker container for Occamy development.
 
 # 1. Stage
-FROM ghcr.io/pulp-platform/snitch_cluster:latest AS occamy
+FROM ghcr.io/pulp-platform/snitch_cluster:main AS occamy
 ARG RISCV_GCC_VERSION=8.3.0-2020.04.0
 
 LABEL version="0.1"
