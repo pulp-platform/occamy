@@ -20,7 +20,7 @@ int main() {
     asm volatile("" ::: "memory");
 
     // Start Snitches
-    wakeup_snitches_cl();
+    wakeup_snitches();
 
     // Wait for job done and return Snitch exit code
     return wait_snitches_done();

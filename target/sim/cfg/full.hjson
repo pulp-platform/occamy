@@ -6,6 +6,7 @@
 {
     is_remote_quadrant: false,
     remote_quadrants: [],
+    enable_multicast: false,
     quadrant_pre_xbar: {
       max_slv_trans: 64,
       max_mst_trans: 64,

@@ -18,6 +18,8 @@
   wide_tlb_entries = wide_tlb_cfg.get("l1_num_entries", 1)
 %>
 
+`include "axi/assign.svh"
+
 module ${name}_quadrant_s1_ctrl
   import ${name}_pkg::*;
   import ${name}_quadrant_s1_reg_pkg::*;

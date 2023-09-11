@@ -26,6 +26,7 @@
 %>
 
 `include "axi/typedef.svh"
+`include "axi/assign.svh"
 `include "axi_tlb/typedef.svh"
 
 /// Occamy Stage 1 Quadrant

@@ -42,3 +42,19 @@ occamy-full-vsim:
     - make sw
     - make bin/occamy_top.vsim
     - ./run.py sw/run-full-occamy.yaml --simulator vsim
+
+##########################
+# Multicast Occamy tests #
+##########################
+
+# Questa
+occamy-mcast-vsim:
+  variables:
+    RISCV_CFLAGS: "-DUSE_MULTICAST"
+    DATA_CFG: "$(PWD)/sw/device/apps/blas/gemm/params.hjson"
+  script:
+    - cd target/sim
+    - make CFG_OVERRIDE=cfg/M-Q8C4.hjson rtl
+    - make LENGTH=1024 sw
+    - make bin/occamy_top.vsim
+    - ./run.py sw/run-full-occamy.yaml -j
