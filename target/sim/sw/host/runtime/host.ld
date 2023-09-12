@@ -6,15 +6,26 @@ ENTRY(_start)
 
 MEMORY
 {
+    /* In the debug region, we store some metadata in the ELF
+       (e.g. section lengths) for use by the test environment */
+    META (rwxa) : ORIGIN = 0x00000000, LENGTH = 0x1000
+    /* Upper 448 KiB of SPM for stage 1 loader or small app */
+    APPL (rwxa) : ORIGIN = 0x70010000, LENGTH = 0x70000
     DRAM (rwxa) : ORIGIN = 0x80000000, LENGTH = 0x80000000
 }
 
 SECTIONS
 {
-  /* The program code and data goes into DRAM */
-  .appl :
-  {
-    /*TODO colluca: place stack at end of DRAM*/
+  /* Scratch 0 register used for return code */
+  __soc_ctrl_scratch0 = 0x02000014;
+
+  /* Metadata section: stores info on application section */
+  .meta : {*(.meta)} > META
+  __meta_appl_addr  = ADDR(.appl);
+  __meta_appl_len   = SIZEOF(.appl);
+
+  /* The program code and data goes into SPM */
+  .appl : {
     __stack_pointer$  = . + 0x70000;
     *(.text.startup)
     *(.text .text.*)
@@ -25,10 +36,8 @@ SECTIONS
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     *(.data)
     *(.rodata .rodata.*)
-  } > DRAM
-
-  /* HTIF section for FESVR */
-  .htif : { *(.htif) } > DRAM
+    *(.devicebin)
+  } > APPL
 
   .bss (NOLOAD) :
   {
@@ -39,11 +48,7 @@ SECTIONS
     *(COMMON)
     . = ALIGN(8);
     __bss_end = . ;
-  } > DRAM
-
-  __end = .;
-
-  .devicebin : { *(.devicebin) } > DRAM
+  } > APPL
 
   /* Discard sections */
   /DISCARD/ : { *(.riscv.attributes) *(.comment) }

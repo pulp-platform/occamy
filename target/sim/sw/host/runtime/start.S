@@ -52,15 +52,10 @@ _exit:
     # Return exit code to host to terminate simulation
     slli      a0, a0, 1
     ori       a0, a0, 1
-    la        t0, tohost
+    la        t0, __soc_ctrl_scratch0
     sw        a0, 0(t0) # (exit code << 1) | 1
     fence
     wfi
-
-# HTIF sections
-.pushsection .htif,"aw",@progbits;
-.align 6; .global tohost; tohost: .dword 0;
-.align 6; .global fromhost; fromhost: .dword 0;
 
 .section .devicebin,"a",@progbits
 .globl snitch_main
@@ -69,3 +64,16 @@ snitch_main:
 #ifdef DEVICEBIN
     .incbin DEVICEBIN
 #endif
+
+# HTIF sections
+.pushsection .htif,"aw",@progbits;
+.align 6; .global tohost; tohost: .dword 0;
+.align 6; .global fromhost; fromhost: .dword 0;
+
+
+# Test environment metadata
+.section .meta,"aw",@progbits
+.globl _meta
+_meta:
+    .dword __meta_appl_addr
+    .dword __meta_appl_len
