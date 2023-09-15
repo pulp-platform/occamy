@@ -1,0 +1,103 @@
+runs:
+########
+# AXPY #
+########
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 1
+    multicast: False
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 2
+    multicast: False
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 4
+    multicast: False
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 8
+    multicast: False
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 16
+    multicast: False
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 32
+    multicast: False
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 1
+    multicast: True
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 2
+    multicast: True
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 4
+    multicast: True
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 8
+    multicast: True
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 16
+    multicast: True
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 32
+    multicast: True
+###############
+# Monte Carlo #
+###############
+  - app: mc
+    length: 256
+    n_clusters_to_use: 1
+    multicast: False
+  - app: mc
+    length: 256
+    n_clusters_to_use: 2
+    multicast: False
+  - app: mc
+    length: 256
+    n_clusters_to_use: 4
+    multicast: False
+  - app: mc
+    length: 256
+    n_clusters_to_use: 8
+    multicast: False
+  - app: mc
+    length: 256
+    n_clusters_to_use: 16
+    multicast: False
+  - app: mc
+    length: 256
+    n_clusters_to_use: 32
+    multicast: False
+  - app: mc
+    length: 256
+    n_clusters_to_use: 1
+    multicast: True
+  - app: mc
+    length: 256
+    n_clusters_to_use: 2
+    multicast: True
+  - app: mc
+    length: 256
+    n_clusters_to_use: 4
+    multicast: True
+  - app: mc
+    length: 256
+    n_clusters_to_use: 8
+    multicast: True
+  - app: mc
+    length: 256
+    n_clusters_to_use: 16
+    multicast: True
+  - app: mc
+    length: 256
+    n_clusters_to_use: 32
+    multicast: True

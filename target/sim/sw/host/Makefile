@@ -7,6 +7,7 @@
 # Add user applications to APPS variable
 APPS  = hello_world
 APPS += offload
+APPS += experimental_offload
 
 TARGET ?= all
 
