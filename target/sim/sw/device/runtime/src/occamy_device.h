@@ -6,6 +6,9 @@
 
 typedef enum { SYNC_ALL, SYNC_CLUSTERS, SYNC_NONE } sync_t;
 
+// Could become cluster-local to save storage
+extern __thread volatile uint32_t ct_barrier_cnt __attribute__((aligned(8)));
+
 inline uint32_t __attribute__((const)) snrt_quadrant_idx() {
     return snrt_cluster_idx() / N_CLUSTERS_PER_QUAD;
 }
@@ -41,17 +44,24 @@ inline void return_to_cva6(sync_t sync) {
     // Optionally synchronize clusters
     if (sync != SYNC_NONE) {
         if (snrt_is_dm_core()) {
-            uint32_t cnt =
-                __atomic_add_fetch(&(_snrt_barrier.cnt), 1, __ATOMIC_RELAXED);
+            // Only the first cluster holds the barrier counter
+            uint32_t barrier_ptr = (uint32_t)(&ct_barrier_cnt);
+            barrier_ptr -= cluster_offset * snrt_cluster_idx();
+            uint32_t cnt = __atomic_add_fetch((volatile uint32_t*)barrier_ptr,
+                                              1, __ATOMIC_RELAXED);
+#ifdef N_CLUSTERS_TO_USE
+            if (cnt == N_CLUSTERS_TO_USE) {
+#else
             if (cnt == snrt_cluster_num()) {
-                _snrt_barrier.cnt = 0;
-                snrt_int_sw_set(0);
+#endif
+                *((volatile uint32_t*)barrier_ptr) = 0;
+                set_host_sw_interrupt();
             }
         }
     }
     // Otherwise assume cores are already synchronized and only
     // one core calls this function
     else {
-        snrt_int_sw_set(0);
+        set_host_sw_interrupt();
     }
 }
