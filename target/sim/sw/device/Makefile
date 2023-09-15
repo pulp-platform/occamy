@@ -8,6 +8,7 @@
 APPS  = blas/axpy
 APPS += blas/gemm
 APPS += mcast
+APPS += experimental_offload
 
 TARGET ?= all
 
