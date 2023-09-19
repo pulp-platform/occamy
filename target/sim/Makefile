@@ -391,7 +391,7 @@ clean-addrmap:
 	rm -rf $(TARGET_ADDRMAP_DIR)
 
 $(TARGET_ADDRMAP_DIR):
-	mkdir $@
+	mkdir -p $@
 
 ADDRMAP_OCCAMYGEN_TARGETS = $(ADDRMAP_DOT) $(ADDRMAP_CSV)
 $(ADDRMAP_OCCAMYGEN_TARGETS): .addrmap_occamygen_targets_group
@@ -597,7 +597,7 @@ help:
 	@echo -e ""
 	@echo -e "${Blue}bin/occamy_top.vcs  ${Black}Build compilation script and compile all sources for VCS simulation. @IIS: vcs-2020.12 make bin/occamy_top.vcs"
 	@echo -e "${Blue}bin/occamy_top.vlt  ${Black}Build compilation script and compile all sources for Verilator simulation."
-	@echo -e "${Blue}bin/occamy_top.vsim ${Black}Build compilation script and compile all sources for Questasim simulation. @IIS: QUESTA_HOME=/usr/pack/modelsim-10.7b-kgf/questasim/ CC=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/gcc CXX=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/g++ LD=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/ld make bin/occamy_top.vsim"
+	@echo -e "${Blue}bin/occamy_top.vsim ${Black}Build compilation script and compile all sources for Questasim simulation. @IIS: QUESTA_HOME=/usr/pack/modelsim-10.7b-kgf/questasim/ CC=\$${QUESTA_HOME}/gcc-5.3.0-linux_x86_64/bin/gcc CXX=\$${QUESTA_HOME}/gcc-5.3.0-linux_x86_64/bin/g++ LD=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/ld make bin/occamy_top.vsim"
 	@echo -e ""
 	@echo -e "${Blue}all            ${Black}Update all SW and HW related sources (by, e.g., re-generating the RegGen registers and their c-header files)."
 	@echo -e "${Blue}fpga           ${Black}Build a small Occamy version (CVA6 + 1xcluster) for the VCU128 FPGA board."
