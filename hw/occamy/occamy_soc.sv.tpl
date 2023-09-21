@@ -276,6 +276,7 @@ module ${name}_soc
   ) i_axi_to_wide_mem (
     .clk_i (${narrow_spm_mst.clk}),
     .rst_ni (${narrow_spm_mst.rst}),
+    .test_i (1'b0),
     .busy_o (),
     .axi_req_i (${narrow_spm_mst.req_name()}),
     .axi_resp_o (${narrow_spm_mst.rsp_name()}),
@@ -341,6 +342,7 @@ module ${name}_soc
   ) i_axi_to_mem (
     .clk_i (${wide_spm_mst.clk}),
     .rst_ni (${wide_spm_mst.rst}),
+    .test_i (1'b0),
     .busy_o (),
     .axi_req_i (${wide_spm_mst.req_name()}),
     .axi_resp_o (${wide_spm_mst.rsp_name()}),
