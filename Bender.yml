@@ -101,6 +101,8 @@ sources:
       - target/sim/src/occamy_soc.sv
       - target/sim/src/occamy_top.sv
       - target/sim/src/occamy_cva6.sv
+    include_dirs:
+      - hw/occamy
 
   # target/fpga
   - target: xilinx

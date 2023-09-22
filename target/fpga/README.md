@@ -15,13 +15,16 @@ Goto [https://github.com/pulp-platform/hero/tree/tmp/hero_occamy_wip]
 
 ### Reducing Occamy's Size
 
-First, the default configuration of Occamy is too large for the VCU128. Therefore, open `hw/system/occamy/src/occamy_cfg.hjson`, and reduce `nr_s1_quadrant` and `nr_clusters` (both to `1`). To make the changes effective in the RTL, navigate to `hw/system/occamy` and run the following command:
+First, the default configuration of Occamy is too large for the VCU128. You will need to generate the correct Occamy RTL files in the `target/sim` directory. From this directory (`target/fpga`) run:
 
 ```
-make update-sources
+make -C ../sim CFG_OVERRIDE=cfg/single-cluster.hjson rtl
 ```
 
-### Compiling the bootrom
+This will generate the Occamy sources in `target/sim/src`.
+Even if these sources are in src, they will be compiled for FPGA too (see `Bender.yml`).
+
+### Compiling the bootrom for Linux (HERO)
 
 To compile the bootrom you will need a riscv64 toolchain as well as u-boot pre-compiled.
 First goto `bootrom/Makefile` and modify the toolchain toolchain with : `CROSS_COMPILE ?= riscv64-hero-linux-gnu-`

@@ -14,13 +14,15 @@ VCU         ?= 01
 FPGA_ID     := 091847100576A
 HW_SERVER   := bordcomputer:3231
 
+BENDER ?= bender
+
 # Select VCU128-02
 ifeq ($(VCU),02)
 	FPGA_ID := 091847100638A
 	HW_SERVER := bordcomputer:3232
 endif
 
-VIVADO ?= vivado
+VIVADO ?= vitis-2020.2 vivado
 MKIMAGE ?= $(CURDIR)/br2_external/install/bin/mkimage
 NPROC  ?= $(shell nproc)
 
@@ -34,8 +36,6 @@ DTB = bootrom/occamy.dtb
 default: all
 all: occamy_vcu128
 
-include $(ROOT)/util/Makefrag
-
 vivado_ips/occamy_xilinx:
 	${MAKE} -C vivado_ips occamy_xilinx
 
@@ -43,7 +43,7 @@ bootrom/bootrom-spl.coe:
 	${MAKE} -C bootrom
 
 occamy_vcu128: vivado_ips/occamy_xilinx bootrom/bootrom-spl.coe define_defines_includes_no_simset.tcl
-	${VIVADO} -mode batch -source occamy_vcu128.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/bootrom/bootrom-spl.coe
+	${VIVADO} -mode gui -source occamy_vcu128.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/bootrom/bootrom-spl.coe
 
 define_defines_includes_no_simset.tcl: $(BENDER_FILES)
 	${BENDER} script vivado -t cv64a6_imafdc_sv39 --only-defines --only-includes --no-simset > $@

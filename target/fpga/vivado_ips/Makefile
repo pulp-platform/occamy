@@ -9,18 +9,15 @@ MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := ${MKFILE_DIR}../../../../..
 DEBUG       ?= 0
 
-VIVADO ?= vivado
+VIVADO ?= vitis-2020.2 vivado
 BENDER ?= bender
 
-BENDER_TARGETS += -t cv64a6_imafdc_sv39
+BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy
 ifeq ($(EXT_JTAG), 0)
 	BENDER_TARGETS += -t bscane
 endif
 
-include $(ROOT)/util/Makefrag
-
 occamy_xilinx: define-sources.tcl
-	$(MAKE) -C ../../ update-source
 	${VIVADO} -mode batch -source occamy_xilinx.tcl -tclargs $(DEBUG) $(EXT_JTAG)
 
 define-sources.tcl:
