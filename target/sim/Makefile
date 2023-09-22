@@ -463,27 +463,26 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 
 CVA6_BINARY ?= $(shell cat $(LOGS_DIR)/.rtlbinary)
 
-$(LOGS_DIR)/hart_00000_perf.json: $(LOGS_DIR)/trace_hart_00000.txt $(EVENTS_PY)
+CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
+CVA6_PERF_TRACE      = $(LOGS_DIR)/hart_00000_perf.json
+CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
+CVA6_DIFF_TRACE      = $(LOGS_DIR)/trace_hart_00000.diff
+
+TXT_TRACES       += $(CVA6_TXT_TRACE)
+PERF_TRACES      += $(CVA6_PERF_TRACE)
+ANNOTATED_TRACES += $(CVA6_ANNOTATED_TRACE)
+DIFF_TRACES      += $(CVA6_DIFF_TRACE)
+
+traces: $(CVA6_TXT_TRACE) $(CVA6_PERF_TRACE)
+annotate: $(CVA6_ANNOTATED_TRACE)
+
+# CVA6 traces require different handling
+$(CVA6_PERF_TRACE): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
-
-$(LOGS_DIR)/trace_hart_00000.s: $(LOGS_DIR)/trace_hart_00000.txt $(ANNOTATE_PY)
+$(CVA6_ANNOTATED_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
 	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $<
-
-$(LOGS_DIR)/trace_hart_00000.diff: $(LOGS_DIR)/trace_hart_00000.txt $(ANNOTATE_PY)
+$(CVA6_DIFF_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
 	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $< -d
-
-traces: $(LOGS_DIR)/hart_00000_perf.json
-
-annotate: $(shell (echo $(LOGS_DIR)/trace_hart_00000.txt | sed 's/\.txt/\.s/') || echo "") \
-          $(shell (echo $(LOGS_DIR)/trace_hart_00000.txt | sed 's/\.txt/\.diff/') || echo "")
-
-$(LOGS_DIR)/perf.csv: $(shell (ls $(LOGS_DIR)/trace_hart_*.dasm 2>/dev/null | sed 's/trace_hart/hart/' | sed 's/.dasm/_perf.json/')) \
-		  $(LOGS_DIR)/hart_00000_perf.json $(PERF_CSV_PY)
-	$(PYTHON) $(PERF_CSV_PY) -o $@ -i $(LOGS_DIR)/hart_*_perf.json
-
-$(LOGS_DIR)/event.csv: $(shell (ls $(LOGS_DIR)/trace_hart_*.dasm 2>/dev/null | sed 's/trace_hart/hart/' | sed 's/.dasm/_perf.json/')) \
-		  $(LOGS_DIR)/hart_00000_perf.json $(PERF_CSV_PY)
-	$(PYTHON) $(PERF_CSV_PY) -o $@ -i $(LOGS_DIR)/hart_*_perf.json --filter tstart tend
 
 #############
 # Verilator #
