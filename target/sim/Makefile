@@ -45,6 +45,7 @@ VLOG = vlog
 # Files and directories #
 #########################
 
+BIN_DIR              ?= bin
 PLATFORM_HEADERS_DIR ?= sw/shared/platform/generated
 TARGET_ADDRMAP_DIR   ?= $(abspath addrmap)
 SOURCE_ADDRMAP_DIR   ?= $(ROOT)/util/addrmap
@@ -510,7 +511,7 @@ $(VLT_BUILDDIR)/test/uartdpi/uartdpi.o: test/uartdpi/uartdpi.c
 	$(CC) $(CFLAGS) $(VLT_CFLAGS) -c $< -o $@
 
 # Link verilated archive wich $(VLT_COBJ)
-bin/occamy_top.vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
+$(BIN_DIR)/occamy_top.vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
 	mkdir -p $(dir $@)
 	$(CXX) $(LDFLAGS) -std=c++14 -L ${VLT_BUILDDIR}/lib -o $@ $(VLT_COBJ) $(VLT_AR) -lfesvr -lpthread -lutil
 
@@ -518,20 +519,20 @@ bin/occamy_top.vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
 .PHONY: clean-vlt
 clean-vlt: clean-work
 	rm -rf work-vlt
-	rm -f bin/occamy_top.vlt
+	rm -f $(BIN_DIR)/occamy_top.vlt
 
 ############
 # Modelsim #
 ############
 
-${VSIM_BUILDDIR}/compile.vsim.tcl: $(VSIM_SOURCES) ${TB_SRCS} ${TB_CC_SOURCES} test/bootrom.bin
+${VSIM_BUILDDIR}/compile.vsim.tcl: $(VSIM_SOURCES) ${TB_SRCS} ${TB_CC_SOURCES} test/bootrom.bin | $(VSIM_BUILDDIR)
 	vlib $(dir $@)
 	${BENDER} script vsim ${VSIM_BENDER} --vlog-arg="${VLOG_FLAGS} -work $(dir $@) " > $@
 	echo '${VLOG} -work $(dir $@) $(TB_CC_SOURCES) -ccflags "$(TB_CC_FLAGS)"' >> $@
 	echo 'return 0' >> $@
 
 # Build compilation script and compile all sources for Questasim simulation
-bin/occamy_top.vsim: ${VSIM_BUILDDIR}/compile.vsim.tcl work/lib/libfesvr.a
+$(BIN_DIR)/occamy_top.vsim: ${VSIM_BUILDDIR}/compile.vsim.tcl work/lib/libfesvr.a
 	$(call QUESTASIM,tb_bin)
 	@# Rename CVA6 trace to align with Snitch trace names
 	@echo "mv ${CVA6_TRACE} $(LOGS_DIR)/trace_hart_00000.txt" >> $@
@@ -542,16 +543,16 @@ bin/occamy_top.vsim: ${VSIM_BUILDDIR}/compile.vsim.tcl work/lib/libfesvr.a
 
 # Clean all build directories and temporary files for Questasim simulation
 clean-vsim: clean-work
-	rm -rf bin/occamy_top.vsim bin/occamy_top.vsim.gui work-vsim vsim.wlf
+	rm -rf $(BIN_DIR)/occamy_top.vsim $(BIN_DIR)/occamy_top.vsim.gui $(VSIM_BUILDDIR) vsim.wlf
 
 #######
 # VCS #
 #######
 
 # Build compilation script and compile all sources for VCS simulation
-bin/occamy_top.vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} test/bootrom.bin
+$(BIN_DIR)/occamy_top.vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} test/bootrom.bin
 	mkdir -p bin
-	vcs $(VCS_FLAGS) -o bin/occamy_top.vcs tb_bin -cc $(CC) -cpp $(CXX) \
+	vcs $(VCS_FLAGS) -o $(BIN_DIR)/occamy_top.vcs tb_bin -cc $(CC) -cpp $(CXX) \
 		$(TB_CC_SOURCES) -CFLAGS "$(TB_CC_FLAGS)" -LDFLAGS "-L${FESVR}/lib" -lfesvr -lutil
 
 # Clean all build directories and temporary files for VCS simulation
@@ -559,7 +560,7 @@ bin/occamy_top.vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} tes
 clean-vcs: clean-work
 	rm -rf AN.DB
 	rm -rf work-vcs
-	rm -f bin/occamy_top.vcs
+	rm -f $(BIN_DIR)/occamy_top.vcs
 
 ########
 # FPGA #
