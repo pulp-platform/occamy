@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
+import os
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent / '../../deps/snitch_cluster/util/clustergen'))
+# If `SNITCH_ROOT` is set, use it. otherwise, assume workspace location
+snitch_root = Path(os.environ['SNITCH_ROOT'] if 'SNITCH_ROOT' in os.environ else "../../deps/snitch_cluster").resolve()
+sys.path.append(f'{snitch_root}/util/clustergen')
 from cluster import Generator, PMA, PMACfg, SnitchCluster, clog2  # noqa: E402
 
 
@@ -15,7 +18,6 @@ class Occamy(Generator):
     """
     def __init__(self, cfg):
         occamy_root = (Path(__file__).parent / "../../").resolve()
-        snitch_root = (Path(__file__).parent / "../../deps/snitch_cluster").resolve()
         schema = occamy_root / "docs/schema/occamy.schema.json"
         remote_schemas = [occamy_root / "docs/schema/axi_xbar.schema.json",
                           occamy_root / "docs/schema/axi_tlb.schema.json",
