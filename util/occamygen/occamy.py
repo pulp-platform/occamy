@@ -7,7 +7,8 @@ import os
 from pathlib import Path
 
 # If `SNITCH_ROOT` is set, use it. otherwise, assume workspace location
-snitch_root = Path(os.environ['SNITCH_ROOT'] if 'SNITCH_ROOT' in os.environ else "../../deps/snitch_cluster").resolve()
+snitch_root = Path(os.environ['SNITCH_ROOT'] if 'SNITCH_ROOT' in os.environ else
+    Path(__file__).parent / "../../deps/snitch_cluster").resolve()
 sys.path.append(f'{snitch_root}/util/clustergen')
 from cluster import Generator, PMA, PMACfg, SnitchCluster, clog2  # noqa: E402
 
