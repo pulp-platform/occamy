@@ -24,7 +24,7 @@ dependencies:
   apb_uart:               { git:  https://github.com/pulp-platform/apb_uart.git,           rev:     b6145341df79137ac584c83e9c081f80a7a40440 }
   axi:                    { git:  https://github.com/pulp-platform/axi.git,                version: 0.39.0  }
   axi_tlb:                { path: hw/vendor/pulp_platform_axi_tlb                                           }
-  clint:                  { git:  https://github.com/pulp-platform/clint.git,              rev:     v0.2.0  }
+  clint:                  { git:  https://github.com/pulp-platform/clint.git,              rev:     occamy  }
   common_cells:           { git:  https://github.com/pulp-platform/common_cells.git,       rev:     v1.28.0 }
   cva6:                   { path: hw/vendor/openhwgroup_cva6                                                }
   opentitan_peripherals:  { path: hw/vendor/pulp_platform_opentitan_peripherals                             }
