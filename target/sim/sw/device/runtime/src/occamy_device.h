@@ -65,3 +65,7 @@ inline void return_to_cva6(sync_t sync) {
         set_host_sw_interrupt();
     }
 }
+
+inline void return_to_cva6_accelerated(uint8_t offload_id) {
+    *((volatile uint32_t*)(CLINT_BASE_ADDR + CLINT_RETURN_TO_CVA6_REG_OFFSET)) = 1 << offload_id;
+}
