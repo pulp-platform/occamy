@@ -6,6 +6,7 @@
     .AxiMaxWriteTxns ( 4  ),
     .AxiMaxReadTxns ( 4  ),
     .FallThrough ( 0  ),
+    .FullBW ( 1  ),
     .full_req_t ( ${bus_in.req_type()} ),
     .full_resp_t ( ${bus_in.rsp_type()} ),
     .lite_req_t ( ${bus_out.req_type()} ),

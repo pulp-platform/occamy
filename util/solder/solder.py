@@ -606,7 +606,7 @@ class AxiBus(Bus):
             ) + "\n")
         return bus
 
-    def change_dw(self, context, target_dw, name, inst_name=None, to=None):
+    def change_dw(self, context, target_dw, name, max_reads=1, inst_name=None, to=None):
         if self.dw == target_dw:
             if to is None:
                 return self
@@ -640,6 +640,7 @@ class AxiBus(Bus):
         tpl = templates.get_template("solder.axi_change_dw.sv.tpl")
         context.write(
             tpl.render_unicode(
+                max_reads=max_reads,
                 axi_in=self,
                 axi_out=bus,
                 name=inst_name or "i_{}".format(name),
