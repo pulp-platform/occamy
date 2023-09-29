@@ -7,7 +7,12 @@
 #include "host.c"
 #include <math.h>
 
+#if defined(OFFLOAD_AXPY)
 #include "axpy/data/data.h"
+#elif defined(OFFLOAD_GEMM)
+#include "gemm/data/data.h"
+#endif
+
 #define N_JOBS 2
 
 #define WIDE_SPM_ADDR(X) \
@@ -60,6 +65,38 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
 #endif
             break;
         }
+        case J_GEMM: {
+            gemm_args_t args = job->args.gemm;
+
+#ifdef MULTICAST
+            uint64_t mask = ((n_clusters_to_use - 1) << 18);
+            enable_multicast(mask);
+#endif
+            *((volatile uint64_t *)(l1_job_ptr)) = job->id;
+            *((volatile uint8_t *)(l1_job_ptr + offsetof(job_t, offload_id))) =
+                job->offload_id;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(gemm_args_t, m))) = args.m;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(gemm_args_t, n))) = args.n;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(gemm_args_t, k))) = args.k;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(gemm_args_t, a_ptr))) = args.a_ptr;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(gemm_args_t, b_ptr))) = args.b_ptr;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(gemm_args_t, c_ptr))) = args.c_ptr;
+
+            mcycle();  // Wakeup
+#ifdef MULTICAST
+            *((volatile uint32_t *)cluster_clint_set_addr(0)) = 511;
+            disable_multicast();
+#else
+            wakeup_snitches();
+#endif
+            break;
+        }
         case J_MONTECARLO: {
             mc_args_t args = job->args.mc;
 
@@ -95,21 +132,32 @@ int main() {
     comm_buffer.usr_data_ptr = (uint32_t)(uint64_t)&usr_data;
     fence();
 
+#if defined(OFFLOAD_AXPY)
     axpy_args_t axpy_args = {
         l / n_clusters_to_use, a, WIDE_SPM_ADDR((uint64_t)x),
         WIDE_SPM_ADDR((uint64_t)y), WIDE_SPM_ADDR((uint64_t)z)};
     job_t axpy = {J_AXPY, 0, axpy_args};
-
-    mc_args_t mc_args = {l / (8 * n_clusters_to_use),
+#elif defined(OFFLOAD_GEMM)
+    gemm_args_t gemm_args = {
+        M / n_clusters_to_use, N, K, WIDE_SPM_ADDR((uint64_t)a),
+        WIDE_SPM_ADDR((uint64_t)b), WIDE_SPM_ADDR((uint64_t)c)};
+    job_args_t job_args;
+    job_args.gemm = gemm_args;
+    job_t gemm = {J_GEMM, 0, job_args};
+#elif defined(OFFLOAD_MONTECARLO)
+    mc_args_t mc_args = {MC_LENGTH / (8 * n_clusters_to_use),
                          WIDE_SPM_ADDR((uint64_t)&pi)};
     job_args_t job_args;
     job_args.mc = mc_args;
     job_t mc = {J_MONTECARLO, 0, job_args};
+#endif
 
 #if defined(OFFLOAD_AXPY)
     job_t jobs[N_JOBS] = {axpy, axpy};
 #elif defined(OFFLOAD_MONTECARLO)
     job_t jobs[N_JOBS] = {mc, mc};
+#elif defined(OFFLOAD_GEMM)
+    job_t jobs[N_JOBS] = {gemm, gemm};
 #endif
 
     volatile uint32_t n_jobs = N_JOBS;
@@ -163,6 +211,10 @@ int main() {
     // Copy results from wide SPM to DRAM for verification
     sys_dma_blk_memcpy((uint64_t)z, WIDE_SPM_ADDR((uint64_t)z),
                        l * sizeof(double));
+#elif defined(OFFLOAD_GEMM)
+    // Copy results from wide SPM to DRAM for verification
+    sys_dma_blk_memcpy((uint64_t)c, WIDE_SPM_ADDR((uint64_t)c),
+                       M * N * sizeof(double));
 #elif defined(OFFLOAD_MONTECARLO)
     double pi_estimate = *((double*)mc_args.result_ptr);
     double err = fabs(pi_estimate - 3.14);
