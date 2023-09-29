@@ -5,7 +5,7 @@
 #include "offload.h"
 #include "snrt.h"
 
-#define N_JOB_TYPES 2
+#define N_JOB_TYPES 3
 
 // Other variables
 __thread usr_data_t* volatile usr_data_ptr;
@@ -13,6 +13,7 @@ __thread uint32_t l1_job_ptr;
 __thread uint32_t remote_job_ptr;
 
 #include "axpy_job.h"
+#include "gemm_job.h"
 #include "montecarlo_job.h"
 
 // Job function type
@@ -20,9 +21,9 @@ typedef void (*job_func_t)(job_t* job);
 
 // Job function arrays
 __thread job_func_t jobs_dm_core[N_JOB_TYPES] = {
-    axpy_job_dm_core, mc_job_dm_core};
+    axpy_job_dm_core, gemm_job_dm_core, mc_job_dm_core};
 __thread job_func_t jobs_compute_core[N_JOB_TYPES] = {
-    axpy_job_compute_core, mc_job_compute_core};
+    axpy_job_compute_core, gemm_job_compute_core, mc_job_compute_core};
 
 static inline void run_job() {
     // Force compiler to assign fallthrough path of the branch to

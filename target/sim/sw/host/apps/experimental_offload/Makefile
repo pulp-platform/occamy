@@ -13,11 +13,21 @@ INCL_DEVICE_BINARY = true
 
 # Define application and number of clusters to use
 RISCV_CFLAGS ?= -DOFFLOAD_AXPY -DN_CLUSTERS_TO_USE=1
+OFFLOAD ?= axpy
 
 SECTION = .wide_spm
 
+ifeq ($(OFFLOAD),axpy)
 include $(BLAS_DIR)/axpy/Makefile
+endif
+
+ifeq ($(OFFLOAD),gemm)
+include $(BLAS_DIR)/gemm/Makefile
+endif
+
 include ../common.mk
 
+ifneq ($(OFFLOAD),mc)
 # Create data.h dependency
 $(DEP): $(DATA_DIR)/data.h
+endif

@@ -15,8 +15,9 @@ sys.path.append(str(Path(__file__).parent / '../../../../../../deps/snitch_clust
 import simulate
 
 FILE_DIR = Path(__file__).parent.resolve()
-RUN_DIR = FILE_DIR / 'runs'
-VERIFY_PY = FILE_DIR / '../../../../../../deps/snitch_cluster/sw/blas/axpy/verify.py'
+RUN_DIR = FILE_DIR / 'runs5'
+AXPY_VERIFY_PY = FILE_DIR / '../../../../../../deps/snitch_cluster/sw/blas/axpy/verify.py'
+GEMM_VERIFY_PY = FILE_DIR / '../../../../../../deps/snitch_cluster/sw/blas/gemm/verify.py'
 BUILD_DIR = FILE_DIR / 'build'
 TARGET_DIR = FILE_DIR / '../../../../'
 APP = 'experimental_offload'
@@ -37,8 +38,9 @@ def run(cmd, env=None, dryrun=False):
             sys.exit(retcode)
 
 
-def extend_environment(**kwargs):
-    env = os.environ.copy()
+def extend_environment(env=None, **kwargs):
+    if not env:
+        env = os.environ.copy()
     env.update(kwargs)
     return env
 
@@ -60,13 +62,19 @@ def build_sw(tests, args):
             cflags += f' -DMULTICAST'
         if app == 'axpy':
             cflags += f' -DOFFLOAD_AXPY'
+        elif app == 'gemm':
+            cflags += f' -DOFFLOAD_GEMM'
         elif app == 'mc':
-            cflags += f' -DOFFLOAD_MONTECARLO'
+            cflags += f' -DOFFLOAD_MONTECARLO -DMC_LENGTH={length}'
         cfg = f'{mcast_prefix}-{CFG}'
         cfg_file = CFG_DIR / f'{cfg}.hjson'
         env = extend_environment(
             RISCV_CFLAGS=cflags,
-            LENGTH=f'{length}')
+            LENGTH=f'{length}',
+            OFFLOAD=app)
+        if app == 'gemm':
+            env = extend_environment(env, DATA_CFG=FILE_DIR / 'gemm' / f'{length}.hjson')
+        
         rundir = RUN_DIR / prefix
         elf = BUILD_DIR / f'{prefix}/{APP}.elf'
         sim_bin = TARGET_DIR / BIN_DIR / f'{cfg}' / 'occamy_top.vsim'
@@ -77,11 +85,14 @@ def build_sw(tests, args):
             run(f'make clean', env=env)
             run(f'cd ../../../../ && make DEBUG=ON CFG_OVERRIDE={cfg_file} sw', env=env)
             run(f'mkdir -p {temp_build_dir.parent} && mv build/ {temp_build_dir}')
+            run(f'cp {DEVICE_ELF} {temp_build_dir / "device.elf"}')
 
         # Extend test with parameter-derived information
         test['elf'] = elf
         if app == 'axpy':
-            test['cmd'] = f'{VERIFY_PY} {sim_bin} {elf} --symbols-bin {elf}'
+            test['cmd'] = f'{AXPY_VERIFY_PY} {sim_bin} {elf} --symbols-bin {elf}'
+        elif app == 'gemm':
+            test['cmd'] = f'{GEMM_VERIFY_PY} {sim_bin} {elf} --symbols-bin {elf}'
         elif app == 'mc':
             test['sim_bin'] = sim_bin
         test['rundir'] = rundir
@@ -109,14 +120,23 @@ def build_hw(tests):
 
 
 def post_process_traces(test):
+    # Get test parameters
     logdir = test['rundir'] / 'logs'
     n_clusters_to_use = test['n_clusters_to_use']
     app = test['app']
+    length = test['length']
+    multicast = test['multicast']
+
+    # Derive other information from parameters
+    mcast_prefix = "M" if multicast else "U"
+    prefix = f'{app}/L{length}/{mcast_prefix}/N{n_clusters_to_use}'
+    device_elf = BUILD_DIR / prefix / "device.elf"
+
     run(f'cd {TARGET_DIR} && make LOGS_DIR={logdir} traces -j')
-    run(f'cd {TARGET_DIR} && make LOGS_DIR={logdir} BINARY={DEVICE_ELF} annotate -j')
+    run(f'cd {TARGET_DIR} && make LOGS_DIR={logdir} BINARY={device_elf} annotate -j')
     run(f'cd {TARGET_DIR} && make LOGS_DIR={logdir} perf-csv')
     run(f'cd {TARGET_DIR} && make LOGS_DIR={logdir} event-csv')
-    if app == 'axpy':
+    if app == 'axpy' or app == 'gemm':
         layout = 'layout.csv'
     elif app == 'mc':
         layout = 'layout_mc.csv'

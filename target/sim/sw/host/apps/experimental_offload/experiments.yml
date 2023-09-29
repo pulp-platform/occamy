@@ -50,6 +50,142 @@ runs:
     length: 1024
     n_clusters_to_use: 32
     multicast: True
+  - app: axpy
+    length: 768
+    n_clusters_to_use: 1
+    multicast: True
+  - app: axpy
+    length: 768
+    n_clusters_to_use: 2
+    multicast: True
+  - app: axpy
+    length: 768
+    n_clusters_to_use: 4
+    multicast: True
+  - app: axpy
+    length: 768
+    n_clusters_to_use: 8
+    multicast: True
+  - app: axpy
+    length: 768
+    n_clusters_to_use: 16
+    multicast: True
+  - app: axpy
+    length: 768
+    n_clusters_to_use: 32
+    multicast: True
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 1
+    multicast: False
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 2
+    multicast: False
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 4
+    multicast: False
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 8
+    multicast: False
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 16
+    multicast: False
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 32
+    multicast: False
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 1
+    multicast: True
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 2
+    multicast: True
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 4
+    multicast: True
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 8
+    multicast: True
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 16
+    multicast: True
+  - app: axpy
+    length: 512
+    n_clusters_to_use: 32
+    multicast: True
+  - app: axpy
+    length: 256
+    n_clusters_to_use: 1
+    multicast: True
+  - app: axpy
+    length: 256
+    n_clusters_to_use: 2
+    multicast: True
+  - app: axpy
+    length: 256
+    n_clusters_to_use: 4
+    multicast: True
+  - app: axpy
+    length: 256
+    n_clusters_to_use: 8
+    multicast: True
+  - app: axpy
+    length: 256
+    n_clusters_to_use: 16
+    multicast: True
+  - app: axpy
+    length: 256
+    n_clusters_to_use: 32
+    multicast: True
+  - app: axpy
+    length: 128
+    n_clusters_to_use: 4
+    multicast: False
+  - app: axpy
+    length: 256
+    n_clusters_to_use: 4
+    multicast: False
+  - app: axpy
+    length: 256
+    n_clusters_to_use: 8
+    multicast: False
+  - app: axpy
+    length: 2048
+    n_clusters_to_use: 16
+    multicast: False
+  - app: axpy
+    length: 2048
+    n_clusters_to_use: 32
+    multicast: False
+  - app: axpy
+    length: 4096
+    n_clusters_to_use: 32
+    multicast: False
+  - app: axpy
+    length: 128
+    n_clusters_to_use: 4
+    multicast: True
+  - app: axpy
+    length: 2048
+    n_clusters_to_use: 16
+    multicast: True
+  - app: axpy
+    length: 2048
+    n_clusters_to_use: 32
+    multicast: True
+  - app: axpy
+    length: 4096
+    n_clusters_to_use: 32
+    multicast: True
 ###############
 # Monte Carlo #
 ###############
@@ -99,5 +235,340 @@ runs:
     multicast: True
   - app: mc
     length: 256
+    n_clusters_to_use: 32
+    multicast: True
+  - app: mc
+    length: 512
+    n_clusters_to_use: 1
+    multicast: False
+  - app: mc
+    length: 512
+    n_clusters_to_use: 2
+    multicast: False
+  - app: mc
+    length: 512
+    n_clusters_to_use: 4
+    multicast: False
+  - app: mc
+    length: 512
+    n_clusters_to_use: 8
+    multicast: False
+  - app: mc
+    length: 512
+    n_clusters_to_use: 16
+    multicast: False
+  - app: mc
+    length: 512
+    n_clusters_to_use: 32
+    multicast: False
+  - app: mc
+    length: 512
+    n_clusters_to_use: 1
+    multicast: True
+  - app: mc
+    length: 512
+    n_clusters_to_use: 2
+    multicast: True
+  - app: mc
+    length: 512
+    n_clusters_to_use: 4
+    multicast: True
+  - app: mc
+    length: 512
+    n_clusters_to_use: 8
+    multicast: True
+  - app: mc
+    length: 512
+    n_clusters_to_use: 16
+    multicast: True
+  - app: mc
+    length: 512
+    n_clusters_to_use: 32
+    multicast: True
+  - app: mc
+    length: 768
+    n_clusters_to_use: 1
+    multicast: True
+  - app: mc
+    length: 768
+    n_clusters_to_use: 2
+    multicast: True
+  - app: mc
+    length: 768
+    n_clusters_to_use: 4
+    multicast: True
+  - app: mc
+    length: 768
+    n_clusters_to_use: 8
+    multicast: True
+  - app: mc
+    length: 768
+    n_clusters_to_use: 16
+    multicast: True
+  - app: mc
+    length: 768
+    n_clusters_to_use: 32
+    multicast: True
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 1
+    multicast: True
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 2
+    multicast: True
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 4
+    multicast: True
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 8
+    multicast: True
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 16
+    multicast: True
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 32
+    multicast: True
+  - app: mc
+    length: 128
+    n_clusters_to_use: 4
+    multicast: False
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 8
+    multicast: False
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 16
+    multicast: False
+  - app: mc
+    length: 1024
+    n_clusters_to_use: 32
+    multicast: False
+  - app: mc
+    length: 2048
+    n_clusters_to_use: 16
+    multicast: False
+  - app: mc
+    length: 2048
+    n_clusters_to_use: 32
+    multicast: False
+  - app: mc
+    length: 4096
+    n_clusters_to_use: 32
+    multicast: False
+  - app: mc
+    length: 128
+    n_clusters_to_use: 4
+    multicast: True
+  - app: mc
+    length: 2048
+    n_clusters_to_use: 16
+    multicast: True
+  - app: mc
+    length: 2048
+    n_clusters_to_use: 32
+    multicast: True
+  - app: mc
+    length: 4096
+    n_clusters_to_use: 32
+    multicast: True
+########
+# GEMM #
+########
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 1
+    multicast: False
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 2
+    multicast: False
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 4
+    multicast: False
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 8
+    multicast: False
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 16
+    multicast: False
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 32
+    multicast: False
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 1
+    multicast: True
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 2
+    multicast: True
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 4
+    multicast: True
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 8
+    multicast: True
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 16
+    multicast: True
+  - app: gemm
+    length: 4
+    n_clusters_to_use: 32
+    multicast: True
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 1
+    multicast: False
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 2
+    multicast: False
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 4
+    multicast: False
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 8
+    multicast: False
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 16
+    multicast: False
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 32
+    multicast: False
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 1
+    multicast: True
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 2
+    multicast: True
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 4
+    multicast: True
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 8
+    multicast: True
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 16
+    multicast: True
+  - app: gemm
+    length: 3
+    n_clusters_to_use: 32
+    multicast: True
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 1
+    multicast: False
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 2
+    multicast: False
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 4
+    multicast: False
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 8
+    multicast: False
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 16
+    multicast: False
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 32
+    multicast: False
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 1
+    multicast: True
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 2
+    multicast: True
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 4
+    multicast: True
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 8
+    multicast: True
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 16
+    multicast: True
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 32
+    multicast: True
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 1
+    multicast: False
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 2
+    multicast: False
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 4
+    multicast: False
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 8
+    multicast: False
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 16
+    multicast: False
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 32
+    multicast: False
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 1
+    multicast: True
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 2
+    multicast: True
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 4
+    multicast: True
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 8
+    multicast: True
+  - app: gemm
+    length: 1
+    n_clusters_to_use: 16
+    multicast: True
+  - app: gemm
+    length: 1
     n_clusters_to_use: 32
     multicast: True
