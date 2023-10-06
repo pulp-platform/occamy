@@ -1,0 +1,153 @@
+From 8179205a45977048a48f67470f4b9f5850e789d7 Mon Sep 17 00:00:00 2001
+From: Luca Colagrande <luca.colagrande3@gmail.com>
+Date: Fri, 6 Oct 2023 15:59:08 +0200
+Subject: [PATCH] cva6_icache: Allow one outstanding killed miss
+
+---
+ core/cache_subsystem/cva6_icache.sv | 62 ++++++++++++++++++++++++-----
+ 1 file changed, 53 insertions(+), 9 deletions(-)
+
+diff --git a/core/cache_subsystem/cva6_icache.sv b/core/cache_subsystem/cva6_icache.sv
+index 6dd677d..d708bbc 100644
+--- a/core/cache_subsystem/cva6_icache.sv
++++ b/core/cache_subsystem/cva6_icache.sv
+@@ -66,6 +66,7 @@ module cva6_icache import ariane_pkg::*; import wt_cache_pkg::*; #(
+   logic                                 cache_wren;                   // triggers write to cacheline
+   logic                                 cmp_en_d, cmp_en_q;           // enable tag comparison in next cycle. used to cut long path due to NC signal.
+   logic                                 flush_d, flush_q;             // used to register and signal pending flushes
++  logic [1:0]                           outst_miss_cnt_d, outst_miss_cnt_q; // tracks number of outstanding misses
+ 
+   // replacement strategy
+   logic                                 update_lfsr;                  // shift the LFSR
+@@ -171,6 +172,7 @@ end else begin : gen_piton_offset
+     cache_wren   = 1'b0;
+     inv_en       = 1'b0;
+     flush_d      = flush_q | flush_i; // register incoming flush
++    outst_miss_cnt_d = outst_miss_cnt_q;
+ 
+     // interfaces
+     dreq_o.ready     = 1'b0;
+@@ -189,6 +191,11 @@ end else begin : gen_piton_offset
+       inv_en = 1'b1;
+     end
+ 
++    // kill an outstanding miss
++    if (mem_rtrn_vld_i && mem_rtrn_i.rtype == ICACHE_IFILL_ACK && outst_miss_cnt_q != '0) begin
++      outst_miss_cnt_d = outst_miss_cnt_q - 1;
++    end
++
+     unique case (state_q)
+       //////////////////////////////////
+       // this clears all valid bits
+@@ -213,7 +220,7 @@ end else begin : gen_piton_offset
+           // wait for incoming requests
+           end
+           else if (!stall_i) begin
+-            // mem requests are for sure invals here
++            // mem requests are for sure invals or killed misses here
+             if (!mem_rtrn_vld_i) begin
+               dreq_o.ready = 1'b1;
+               // we have a new request
+@@ -251,8 +258,8 @@ end else begin : gen_piton_offset
+ 
+               // we can accept another request
+               // and stay here, but only if no inval is coming in
+-              // note: we are not expecting ifill return packets here...
+-              if (!mem_rtrn_vld_i) begin
++              // note: ifill return packets may arrive here only if killed...
++              if (!mem_rtrn_vld_i || (mem_rtrn_i.rtype == ICACHE_IFILL_ACK)) begin
+                 dreq_o.ready     = 1'b1;
+                 if (dreq_i.req) begin
+                   state_d          = READ;
+@@ -290,16 +297,47 @@ end else begin : gen_piton_offset
+         // note: this is mutually exclusive with ICACHE_INV_REQ,
+         // so we do not have to check for invals here
+         if (mem_rtrn_vld_i && mem_rtrn_i.rtype == ICACHE_IFILL_ACK) begin
+-          state_d      = IDLE;
+-          // only return data if request is not being killed
+-          if (!(dreq_i.kill_s2 || flush_d)) begin
++          // only return data if not a killed miss
++          if (outst_miss_cnt_q == '0 && !(dreq_i.kill_s2 || flush_d)) begin
+             dreq_o.valid = 1'b1;
+             // only write to cache if this address is cacheable
+             cache_wren   = ~paddr_is_nc;
+           end
+-        // bail out if this request is being killed
++        end
++
++        // we must wait in this state for the return data of the miss.
++        // if the miss is killed we can go back to IDLE and process other
++        // cache requests in parallel, so long as we keep track of the
++        // outstanding killed misses and discard the return data.
++        // we support max 1 outstanding killed miss: in case of a second
++        // killed miss we must wait in the KILL_MISS state
++        if (mem_rtrn_vld_i && mem_rtrn_i.rtype == ICACHE_IFILL_ACK) begin
++          if (outst_miss_cnt_q == 0) begin
++            state_d = IDLE;
++          end else begin
++            state_d = state_q;
++          end
+         end else if (dreq_i.kill_s2 || flush_d) begin
+-          state_d  = KILL_MISS;
++          if (outst_miss_cnt_q == 0) begin
++            state_d = IDLE;
++          end else begin
++            state_d = KILL_MISS;
++          end
++        end
++
++        // track outstanding killed misses
++        if (dreq_i.kill_s2 || flush_d) begin
++          if (mem_rtrn_vld_i && mem_rtrn_i.rtype == ICACHE_IFILL_ACK) begin
++            outst_miss_cnt_d = outst_miss_cnt_q;
++          end else begin
++            outst_miss_cnt_d = outst_miss_cnt_q + 1;
++          end
++        end else begin
++          if (mem_rtrn_vld_i && mem_rtrn_i.rtype == ICACHE_IFILL_ACK && outst_miss_cnt_q != '0) begin
++            outst_miss_cnt_d = outst_miss_cnt_q - 1;
++          end else begin
++            outst_miss_cnt_d = outst_miss_cnt_q;
++          end
+         end
+       end
+       //////////////////////////////////
+@@ -318,7 +356,7 @@ end else begin : gen_piton_offset
+       // go back to idle
+       KILL_MISS: begin
+         if (mem_rtrn_vld_i && mem_rtrn_i.rtype == ICACHE_IFILL_ACK) begin
+-          state_d      = IDLE;
++          state_d = IDLE;
+         end
+       end
+       default: begin
+@@ -492,6 +530,7 @@ end else begin : gen_piton_offset
+       cl_offset_q   <= '0;
+       repl_way_oh_q <= '0;
+       inv_q         <= '0;
++      outst_miss_cnt_q <= '0;
+     end else begin
+       cl_tag_q      <= cl_tag_d;
+       flush_cnt_q   <= flush_cnt_d;
+@@ -503,6 +542,7 @@ end else begin : gen_piton_offset
+       cl_offset_q   <= cl_offset_d;
+       repl_way_oh_q <= repl_way_oh_d;
+       inv_q         <= inv_d;
++      outst_miss_cnt_q <= outst_miss_cnt_d;
+     end
+   end
+ 
+@@ -528,6 +568,10 @@ end else begin : gen_piton_offset
+     @(posedge clk_i) disable iff (!rst_ni) (!inv_en) |-> cache_rden |=> cmp_en_q |-> $onehot0(cl_hit))
+       else $fatal(1,"[l1 icache] cl_hit signal must be hot1");
+ 
++  outst_miss: assert property (
++    @(posedge clk_i) disable iff (!rst_ni) (state_q == MISS) |-> outst_miss_cnt_q <= 1 )
++      else $fatal(1,"[l1 icache] max one outstanding killed miss");
++
+   // this is only used for verification!
+   logic                                    vld_mirror[wt_cache_pkg::ICACHE_NUM_WORDS-1:0][ariane_pkg::ICACHE_SET_ASSOC-1:0];
+   logic [ariane_pkg::ICACHE_TAG_WIDTH-1:0] tag_mirror[wt_cache_pkg::ICACHE_NUM_WORDS-1:0][ariane_pkg::ICACHE_SET_ASSOC-1:0];
+-- 
+2.28.0
+
