@@ -37,6 +37,7 @@ INCDIRS += $(SNITCH_ROOT)/sw/math/src/include
 INCDIRS += $(SNITCH_ROOT)/sw/math/src/internal
 INCDIRS += $(SNITCH_ROOT)/sw/math/include/bits
 INCDIRS += $(SNITCH_ROOT)/sw/math/include
+MATH_DIR = $(SNITCH_ROOT)/sw/math/build
 
 # Linking sources
 BASE_LD       = $(abspath $(SNRT_DIR)/base.ld)
@@ -55,6 +56,9 @@ RISCV_LDFLAGS += -T$(BASE_LD)
 # Link snRuntime library
 RISCV_LDFLAGS += -L$(SNRT_LIB_DIR)
 RISCV_LDFLAGS += -l$(SNRT_LIB_NAME)
+# Link math library
+RISCV_LDFLAGS += -L$(MATH_DIR)
+RISCV_LDFLAGS += -lmath
 
 # Objcopy flags
 OBJCOPY_FLAGS  = -O binary
