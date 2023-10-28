@@ -4,5 +4,9 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-SNITCH_ROOT = $(shell bender path snitch_cluster)
-include $(SNITCH_ROOT)/target/snitch_cluster/sw/toolchain.mk
+APP ?= layernorm
+
+include ../../../../../../../deps/snitch_cluster/sw/dnn/common.mk
+include ../../common.mk
+
+$(DEP): $(DATA_H)

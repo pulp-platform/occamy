@@ -18,6 +18,7 @@ APP  = offload
 SRCS = src/offload.c
 DEVICE_APPS  = blas/axpy
 DEVICE_APPS += blas/gemm
+DEVICE_APPS += dnn/layernorm
 
 # Compiler toolchain
 RISCV_CC      = riscv64-unknown-elf-gcc

@@ -44,7 +44,7 @@ ALL_OUTPUTS = $(DEPS) $(LIB) $(DUMP)
 #########
 
 .PHONY: all
-all: math $(ALL_OUTPUTS)
+all: $(ALL_OUTPUTS)
 
 .PHONY: clean
 clean:
@@ -67,11 +67,6 @@ $(LIB): $(OBJS) | $(BUILDDIR)
 
 $(DUMP): $(LIB) | $(BUILDDIR)
 	$(RISCV_OBJDUMP) -D $< > $@
-
-# Build math library sources
-.PHONY: math
-math:
-	make -C $(SNITCH_ROOT)/sw/math all
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)

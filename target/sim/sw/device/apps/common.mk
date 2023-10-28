@@ -9,17 +9,25 @@
 MK_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 include $(MK_DIR)/../toolchain.mk
 
+###############
+# Directories #
+###############
+
+# Fixed paths in repository tree
+ROOT        = $(abspath $(MK_DIR)/../../../../../)
+SNITCH_ROOT = $(shell bender path snitch_cluster)
+APPSDIR     = $(abspath $(MK_DIR))
+RUNTIME_DIR = $(ROOT)/target/sim/sw/device/runtime
+SNRT_DIR    = $(SNITCH_ROOT)/sw/snRuntime
+SW_DIR      = $(ROOT)/target/sim/sw/
+MATH_DIR    = $(ROOT)/target/sim/sw/device/math
+
+# Paths relative to the app including this Makefile
+BUILDDIR    = $(abspath build)
+
 ###################
 # Build variables #
 ###################
-
-# Directories
-BUILDDIR    = $(abspath build)
-APPSDIR     = $(abspath $(MK_DIR))
-RUNTIME_DIR = $(abspath $(MK_DIR)/../runtime)
-SNITCH_ROOT = $(shell bender path snitch_cluster)
-SNRT_DIR    = $(SNITCH_ROOT)/sw/snRuntime
-SW_DIR      = $(abspath $(MK_DIR)/../../)
 
 # Dependencies
 INCDIRS += $(RUNTIME_DIR)/src
@@ -29,14 +37,7 @@ INCDIRS += $(SNRT_DIR)/vendor/riscv-opcodes
 INCDIRS += $(SW_DIR)/shared/platform/generated
 INCDIRS += $(SW_DIR)/shared/platform
 INCDIRS += $(SW_DIR)/shared/runtime
-
-# Math library override
-INCDIRS += $(SNITCH_ROOT)/sw/math/arch/riscv64/bits/
-INCDIRS += $(SNITCH_ROOT)/sw/math/arch/generic
-INCDIRS += $(SNITCH_ROOT)/sw/math/src/include
-INCDIRS += $(SNITCH_ROOT)/sw/math/src/internal
-INCDIRS += $(SNITCH_ROOT)/sw/math/include/bits
-INCDIRS += $(SNITCH_ROOT)/sw/math/include
+INCDIRS += $(SNITCH_ROOT)/sw/blas
 
 # Linking sources
 BASE_LD       = $(abspath $(SNRT_DIR)/base.ld)
@@ -55,6 +56,10 @@ RISCV_LDFLAGS += -T$(BASE_LD)
 # Link snRuntime library
 RISCV_LDFLAGS += -L$(SNRT_LIB_DIR)
 RISCV_LDFLAGS += -l$(SNRT_LIB_NAME)
+# Link math library
+RISCV_LDFLAGS += -L$(MATH_DIR)/build
+RISCV_LDFLAGS += -lmath
+
 
 # Objcopy flags
 OBJCOPY_FLAGS  = -O binary

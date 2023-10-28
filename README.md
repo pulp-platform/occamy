@@ -30,4 +30,4 @@ The following files are released under Apache License 2.0 (`Apache-2.0`) see `LI
 
 The following files are released under Solderpad v0.51 (`SHL-0.51`) see `hw/LICENSE`:
 
-- `hw/`
+- `hw/`sdfsdfs
