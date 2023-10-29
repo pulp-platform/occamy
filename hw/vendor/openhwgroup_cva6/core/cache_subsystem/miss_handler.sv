@@ -561,6 +561,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
     // ----------------------
     axi_adapter_arbiter #(
         .NR_PORTS(NR_BYPASS_PORTS),
+        .MAX_OUTSTANDING_REQ(7),
         .req_t   (bypass_req_t),
         .rsp_t   (bypass_rsp_t)
     ) i_bypass_arbiter (
@@ -588,6 +589,7 @@ module miss_handler import ariane_pkg::*; import std_cache_pkg::*; #(
         .AXI_DATA_WIDTH        ( AXI_DATA_WIDTH     ),
         .AXI_USER_WIDTH        ( AXI_USER_WIDTH     ),
         .AXI_ID_WIDTH          ( AXI_ID_WIDTH       ),
+        .MAX_OUTSTANDING_AW    ( 7                  ),
         .axi_req_t             ( axi_req_t          ),
         .axi_rsp_t             ( axi_rsp_t          )
     ) i_bypass_axi_adapter (
@@ -692,6 +694,7 @@ endmodule
 //
 module axi_adapter_arbiter #(
     parameter NR_PORTS = 4,
+    parameter MAX_OUTSTANDING_REQ = 0,
     parameter type req_t = std_cache_pkg::bypass_req_t,
     parameter type rsp_t = std_cache_pkg::bypass_rsp_t
 )(
@@ -705,13 +708,29 @@ module axi_adapter_arbiter #(
     input  rsp_t                rsp_i
 );
 
+    localparam MAX_OUTSTANDING_CNT_WIDTH = $clog2(MAX_OUTSTANDING_REQ + 1) > 0 ? $clog2(MAX_OUTSTANDING_REQ + 1) : 1;
+
+    typedef logic [MAX_OUTSTANDING_CNT_WIDTH-1:0] outstanding_cnt_t;
+
     enum logic { IDLE, SERVING } state_d, state_q;
 
     req_t req_d, req_q;
     logic [NR_PORTS-1:0] sel_d, sel_q;
+    outstanding_cnt_t outstanding_cnt_d, outstanding_cnt_q;
+
+    logic [NR_PORTS-1:0] req_flat;
+    logic any_unselected_port_valid;
+
+    generate
+        for (genvar i = 0; i < NR_PORTS; i++) begin
+            assign req_flat[i] = req_i[i].req;
+        end
+    endgenerate
+    assign any_unselected_port_valid = |(req_flat & ~(1 << sel_q));
 
     always_comb begin
         sel_d = sel_q;
+        outstanding_cnt_d = outstanding_cnt_q;
 
         state_d = state_q;
         req_d   = req_q;
@@ -720,6 +739,7 @@ module axi_adapter_arbiter #(
 
         rsp_o = '0;
         rsp_o[sel_q].rdata = rsp_i.rdata;
+        rsp_o[sel_q].valid = rsp_i.valid;
 
         case (state_q)
 
@@ -736,12 +756,40 @@ module axi_adapter_arbiter #(
                 req_d = req_i[sel_d];
                 req_o = req_i[sel_d];
                 rsp_o[sel_d].gnt = req_i[sel_d].req;
+
+                // Count outstanding transactions, i.e. requests which have been
+                // granted but response hasn't arrived yet
+                if (req_o.req && rsp_i.gnt) begin
+                    req_d.req = 1'b0;
+                    outstanding_cnt_d += 1;
+                end
             end
 
             SERVING: begin
+                // Count outstanding transactions, i.e. requests which have been
+                // granted but response hasn't arrived yet
+                if (req_o.req && rsp_i.gnt) begin
+                    req_d.req = 1'b0;
+                    outstanding_cnt_d += 1;
+                end
                 if (rsp_i.valid) begin
+                    outstanding_cnt_d -= 1;
                     rsp_o[sel_q].valid = 1'b1;
-                    state_d = IDLE;
+
+                    if ((outstanding_cnt_d == 0) && (!req_o.req || rsp_i.gnt)) begin
+                        state_d = IDLE;
+                    end
+                end
+
+                // We can accept multiple outstanding transactions from same port.
+                // To ensure fairness, we allow this only if all other ports are idle
+                if ((!req_o.req || rsp_i.gnt) && !any_unselected_port_valid &&
+                        (outstanding_cnt_d != MAX_OUTSTANDING_REQ)) begin
+                    if (req_i[sel_q].req) begin
+                        req_d = req_i[sel_q];
+                        rsp_o[sel_q].gnt = 1'b1;
+                        state_d = SERVING;
+                    end
                 end
             end
 
@@ -754,10 +802,12 @@ module axi_adapter_arbiter #(
             state_q <= IDLE;
             sel_q   <= '0;
             req_q   <= '0;
+            outstanding_cnt_q <= '0;
         end else begin
             state_q <= state_d;
             sel_q   <= sel_d;
             req_q   <= req_d;
+            outstanding_cnt_q <= outstanding_cnt_d;
         end
     end
     // ------------
@@ -769,7 +819,7 @@ module axi_adapter_arbiter #(
     // make sure that we eventually get an rvalid after we received a grant
     assert property (@(posedge clk_i) rsp_i.gnt |-> ##[1:$] rsp_i.valid )
         else begin $error("There was a grant without a rvalid"); $stop(); end
-    // assert that there is no grant without a request
+    // assert that there is no grant without a request or outstanding transactions
     assert property (@(negedge clk_i) rsp_i.gnt |-> req_o.req)
         else begin $error("There was a grant without a request."); $stop(); end
     // assert that the address does not contain X when request is sent
