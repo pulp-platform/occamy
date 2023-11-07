@@ -15,6 +15,10 @@ int main() {
     // Program Snitch entry point and communication buffer
     program_snitches();
 
+    // Compiler fence to ensure Snitch entry point is
+    // programmed before Snitches are woken up
+    asm volatile("" ::: "memory");
+
     // Start Snitches
     wakeup_snitches_cl();
 
