@@ -193,13 +193,15 @@ test/bootrom.bin: test/bootrom.elf
 rtl: clint plic socctrl hbmctrl quadctrl soc tb
 clean-rtl: clean-clint clean-plic clean-socctrl clean-hbmctrl clean-quadctrl clean-soc clean-tb
 
-MISC_OCCAMYGEN_SV_TARGETS  = $(TARGET_SRC_DIR)/occamy_top.sv
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_soc.sv
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_pkg.sv
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_quadrant_s1.sv
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_quadrant_s1_ctrl.sv
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_xilinx.sv
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_cva6.sv
+MISC_OCCAMYGEN_SV_TEMPLATES  = $(SOURCE_OCCAMY_DIR)/occamy_top.sv.tpl
+MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_soc.sv.tpl
+MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_pkg.sv.tpl
+MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1.sv.tpl
+MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1_ctrl.sv.tpl
+MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_xilinx.sv.tpl
+MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
+
+MISC_OCCAMYGEN_SV_TARGETS  = $(addprefix $(TARGET_SRC_DIR)/,$(notdir $(basename $(MISC_OCCAMYGEN_SV_TEMPLATES))))
 MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_cluster_wrapper.sv
 
 MISC_OCCAMYGEN_TARGETS  = $(MISC_OCCAMYGEN_SV_TARGETS)
@@ -210,7 +212,7 @@ clean-soc:
 	rm -rf $(MISC_OCCAMYGEN_TARGETS) .misc_occamygen_targets_group
 
 $(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
-.misc_occamygen_targets_group: $(CFG)
+.misc_occamygen_targets_group: $(CFG) $(MISC_OCCAMYGEN_SV_TEMPLATES)
 	@echo "[OCCAMYGEN] Generate $(MISC_OCCAMYGEN_TARGETS)"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_SRC_DIR)\
 		--wrapper \
