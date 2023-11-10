@@ -14,6 +14,7 @@
 #include "occamy_start.c"
 #include "printf.c"
 #include "putchar.c"
+#include "ssr.c"
 #include "sync.c"
 #include "sys_dma.c"
 #include "team.c"
