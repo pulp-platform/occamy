@@ -13,15 +13,15 @@ TARGET ?= all
 APP_SUBDIRS = $(addprefix apps/,$(APPS))
 
 SUBDIRS  = runtime
+SUBDIRS += math
 SUBDIRS += $(APP_SUBDIRS)
 
 .PHONY: all $(SUBDIRS)
 
 all: $(SUBDIRS)
 
-runtime:
+$(SUBDIRS):
 	$(MAKE) -C $@ $(TARGET)
 
 # Explicit dependency of apps on runtime
-$(APP_SUBDIRS): runtime
-	$(MAKE) -C $@ $(TARGET)
+$(APP_SUBDIRS): runtime math

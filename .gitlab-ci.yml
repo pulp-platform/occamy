@@ -21,7 +21,7 @@ before_script:
   # yamllint disable rule:line-length
   - $PYTHON -m venv .venv
   - source .venv/bin/activate
-  - bender update
+  - $BENDER update
   - pip install -r python-requirements.txt
   # Install CVA6 compiler toolchain
   - curl -Ls -o riscv-gcc.tar.gz https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-$RISCV_GCC_VERSION-x86_64-linux-ubuntu14.tar.gz
