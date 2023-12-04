@@ -10,19 +10,16 @@ from pathlib import Path
 import sys
 
 sys.path.append(str(Path(__file__).parent / '../../../../../../deps/snitch_cluster/util/sim/'))
-from simulate import run_simulation  # noqa: E402
+from sim_utils import run_simulations  # noqa: E402
+from Simulator import QuestaSimulator  # noqa: E402
 
-UART_LOG = str(Path(__file__).parent / '../../../../uart0.log')
+UART_LOG = 'uart0.log'
 EXPECTED_OUTPUT = "Hello world!\r\n"
 
 
 def parse_args():
     # Argument parsing
     parser = argparse.ArgumentParser(allow_abbrev=True)
-    parser.add_argument(
-        'simulator',
-        help='The simulator to be used',
-    )
     parser.add_argument(
         'sim_bin',
         help='The simulator binary to be used to start the simulation',
@@ -35,8 +32,10 @@ def parse_args():
 
 def main():
     args = parse_args()
-    cmd = f"{args.sim_bin} {args.snitch_bin}"
-    result, _ = run_simulation(cmd, args.simulator, {})
+    simulator = QuestaSimulator(args.sim_bin)
+    simulation = simulator.get_simulation({'elf': args.snitch_bin})
+    result = run_simulations([simulation])
+
     actual_output = ''
     with open(UART_LOG, 'rb') as file:
         actual_output = file.read().decode('ascii')
