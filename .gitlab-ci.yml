@@ -51,9 +51,7 @@ occamy-single-cluster-vsim:
     - make CFG_OVERRIDE=cfg/single-cluster.hjson rtl
     - make sw
     - make bin/occamy_top.vsim
-    - ../../deps/snitch_cluster/util/sim/simulate.py
-        sw/run-single-cluster.yaml --simulator vsim
-        --sim-bin bin/occamy_top.vsim
+    - ./run.py sw/run-single-cluster.yaml --simulator vsim
 
 #####################
 # Full Occamy tests #
@@ -66,6 +64,4 @@ occamy-full-vsim:
     - make CFG_OVERRIDE=cfg/full.hjson rtl
     - make LENGTH=384 sw
     - make bin/occamy_top.vsim
-    - ../../deps/snitch_cluster/util/sim/simulate.py
-        sw/run-full-occamy.yaml --simulator vsim
-        --sim-bin bin/occamy_top.vsim
+    - ./run.py sw/run-full-occamy.yaml --simulator vsim
