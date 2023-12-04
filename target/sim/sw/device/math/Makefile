@@ -4,6 +4,5 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-BENDER ?= bender
-SNITCH_ROOT = $(shell $(BENDER) path snitch_cluster)
-include $(SNITCH_ROOT)/target/snitch_cluster/sw/toolchain.mk
+include ../toolchain.mk
+include $(SNITCH_ROOT)/sw/math/Makefile
