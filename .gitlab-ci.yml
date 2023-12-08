@@ -57,6 +57,12 @@ occamy-single-cluster-vsim:
         sw/run-single-cluster.yaml --simulator vsim
         --sim-bin bin/occamy_top.vsim
 
+# Vivado synth (VCU128)
+occamy-vivado-synth:
+  script:
+    - make -C target/sim CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+    - make -C target/fpga occamy_vcu128 EXT_JTAG=1 XILINX_SYNTHESIS_ONLY=1
+
 #####################
 # Full Occamy tests #
 #####################

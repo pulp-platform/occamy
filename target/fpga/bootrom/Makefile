@@ -8,8 +8,6 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := ${MKFILE_DIR}../../../../..
 
-include $(ROOT)/util/Makefrag
-
 CVA6_SDK  ?= $(ROOT)/../cva6-sdk
 UBOOT_SPL_BIN ?= $(CVA6_SDK)/u-boot/spl/u-boot-spl.bin
 
@@ -28,7 +26,7 @@ CFLAGS 	= -Os -g -Werror -ffreestanding -fno-strict-aliasing
 CFLAGS += -static -nostartfiles -nostartfiles
 CFLAGS += -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-stack-protector
 CFLAGS += -mno-save-restore -mstrict-align
-CFLAGS += -mabi=lp64d -march=rv64imafd
+CFLAGS += -mabi=lp64d -march=rv64imafd_zifencei
 CFLAGS += -mcmodel=medany
 
 GIT_SHA := $(shell git describe --match=NeVeRmAtCh --always --abbrev=10 --dirty)
@@ -67,4 +65,4 @@ clean:
 %.tcl:  %.bin
 	@echo "TCL   <= $<"
 	@$(call BINRAY_SIZE_CHECK,$<,1000000)
-	@$(BIN2JTAG) -c32 -b 0 -d hw_axi_1 $< > $@
+	bin2jtag -c32 -b 0 -d hw_axi_1 $< > $@

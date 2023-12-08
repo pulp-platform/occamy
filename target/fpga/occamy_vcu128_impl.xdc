@@ -15,6 +15,11 @@ set_property IOSTANDARD LVCMOS18 [get_ports uart_rx_i_0]
 set_property PACKAGE_PIN BN26 [get_ports uart_tx_o_0]
 set_property IOSTANDARD LVCMOS18 [get_ports uart_tx_o_0]
 
+# Assume no glitchless mux needs to be clock capable (causes pb on resets)
+set all_in_mux [get_nets -of [ get_pins -filter { DIRECTION == IN } -of [get_cells -hier -filter { ORIG_REF_NAME == tc_clk_mux2 || REF_NAME == tc_clk_mux2 }]]]
+set_property CLOCK_DEDICATED_ROUTE FALSE $all_in_mux
+set_property CLOCK_BUFFER_TYPE NONE $all_in_mux
+
 # CPU_RESET pushbutton switch
 set_false_path -from [get_port reset] -to [all_registers]
 set_property PACKAGE_PIN BM29      [get_ports reset]

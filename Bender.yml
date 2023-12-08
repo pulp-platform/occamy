@@ -38,6 +38,7 @@ workspace:
 
 export_include_dirs:
   - hw/spm_interface/include
+  - hw/occamy
 
 sources:
   # future
@@ -46,6 +47,7 @@ sources:
   # snitch_read_only_cache
   - hw/snitch_read_only_cache/src/snitch_axi_to_cache.sv
   - hw/snitch_read_only_cache/src/snitch_read_only_cache.sv
+
   - target: test
     files:
       - hw/snitch_read_only_cache/test/snitch_read_only_cache_tb.sv
