@@ -99,6 +99,12 @@ if {[get_property PROGRESS [get_run $run]] != "100%"} {
     puts "Skipping 100% complete run: $run"
 }
 
+if {[info exists ::env(XILINX_SYNTHESIS_ONLY)] && $::env(XILINX_SYNTHESIS_ONLY)==1} {
+  puts "XILINX_SYNTHESIS_ONLY is set, stopping now..."
+  exit
+}
+
+
 # Create ILA. Attach all signals that were previously marked debug.
 # For occamy-internal signals: Add "(* mark_debug = "true" *)" before signal definition in HDL code.
 # For blockdesign-level signals: Use "set_property HDL_ATTRIBUTE.DEBUG $DEBUG [get_bd_nets ...]" in occamy_vcu128_bd.tcl
