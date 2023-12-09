@@ -62,7 +62,7 @@ def get_send_job_information_time(app, mcast=0, size=L, nr_clusters=1):
 def get_send_interrupt_time(app, mcast=0, size=L, nr_clusters=1):
     df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
-    return df.loc[0, '7_tend']- df.loc[0, '7_tstart']
+    return df.loc[0, '7_tend'] - df.loc[0, '7_tstart']
 
 def get_wakeup_time(app, mcast=0, size=L, nr_clusters=1):
     df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
@@ -258,8 +258,10 @@ def baseline_runtime(apps, sizes):
 def runtime_comparison(apps, sizes):
     x = N_CLUSTERS
 
+    plt.rcParams['font.size'] = '5'
     fig, ax = plt.subplots(1, len(apps), layout="constrained")
-    fig.set_figwidth(3.8)
+    fig.set_figwidth(1.83)
+    fig.set_figheight(1.53)
 
     if not hasattr(ax, '__len__'):
         ax = [ax]
@@ -273,7 +275,7 @@ def runtime_comparison(apps, sizes):
 
         ax[i].set_xticks(x)
         ax[i].set_xlim([0, 33])
-        ax[i].set_title(APP_LABELS[app])
+        # ax[i].set_title(APP_LABELS[app])
         ax[i].legend()
         ax[i].grid(color='gainsboro', which='both', linewidth=0.5)
 
@@ -357,8 +359,10 @@ def strong_scaling(app):
 
 def mcast_speedup(apps, sizes_per_cluster):
 
+    plt.rcParams['font.size'] = '5'
     fig, ax = plt.subplots(len(apps), 1, layout="constrained")
-    fig.set_figwidth(3.8)
+    fig.set_figwidth(1.83)
+    fig.set_figheight(1.53)
 
     if not hasattr(ax, '__len__'):
         ax = [ax]
@@ -382,7 +386,10 @@ def mcast_speedup(apps, sizes_per_cluster):
         print(list(set(all_x)))
 
         if j == (len(apps) - 1):
-            ax[j].set_xticks(list(set(all_x)), [str(x) for x in list(set(all_x))], rotation=-45)
+            real_all_x = [128,256, 512, 1024, 2048]
+            almost_all_x_str = ['128', '', '512', '1024', '2048']
+            # ax[j].set_xticks(list(set(all_x)), [str(x) for x in list(set(all_x))], rotation=-45)
+            ax[j].set_xticks(real_all_x, almost_all_x_str, rotation=-45)
         else:
             ax[j].set_xticks(list(set(all_x)))
             ax[j].tick_params(
@@ -393,7 +400,7 @@ def mcast_speedup(apps, sizes_per_cluster):
 
         ax[j].set_ylim([1, ax[j].get_ylim()[1]])
         ax[j].legend()
-        ax[j].set_title(APP_LABELS[app])
+        # ax[j].set_title(APP_LABELS[app])
         ax[j].grid(color='gainsboro', linewidth=0.5)
 
     fig.supxlabel('Problem size')
