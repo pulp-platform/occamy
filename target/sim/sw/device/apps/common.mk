@@ -99,6 +99,9 @@ $(BUILDDIR):
 $(DEP): $(SRCS) | $(BUILDDIR)
 	$(RISCV_CC) $(RISCV_CFLAGS) -MM -MT '$(ELF)' $< > $@
 
+$(BUILDDIR)/%.o: $(SRC_DIR)/%.c | $(BUILDDIR)
+	$(RISCV_CC) $(RISCV_CFLAGS) -c $< -o $@
+
 $(ELF): $(DEP) $(LD_SRCS) | $(BUILDDIR)
 	$(RISCV_CC) $(RISCV_CFLAGS) $(RISCV_LDFLAGS) $(SRCS) -o $@
 

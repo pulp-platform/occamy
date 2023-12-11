@@ -7,6 +7,7 @@
 # Add user applications to APPS variable
 APPS  = blas/axpy
 APPS += blas/gemm
+APPS += libomptarget_device
 
 TARGET ?= all
 
