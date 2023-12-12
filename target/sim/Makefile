@@ -78,6 +78,7 @@ CVA6_TRACE            = trace_hart_0.log
 # to be rebuilt. This file is used to express this condition as a
 # prerequisite for other rules.
 CFG = cfg/lru.hjson
+DEFAULT_CFG = cfg/U-Q6C4.hjson
 
 #####################
 # Simulator options #
@@ -158,7 +159,7 @@ VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
 $(CFG): FORCE
 	@# If the LRU config file doesn't exist, we use the default config.
 	@if [ ! -e $@ ] ; then \
-		DEFAULT_CFG="cfg/full.hjson"; \
+		DEFAULT_CFG=$(DEFAULT_CFG); \
 		echo "Using default config file: $$DEFAULT_CFG"; \
 		cp $$DEFAULT_CFG $@; \
 	fi

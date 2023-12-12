@@ -25,7 +25,7 @@ docs:
 occamy-single-cluster-vsim:
   script:
     - cd target/sim
-    - make CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+    - make CFG_OVERRIDE=cfg/U-Q1C1.hjson rtl
     - make sw
     - make bin/occamy_top.vsim
     - ./run.py sw/run-single-cluster.yaml --simulator vsim
@@ -38,7 +38,7 @@ occamy-single-cluster-vsim:
 occamy-full-vsim:
   script:
     - cd target/sim
-    - make CFG_OVERRIDE=cfg/full.hjson rtl
+    - make CFG_OVERRIDE=cfg/U-Q6C4.hjson rtl
     - make sw
     - make bin/occamy_top.vsim
     - ./run.py sw/run-full-occamy.yaml --simulator vsim
@@ -54,7 +54,7 @@ occamy-mcast-vsim:
     DATA_CFG: "$(PWD)/sw/device/apps/blas/gemm/params.hjson"
   script:
     - cd target/sim
-    - make CFG_OVERRIDE=cfg/M-Q8C4.hjson rtl
+    - make CFG_OVERRIDE=cfg/M-Q4C4.hjson rtl
     - make LENGTH=1024 sw
     - make bin/occamy_top.vsim
-    - ./run.py sw/run-full-occamy.yaml -j
+    - ./run.py sw/run-mcast-occamy.yaml -j
