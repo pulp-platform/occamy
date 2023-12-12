@@ -55,4 +55,4 @@ jobs:
           submodules: 'recursive'
       - name: Generate single-cluster Occamy RTL sources
         run: |
-          make -C target/sim CFG_OVERRIDE=cfg/single-cluster.hjson rtl
+          make -C target/sim CFG_OVERRIDE=cfg/U-Q1C1.hjson rtl

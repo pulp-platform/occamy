@@ -9,6 +9,7 @@
 #include "cluster_interrupts.c"
 #include "dma.c"
 #include "global_interrupts.c"
+#include "mcast.c"
 #include "occamy_device.c"
 #include "occamy_memory.c"
 #include "occamy_start.c"
