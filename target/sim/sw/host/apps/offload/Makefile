@@ -20,10 +20,10 @@ DEVICE_APPS  = blas/axpy
 DEVICE_APPS += blas/gemm
 
 # Compiler toolchain
-RISCV_CC      = riscv64-unknown-elf-gcc
-RISCV_OBJCOPY = riscv64-unknown-elf-objcopy
-RISCV_OBJDUMP = riscv64-unknown-elf-objdump
-RISCV_READELF = riscv64-unknown-elf-readelf
+HOST_RISCV_CC      ?= riscv64-unknown-elf-gcc
+HOST_RISCV_OBJCOPY ?= riscv64-unknown-elf-objcopy
+HOST_RISCV_OBJDUMP ?= riscv64-unknown-elf-objdump
+HOST_RISCV_READELF ?= riscv64-unknown-elf-readelf
 
 # Directories
 BUILDDIR    = $(abspath build)
@@ -103,41 +103,41 @@ $(DEVICE_BUILDDIRS):
 	mkdir -p $@
 
 $(DEP): $(SRCS) | $(BUILDDIR)
-	$(RISCV_CC) $(RISCV_CFLAGS) -MM -MT '$(PARTIAL_ELF)' $< > $@
+	$(HOST_RISCV_CC) $(RISCV_CFLAGS) -MM -MT '$(PARTIAL_ELF)' $< > $@
 	for elf in $(ELFS); do \
-		$(RISCV_CC) $(RISCV_CFLAGS) -MM -MT '$$elf' $< >> $@; \
+		$(HOST_RISCV_CC) $(RISCV_CFLAGS) -MM -MT '$$elf' $< >> $@; \
 	done
 
 # Partially linked object
 $(PARTIAL_ELF): $(DEP) $(LD_SRCS) | $(BUILDDIR)
-	$(RISCV_CC) $(RISCV_CFLAGS) $(RISCV_LDFLAGS) $(SRCS) -o $@
+	$(HOST_RISCV_CC) $(RISCV_CFLAGS) $(RISCV_LDFLAGS) $(SRCS) -o $@
 
 $(PARTIAL_DUMP): $(PARTIAL_ELF) | $(BUILDDIR)
-	$(RISCV_OBJDUMP) -D $< > $@
+	$(HOST_RISCV_OBJDUMP) -D $< > $@
 
 # Device object relocation address
 $(DEVICE_DIR)/apps/%/build/origin.ld: $(PARTIAL_ELF) | $(DEVICE_DIR)/apps/%/build
-	@RELOC_ADDR=$$($(RISCV_OBJDUMP) -t $< | grep snitch_main | cut -c9-16); \
+	@RELOC_ADDR=$$($(HOST_RISCV_OBJDUMP) -t $< | grep snitch_main | cut -c9-16); \
 	echo "Writing device object relocation address 0x$$RELOC_ADDR to $@"; \
 	echo "L3_ORIGIN = 0x$$RELOC_ADDR;" > $@
 
 # Generates a rule which looks somewhat like:
 #
 # $(BUILDDIR)/$(APP)-%.elf: $(DEVICE_DIR)/apps/%/build/%.bin $(DEP) $(LD_SRCS) | $(BUILDDIR)
-# 	$(RISCV_CC) $(RISCV_CFLAGS) -DDEVICEBIN=\"$<\" $(RISCV_LDFLAGS) $(SRCS) -o $@
+# 	$(HOST_RISCV_CC) $(RISCV_CFLAGS) -DDEVICEBIN=\"$<\" $(RISCV_LDFLAGS) $(SRCS) -o $@
 #
 # This approach is required cause you can't use multiple %-signs in a prerequisite
 define elf_rule_template =
     $$(BUILDDIR)/$$(APP)-$(notdir $(1)).elf: $$(DEVICE_DIR)/apps/$(1)/build/$(notdir $(1)).bin $$(DEP) $$(LD_SRCS) | $$(BUILDDIR)
-		$$(RISCV_CC) $$(RISCV_CFLAGS) -DDEVICEBIN=\"$$<\" $$(RISCV_LDFLAGS) $$(SRCS) -o $$@
+		$$(HOST_RISCV_CC) $$(RISCV_CFLAGS) -DDEVICEBIN=\"$$<\" $$(RISCV_LDFLAGS) $$(SRCS) -o $$@
 endef
 $(foreach f,$(DEVICE_APPS),$(eval $(call elf_rule_template,$(f))))
 
 $(BUILDDIR)/$(APP)-%.dump: $(BUILDDIR)/$(APP)-%.elf | $(BUILDDIR)
-	$(RISCV_OBJDUMP) -D $< > $@
+	$(HOST_RISCV_OBJDUMP) -D $< > $@
 
 $(BUILDDIR)/$(APP)-%.dwarf: $(BUILDDIR)/$(APP)-%.elf | $(BUILDDIR)
-	$(RISCV_READELF) --debug-dump $< > $@
+	$(HOST_RISCV_READELF) --debug-dump $< > $@
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
