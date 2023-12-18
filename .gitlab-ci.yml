@@ -13,7 +13,7 @@ variables:
   QUESTA_SEPP: questa-2022.3
   LLVM_BINROOT: /usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin
   CLANG: /usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin/clang
-  RISCV_GCC_VERSION: 8.3.0-2020.04.0
+  RISCV_GCC_VERSION: 10.1.0-2020.08.2
 
 before_script:
   # yamllint disable rule:line-length
@@ -57,7 +57,8 @@ occamy-single-cluster-vsim:
 occamy-vivado-synth:
   script:
     - make -C target/sim CFG_OVERRIDE=cfg/single-cluster.hjson rtl
-    - make -C target/fpga occamy_vcu128 EXT_JTAG=1 XILINX_SYNTHESIS_ONLY=1
+    - touch empty.bin
+    - make -C target/fpga occamy_vcu128 EXT_JTAG=1 XILINX_SYNTHESIS_ONLY=1 UBOOT_SPL_BIN=$(realpath empty.bin)
 
 #####################
 # Full Occamy tests #
