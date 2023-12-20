@@ -50,7 +50,7 @@ occamy-full-vsim:
 # Questa
 occamy-mcast-vsim:
   variables:
-    RISCV_CFLAGS: "-DUSE_MULTICAST"
+    RISCV_CFLAGS: "-DUSE_MULTICAST -DOFFLOAD_AXPY"
     DATA_CFG: "$(PWD)/sw/device/apps/blas/gemm/params.hjson"
   script:
     - cd target/sim
@@ -58,3 +58,12 @@ occamy-mcast-vsim:
     - make LENGTH=1024 sw
     - make bin/occamy_top.vsim
     - ./run.py sw/run-mcast-occamy.yaml -j
+
+########################
+# Offload Occamy tests #
+########################
+
+occamy-offload-vsim:
+  script:
+    - cd target/sim/sw/host/apps/experimental_offload
+    - ./run.py ci.yml -j --hw-cfg Q4C4
