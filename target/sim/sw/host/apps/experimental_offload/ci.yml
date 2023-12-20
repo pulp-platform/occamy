@@ -1,0 +1,31 @@
+# Copyright 2023 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Luca Colagrande <colluca@iis.ee.ethz.ch>
+
+runs:
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 2
+    multicast: true
+  - app: mc
+    length: 256
+    n_clusters_to_use: 2
+    multicast: true
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 2
+    multicast: true
+  - app: axpy
+    length: 1024
+    n_clusters_to_use: 2
+    multicast: false
+  - app: mc
+    length: 256
+    n_clusters_to_use: 2
+    multicast: false
+  - app: gemm
+    length: 2
+    n_clusters_to_use: 2
+    multicast: false
