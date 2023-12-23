@@ -258,9 +258,15 @@ void wakeup_master_snitches() {
 /**
  * @brief Waits until snitches are done executing
  */
-static inline void wait_snitches_done() {
+static inline int wait_snitches_done() {
     wait_sw_interrupt();
     clear_host_sw_interrupt();
+    int retval = *soc_ctrl_scratch_ptr(3);
+    // LSB signals completion
+    if (retval & 1)
+        return retval >> 1;
+    else
+        return -1;
 }
 
 static inline volatile uint32_t* get_shared_lock() {

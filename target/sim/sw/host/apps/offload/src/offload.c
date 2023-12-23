@@ -18,9 +18,6 @@ int main() {
     // Start Snitches
     wakeup_snitches_cl();
 
-    // Wait for job done
-    wait_snitches_done();
-
-    // Exit routine
-    mcycle();
+    // Wait for job done and return Snitch exit code
+    return wait_snitches_done();
 }
