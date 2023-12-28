@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "offload.h"
+#include <math.h>
 #include <stddef.h>
 #include "host.c"
-#include <math.h>
 
 #if defined(OFFLOAD_AXPY)
 #include "axpy/data/data.h"
@@ -31,7 +31,7 @@ usr_data_t usr_data __attribute__((section(".nc_spm")));
 double pi __attribute__((section(".wide_spm")));
 
 static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
-    *((volatile uint32_t*)(CLINT_BASE_ADDR + CLINT_OFFLOAD0_REG_OFFSET)) =
+    *((volatile uint32_t *)(CLINT_BASE_ADDR + CLINT_OFFLOAD0_REG_OFFSET)) =
         n_clusters_to_use;
 
     switch (job->id) {
@@ -138,9 +138,12 @@ int main() {
         WIDE_SPM_ADDR((uint64_t)y), WIDE_SPM_ADDR((uint64_t)z)};
     job_t axpy = {J_AXPY, 0, axpy_args};
 #elif defined(OFFLOAD_GEMM)
-    gemm_args_t gemm_args = {
-        M / n_clusters_to_use, N, K, WIDE_SPM_ADDR((uint64_t)a),
-        WIDE_SPM_ADDR((uint64_t)b), WIDE_SPM_ADDR((uint64_t)c)};
+    gemm_args_t gemm_args = {M / n_clusters_to_use,
+                             N,
+                             K,
+                             WIDE_SPM_ADDR((uint64_t)a),
+                             WIDE_SPM_ADDR((uint64_t)b),
+                             WIDE_SPM_ADDR((uint64_t)c)};
     job_args_t job_args;
     job_args.gemm = gemm_args;
     job_t gemm = {J_GEMM, 0, job_args};
@@ -216,7 +219,7 @@ int main() {
     sys_dma_blk_memcpy((uint64_t)c, WIDE_SPM_ADDR((uint64_t)c),
                        M * N * sizeof(double));
 #elif defined(OFFLOAD_MONTECARLO)
-    double pi_estimate = *((double*)mc_args.result_ptr);
+    double pi_estimate = *((double *)mc_args.result_ptr);
     double err = fabs(pi_estimate - 3.14);
     if (err > 0.5) return 1;
 #endif

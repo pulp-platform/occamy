@@ -5,6 +5,8 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
+# flake8: noqa
+
 import argparse
 import pandas as pd
 import numpy as np

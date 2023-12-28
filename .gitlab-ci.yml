@@ -41,7 +41,7 @@ occamy-full-vsim:
     - make CFG_OVERRIDE=cfg/U-Q6C4.hjson rtl
     - make sw
     - make bin/occamy_top.vsim
-    - ./run.py sw/run-full-occamy.yaml --simulator vsim
+    - ./run.py sw/run-full-occamy.yaml --simulator vsim -j
 
 ##########################
 # Multicast Occamy tests #
@@ -50,7 +50,7 @@ occamy-full-vsim:
 # Questa
 occamy-mcast-vsim:
   variables:
-    RISCV_CFLAGS: "-DUSE_MULTICAST -DOFFLOAD_AXPY"
+    RISCV_CFLAGS: "-DUSE_MULTICAST -DOFFLOAD_AXPY -DN_CLUSTERS_TO_USE=1"
     DATA_CFG: "$(PWD)/sw/device/apps/blas/gemm/params.hjson"
   script:
     - cd target/sim

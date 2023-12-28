@@ -5,7 +5,6 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-import argparse
 import os
 from pathlib import Path
 import signal
@@ -15,7 +14,7 @@ import yaml
 from termcolor import cprint, colored
 
 sys.path.append(str(Path(__file__).parent / '../../../../../../deps/snitch_cluster/util/sim/'))
-import sim_utils
+import sim_utils  # noqa: E402
 from Simulator import QuestaSimulator  # noqa: E402
 
 FILE_DIR = Path(__file__).parent.resolve()
@@ -80,7 +79,6 @@ def build_hw(tests, dry_run=False):
 
 
 def post_process_traces(test, dry_run=False):
-    app = test['app']
     n_clusters_to_use = test['n_clusters_to_use']
     logdir = test['run_dir'] / 'logs'
     device_elf = test['device_elf']
@@ -101,7 +99,7 @@ def post_process_traces(test, dry_run=False):
 
 # Get tests from a test list file
 def get_tests(testlist, run_dir, hw_cfg):
-    
+
     # Get tests from test list file
     testlist_path = Path(testlist).absolute()
     with open(testlist_path, 'r') as f:
@@ -129,12 +127,12 @@ def get_tests(testlist, run_dir, hw_cfg):
         sim_bin = TARGET_DIR / BIN_DIR / full_hw_cfg / 'occamy_top.vsim'
         cflags = f'-DN_CLUSTERS_TO_USE={n_clusters_to_use}'
         if multicast:
-            cflags += f' -DMULTICAST'
+            cflags += ' -DMULTICAST'
         if app == 'axpy':
-            cflags += f' -DOFFLOAD_AXPY'
+            cflags += ' -DOFFLOAD_AXPY'
             layout = 'layout.csv'
         elif app == 'gemm':
-            cflags += f' -DOFFLOAD_GEMM'
+            cflags += ' -DOFFLOAD_GEMM'
             layout = 'layout.csv'
         elif app == 'mc':
             cflags += f' -DOFFLOAD_MONTECARLO -DMC_LENGTH={length}'
