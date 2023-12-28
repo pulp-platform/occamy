@@ -5,7 +5,8 @@
 #define XSSR
 #include "gemm.h"
 
-void matmul(uint32_t M, uint32_t N, uint32_t K, double* A, double* B, double* C) {
+void matmul(uint32_t M, uint32_t N, uint32_t K, double* A, double* B,
+            double* C) {
     const uint32_t compute_num = snrt_cluster_compute_core_num();
     const uint32_t compute_id = snrt_cluster_core_idx();
 
@@ -28,15 +29,15 @@ void matmul(uint32_t M, uint32_t N, uint32_t K, double* A, double* B, double* C)
     const uint32_t ssr0_b[3] = {K, N, m};
     const uint32_t ssr0_i[3] = {sizeof(double), 0, sizeof(double) * stride_a};
 
-    snrt_ssr_loop_3d(SNRT_SSR_DM0, ssr0_b[0], ssr0_b[1], ssr0_b[2],
-                        ssr0_i[0], ssr0_i[1], ssr0_i[2]);
+    snrt_ssr_loop_3d(SNRT_SSR_DM0, ssr0_b[0], ssr0_b[1], ssr0_b[2], ssr0_i[0],
+                     ssr0_i[1], ssr0_i[2]);
 
     // Second matrix is stored in transposed format
     const uint32_t ssr1_b[3] = {K, N, m};
     const uint32_t ssr1_i[3] = {8, 8 * stride_b, 0};
 
-    snrt_ssr_loop_3d(SNRT_SSR_DM1, ssr1_b[0], ssr1_b[1], ssr1_b[2],
-                        ssr1_i[0], ssr1_i[1], ssr1_i[2]);
+    snrt_ssr_loop_3d(SNRT_SSR_DM1, ssr1_b[0], ssr1_b[1], ssr1_b[2], ssr1_i[0],
+                     ssr1_i[1], ssr1_i[2]);
 
     // SSR start address need to be configured each time
     snrt_ssr_read(SNRT_SSR_DM0, SNRT_SSR_3D, a);
@@ -50,7 +51,8 @@ void matmul(uint32_t M, uint32_t N, uint32_t K, double* A, double* B, double* C)
             asm volatile(
                 "frep.o %[n_frep], 1, 0, 0 \n"
                 "fmadd.d %[accum], ft0, ft1, %[accum] \n"
-                : [ accum ] "+f"(accum) : [ n_frep ] "r"(K - 1)
+                : [ accum ] "+f"(accum)
+                : [ n_frep ] "r"(K - 1)
                 : "ft0", "ft1", "ft2");
 
             // Store results back
