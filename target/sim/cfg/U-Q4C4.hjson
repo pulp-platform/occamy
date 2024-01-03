@@ -86,7 +86,7 @@
     }
     narrow_xbar_slv_id_width: 4,
     narrow_xbar_user_width: 5, // clog2(total number of clusters)
-    nr_s1_quadrant: 8,
+    nr_s1_quadrant: 4,
     s1_quadrant: {
       nr_clusters: 4,
       // number of pending transactions on the narrow/wide network
