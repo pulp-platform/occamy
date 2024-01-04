@@ -6,7 +6,7 @@
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-ROOT        := ${MKFILE_DIR}../../../../..
+ROOT        := ${MKFILE_DIR}../../..
 
 CVA6_SDK  ?= $(ROOT)/../cva6-sdk
 UBOOT_SPL_BIN ?= $(CVA6_SDK)/u-boot/spl/u-boot-spl.bin
@@ -55,9 +55,6 @@ bootrom-spl.bin: bootrom.S $(OBJS_C) bootrom.ld occamy.dtb
 	$(OBJDUMP) -d bootrom-spl.elf > bootrom-spl.dump
 	$(OBJCOPY) -O binary bootrom-spl.elf bootrom-spl.bin
 
-%.coe: %.bin
-	bin2coe -i $< -o $@ -w 32
-
 clean:
 	rm -rf *.bin *.coe *.dump src/*.o *.dtb *.elf *.tcl
 
@@ -65,4 +62,5 @@ clean:
 %.tcl:  %.bin
 	@echo "TCL   <= $<"
 	@$(call BINRAY_SIZE_CHECK,$<,1000000)
-	bin2jtag -c32 -b 0 -d hw_axi_1 $< > $@
+	python3 $(ROOT)/util/bin2jtag.py -c32 -b 0 -d hw_axi_1 $< > $@
+
