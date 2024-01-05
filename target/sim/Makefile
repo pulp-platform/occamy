@@ -9,7 +9,7 @@
 # Makefile invocation #
 #######################
 
-DEBUG        ?= OFF # ON to turn on debugging symbols
+DEBUG        ?= OFF # ON to turn on debugging symbols and wave logging
 CFG_OVERRIDE ?=     # Override default config file
 
 .DEFAULT_GOAL := help
@@ -87,9 +87,6 @@ DEFAULT_CFG = cfg/U-Q6C4.hjson
 VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
 VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
 
-VSIM_FLAGS += -t 1ps
-VSIM_FLAGS += -voptargs=+acc
-VSIM_FLAGS += -do "log -r /*; run -a"
 # Downgraded from error as VSIM *wrongly* reports illegal enum assignments in riscv_dbg 4-phase CDCs
 # TODO: Workaround; revise
 VSIM_FLAGS += -warning 8386
