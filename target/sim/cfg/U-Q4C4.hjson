@@ -77,13 +77,13 @@
       periph_axi_lite_narrow_plic_cfg: 1,
       periph_axi_lite_narrow_spim_cfg: 1,
       periph_axi_lite_narrow_timer_cfg: 1,
-    }
+    },
     txns: {
       wide_and_inter: 128,
       wide_to_hbm: 128,
       narrow_and_wide: 16,
       rmq: 4,
-    }
+    },
     narrow_xbar_slv_id_width: 4,
     narrow_xbar_user_width: 5, // clog2(total number of clusters)
     nr_s1_quadrant: 4,
@@ -99,23 +99,23 @@
           sets: 2,
           max_trans: 32,
           address_regions: 4,
-      }
+      },
       narrow_tlb_cfg: {
           max_trans: 32,
           l1_num_entries: 8,
           l1_cut_ax: true,
-      }
+      },
       wide_tlb_cfg: {
           max_trans: 32,
           l1_num_entries: 8,
           l1_cut_ax: true,
-      }
+      },
       wide_xbar: {
         max_slv_trans: 32,
         max_mst_trans: 32,
         fall_through: false,
       },
-      wide_xbar_slv_id_width: 3
+      wide_xbar_slv_id_width: 3,
       narrow_xbar: {
         max_slv_trans: 8,
         max_mst_trans: 8,
@@ -127,10 +127,10 @@
       cfg_base_offset: 65536 // 0x10000
     },
     cluster: {
-        name: "occamy_cluster"
+        name: "occamy_cluster",
         boot_addr: 4096, // 0x1000
         cluster_base_addr: 268435456, // 0x10000000
-        cluster_base_offset: 262144 // 0x40000
+        cluster_base_offset: 262144, // 0x40000
         cluster_base_hartid: 1,
         addr_width: 48,
         data_width: 64,
@@ -142,11 +142,11 @@
         cluster_periph_size: 64, // kB
         zero_mem_size: 64, // kB
         dma_data_width: 512,
+        dma_user_width: 1,
         dma_axi_req_fifo_depth: 24,
         dma_req_fifo_depth: 8,
         narrow_trans: 4,
         wide_trans: 32,
-        dma_user_width: 1,
         // We don't need Snitch debugging in Occamy
         enable_debug: false,
         // We don't need Snitch (core-internal) virtual memory support
@@ -169,7 +169,7 @@
             lat_noncomp: 1,
             lat_conv: 2,
             lat_sdotp: 3,
-            fpu_pipe_config: "BEFORE"
+            fpu_pipe_config: "BEFORE",
             narrow_xbar_latency: "CUT_ALL_PORTS",
             wide_xbar_latency: "CUT_ALL_PORTS",
             // Isolate the core.
@@ -185,8 +185,8 @@
             // Hive 0
             {
                 icache: {
-                    size: 16, // total instruction cache size in kByte
-                    sets: 8, // number of ways
+                    size: 8, // total instruction cache size in kByte
+                    sets: 2, // number of ways
                     cacheline: 256 // word size in bits
                 },
                 cores: [
@@ -202,7 +202,7 @@
                 ]
             }
         ],
-    }
+    },
     // Templates.
     compute_core_template: {
         isa: "rv32imafd",
@@ -236,10 +236,10 @@
     dma_core_template: {
         isa: "rv32imafd",
         Xdiv_sqrt: true,
-        # isa: "rv32ema",
-        xdma: true
-        xssr: false
-        xfrep: false
+        // isa: "rv32ema",
+        xdma: true,
+        xssr: false,
+        xfrep: false,
         xf16: false,
         xf16alt: false,
         xf8: false,
@@ -253,7 +253,7 @@
         num_sequencer_instructions: 16,
         num_dtlb_entries: 1,
         num_itlb_entries: 1,
-    }
+    },
     // peripherals
     peripherals: {
         rom: {
@@ -358,7 +358,7 @@
     spm_narrow: {
       address: 1879048192, // 0x7000_0000
       length: 524288, // 512 kiB 0x8_0000
-      # An uncached alias address space of the same length
+      // An uncached alias address space of the same length
       uncached_alias: 1879572480, // 0x7008_0000
     },
     spm_wide: {
@@ -376,7 +376,7 @@
     hbi: {
         address: 1099511627776, // 0x100_0000_0000
         length: 1099511627776, // 1 TiB 0x100_0000_0000
-    }
+    },
     hbm: {
         address_0: 2147483648, // 0x8000_0000
         address_1: 68719476736, // 0x10_0000_0000
@@ -389,7 +389,7 @@
                 length: 4194304, // 4 MiB 0x40_0000
             },
             phy: {
-                address: 150994944 // 0x0900_0000
+                address: 150994944, // 0x0900_0000
                 length: 1048576, // 1 MiB 0x10_0000
             },
             seq: {
