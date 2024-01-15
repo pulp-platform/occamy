@@ -2,7 +2,7 @@
 # Unless a later match takes precedence, global owners below will be
 # requested for review when someone opens a pull request.
 
-* @GiannaP @colluca @paulsc96
+* @fischeti @colluca @paulsc96
 
-target/sim/sw @colluca @viv-eth
+target/sim/sw @colluca @viv-eth @fischeti
 target/fpga @niwis @CyrilKoe
