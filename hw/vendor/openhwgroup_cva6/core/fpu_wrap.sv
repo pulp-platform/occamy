@@ -518,6 +518,7 @@ module fpu_wrap import ariane_pkg::*; (
     ) i_fpnew_bulk (
       .clk_i,
       .rst_ni,
+      .hart_id_i      ( '0                                  ),
       .operands_i     ( fpu_operands                        ),
       .rnd_mode_i     ( fpnew_pkg::roundmode_e'(fpu_rm)     ),
       .op_i           ( fpnew_pkg::operation_e'(fpu_op)     ),
@@ -527,6 +528,7 @@ module fpu_wrap import ariane_pkg::*; (
       .int_fmt_i      ( fpnew_pkg::int_format_e'(fpu_ifmt)  ),
       .vectorial_op_i ( fpu_vec_op                          ),
       .tag_i          ( fpu_tag                             ),
+      .simd_mask_i    ( '1                                  ),
       .in_valid_i     ( fpu_in_valid                        ),
       .in_ready_o     ( fpu_in_ready                        ),
       .flush_i,
