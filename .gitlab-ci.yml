@@ -10,9 +10,7 @@ variables:
   CLANG_FORMAT: clang-format-10.0.1
   CC: gcc-9.2.0
   CXX: g++-9.2.0
-  VCS: vcs-2020.12
-  VERILATOR: verilator-4.110
-  QUESTA: questa-2022.3
+  QUESTA_SEPP: questa-2022.3
   LLVM_BINROOT: /usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin
   CLANG: /usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin/clang
   RISCV_GCC_VERSION: 8.3.0-2020.04.0
@@ -21,7 +19,7 @@ before_script:
   # yamllint disable rule:line-length
   - $PYTHON -m venv .venv
   - source .venv/bin/activate
-  - bender update
+  - $BENDER update
   - pip install -r python-requirements.txt
   # Install CVA6 compiler toolchain
   - curl -Ls -o riscv-gcc.tar.gz https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-$RISCV_GCC_VERSION-x86_64-linux-ubuntu14.tar.gz
@@ -52,10 +50,8 @@ occamy-single-cluster-vsim:
     - cd target/sim
     - make CFG_OVERRIDE=cfg/single-cluster.hjson rtl
     - make sw
-    - $QUESTA make bin/occamy_top.vsim
-    - $QUESTA ../../deps/snitch_cluster/util/sim/simulate.py
-        sw/run-single-cluster.yaml --simulator vsim
-        --sim-bin bin/occamy_top.vsim
+    - make bin/occamy_top.vsim
+    - ./run.py sw/run-single-cluster.yaml --simulator vsim
 
 #####################
 # Full Occamy tests #
@@ -67,7 +63,5 @@ occamy-full-vsim:
     - cd target/sim
     - make CFG_OVERRIDE=cfg/full.hjson rtl
     - make LENGTH=384 sw
-    - $QUESTA make bin/occamy_top.vsim
-    - $QUESTA ../../deps/snitch_cluster/util/sim/simulate.py
-        sw/run-full-occamy.yaml --simulator vsim
-        --sim-bin bin/occamy_top.vsim
+    - make bin/occamy_top.vsim
+    - ./run.py sw/run-full-occamy.yaml --simulator vsim

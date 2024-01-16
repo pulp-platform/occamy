@@ -38,9 +38,6 @@ ADDRMAPGEN ?= $(ROOT)/util/addrmap/addrmapgen.py
 
 CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 
-VSIM = vsim
-VLOG = vlog
-
 #########################
 # Files and directories #
 #########################
@@ -526,7 +523,7 @@ clean-vlt: clean-work
 ############
 
 ${VSIM_BUILDDIR}/compile.vsim.tcl: $(VSIM_SOURCES) ${TB_SRCS} ${TB_CC_SOURCES} test/bootrom.bin | $(VSIM_BUILDDIR)
-	vlib $(dir $@)
+	$(VLIB) $(dir $@)
 	${BENDER} script vsim ${VSIM_BENDER} --vlog-arg="${VLOG_FLAGS} -work $(dir $@) " > $@
 	echo '${VLOG} -work $(dir $@) $(TB_CC_SOURCES) -ccflags "$(TB_CC_FLAGS)"' >> $@
 	echo 'return 0' >> $@
