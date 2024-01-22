@@ -8,6 +8,7 @@
 # flake8: noqa
 
 import argparse
+import json
 import pandas as pd
 import numpy as np
 np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
@@ -32,7 +33,7 @@ plt.rcParams['axes.axisbelow'] = True
 MCAST = 0
 NO_MCAST = 1
 CONFIGS = [True, False]
-N_CLUSTERS = [1, 2, 4, 8, 16, 32]
+N_CLUSTERS = [1, 2, 4, 8, 16]#, 32]
 L = 1024
 POLLACK_FACTOR = 1.67
 
@@ -40,31 +41,35 @@ MARKERS = ['o', '^', 's', '*', 'd', 'X']
 MARKER_SIZES = [3, 3, 3, 3, 3, 3]
 
 APP_LABELS = {'axpy': 'AXPY', 'mc': 'Monte Carlo', 'gemm': 'Matmul'}
-
-LOGS_PREFIX = 'runs5'
+rundir = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Your program description here")
     parser.add_argument("--app", default="", type=str)
     parser.add_argument("--plot", default="phase_runtimes", type=str)
     parser.add_argument("--phase", default="total", type=str)
+    parser.add_argument("--run-dir", default="runs", type=str)
     return parser.parse_args()
 
 def get_events(app='axpy', mcast=0, size=L, nr_clusters=1):
-    logs = f'{LOGS_PREFIX}/{app}/L{size}'
+    logs = f'{rundir}/{app}/L{size}'
     if mcast:
         logs = f'{logs}/M'
     else:
         logs = f'{logs}/U'
     logs = f'{logs}/N{nr_clusters}'
 
-    file = f'{logs}/logs/event.csv'
-    return pd.read_csv(file, index_col=0)
+    filepath = f'{logs}/logs/perf.json'
+    print(filepath)
+    with open(filepath, 'r') as f:
+        return json.load(f)
+
+def get_metric(data, thread, region, metric):
+    return data[thread][region][metric]    
 
 def get_send_job_information_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
-
-    return df.loc[0, '6_tend'] - df.loc[0, '6_tstart']
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    return get_metric(perf, 'hart_0', 6, 'tend') - get_metric(perf, 'hart_0', 6, 'tstart')
 
 def get_send_interrupt_time(app, mcast=0, size=L, nr_clusters=1):
     df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
@@ -72,12 +77,12 @@ def get_send_interrupt_time(app, mcast=0, size=L, nr_clusters=1):
     return df.loc[0, '7_tend'] - df.loc[0, '7_tstart']
 
 def get_wakeup_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
     if app == 'axpy' or app == 'gemm':
-        vals = [df.loc[9*(i+1), '10_tend']- df.loc[0, '7_tstart'] for i in range(nr_clusters)]
+        vals = [get_metric(perf, f'hart_{9*(i+1)}', 10, 'tend') - get_metric(perf, 'hart_0', 7, 'tstart') for i in range(nr_clusters)]
     elif app == 'mc':
-        vals = [df.loc[9*(i+1), '8_tend']- df.loc[0, '7_tstart'] for i in range(nr_clusters)]
+        vals = [get_metric(perf, f'hart_{9*(i+1)}', 8, 'tend') - get_metric(perf, 'hart_0', 7, 'tstart') for i in range(nr_clusters)]
     return np.min(vals), np.max(vals), np.average(vals)
 
 def get_interrupt_clear_time(app, mcast=0, size=L, nr_clusters=1):
@@ -90,41 +95,47 @@ def get_interrupt_clear_time(app, mcast=0, size=L, nr_clusters=1):
     return np.min(vals), np.max(vals), np.average(vals)
 
 def get_retrieve_job_pointer_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
     if app == 'axpy' or app == 'gemm':
-        vals = [df.loc[9*(i+1), '11_tend'] - df.loc[9*(i+1), '11_tstart'] for i in range(nr_clusters)]
+        vals = [get_metric(perf, f'hart_{9*(i+1)}', 11, 'tend') - get_metric(perf, f'hart_{9*(i+1)}', 11, 'tstart') for i in range(nr_clusters)]
     elif app == 'mc':
-        vals = [df.loc[9*(i+1), '9_tend'] - df.loc[9*(i+1), '9_tstart'] for i in range(nr_clusters)]
+        vals = [get_metric(perf, f'hart_{9*(i+1)}', 9, 'tend') - get_metric(perf, f'hart_{9*(i+1)}', 9, 'tstart') for i in range(nr_clusters)]
     
     return np.min(vals), np.max(vals), np.average(vals)
 
 def get_retrieve_job_arguments_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
     if app == 'axpy' or app == 'gemm':
-        vals = [df.loc[9*(i+1), '12_tend'] - df.loc[9*(i+1), '12_tstart'] for i in range(nr_clusters)]
+        vals = [get_metric(perf, f'hart_{9*(i+1)}', 12, 'tend') - get_metric(perf, f'hart_{9*(i+1)}', 12, 'tstart') for i in range(nr_clusters)]
     elif app == 'mc':
-        vals = [df.loc[9*(i+1), '10_tend'] - df.loc[9*(i+1), '10_tstart'] for i in range(nr_clusters)]
+        vals = [get_metric(perf, f'hart_{9*(i+1)}', 10, 'tend') - get_metric(perf, f'hart_{9*(i+1)}', 10, 'tstart') for i in range(nr_clusters)]
     
     return np.min(vals), np.max(vals), np.average(vals)
 
 def get_retrieve_job_operands_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
     if app == 'axpy' or app == 'gemm':
-        vals = [df.loc[9*(i+1), '13_tend'] - df.loc[9*(i+1), '13_tstart'] for i in range(nr_clusters)]
+        vals = [get_metric(perf, f'hart_{9*(i+1)}', 13, 'tend') - get_metric(perf, f'hart_{9*(i+1)}', 13, 'tstart') for i in range(nr_clusters)]
     elif app == 'mc':
-        vals = [df.loc[9*(i+1), '12_tend'] - df.loc[9*(i+1), '11_tstart'] for i in range(nr_clusters)]
+        vals = [get_metric(perf, f'hart_{9*(i+1)}', 12, 'tend') - get_metric(perf, f'hart_{9*(i+1)}', 11, 'tstart') for i in range(nr_clusters)]
     
     return np.min(vals), np.max(vals), np.average(vals)
 
 def get_job_execution_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
     if app == 'axpy' or app == 'gemm':
-        # Max in cluster
-        vals = [np.max(df.loc[1+9*i:1+9*i+7, '14_tend']) - np.min(df.loc[1+9*i:1+9*i+7, '13_tstart']) for i in range(nr_clusters)]
+        vals = []
+        # Get execution time of every cluster
+        for i in range(nr_clusters):
+            # Cluster execution time is calculated from the start of the first core
+            # to the end of the last
+            start_times = [get_metric(perf, f'hart_{1+9*i+j}', 13, 'tstart') for j in range(8)]
+            end_times = [get_metric(perf, f'hart_{1+9*i+j}', 14, 'tend') for j in range(8)]
+            vals.append(np.max(end_times) - np.min(start_times))
         return np.min(vals), np.max(vals), np.average(vals)
     elif app == 'mc':
         vals = []
@@ -169,11 +180,11 @@ def get_inter_cluster_reduce_time(app, mcast=0, size=L, nr_clusters=1):
         return val
 
 def get_writeback_job_outputs_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
     if app == 'axpy' or app == 'gemm':
-        start_times = [df.loc[9*(i+1), '16_tstart'] for i in range(nr_clusters)]
-        end_times = [df.loc[9*(i+1), '16_tend'] for i in range(nr_clusters)]
+        start_times = [get_metric(perf, f'hart_{9*(i+1)}', 16, 'tstart') for i in range(nr_clusters)]
+        end_times = [get_metric(perf, f'hart_{9*(i+1)}', 16, 'tend') for i in range(nr_clusters)]
         # max_end_time = np.amax(end_times)
         # last_cluster_to_start = np.argmax(start_times)
         # last_cluster_to_end = np.argwhere(end_times == max_end_time)
@@ -183,25 +194,26 @@ def get_writeback_job_outputs_time(app, mcast=0, size=L, nr_clusters=1):
         return np.min(vals), np.max(vals), np.average(vals)
 
 def get_job_completion_notification_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
     if app == 'axpy' or app == 'gemm':
         # from last core arriving on the barrier to CVA6 waking up
-        return df.loc[0, '9_tstart'] - np.max([df.loc[9*(i+1), '17_tstart'] for i in range(nr_clusters)])
+        return get_metric(perf, 'hart_0', 9, 'tstart') - np.max([get_metric(perf, f'hart_{9*(i+1)}', 17, 'tstart') for i in range(nr_clusters)])
     elif app == 'mc':
         # from core 0 of cluster 0 completing the reduction to CVA6 waking up
-        return df.loc[0, '9_tstart'] - df.loc[1, '21_tstart']
+        return get_metric(perf, 'hart_0', 9, 'tstart') - get_metric(perf, 'hart_1', 21, 'tstart')
 
 def get_resume_operation_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
-    return df.loc[0, '9_tend'] - df.loc[0, '9_tstart']
+    return get_metric(perf, 'hart_0', 9, 'tend') - get_metric(perf, 'hart_0', 9, 'tstart')
 
 def get_total_time(app, mcast=0, size=L, nr_clusters=1):
-    df = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
+    print(nr_clusters)
+    perf = get_events(app=app, mcast=mcast, size=size, nr_clusters=nr_clusters)
 
     # All
-    val = df.loc[0, '9_tend'] - df.loc[0, '6_tstart']
+    val = get_metric(perf, 'hart_0', 9, 'tend') - get_metric(perf, 'hart_0', 6, 'tstart')
     return val
 
 def baseline_speedup(app, sizes):
@@ -234,7 +246,7 @@ def baseline_speedup(app, sizes):
     plt.grid(color='gainsboro', which='both')
     plt.show()
 
-def baseline_runtime(apps, sizes):
+def runtime_baseline_vs_ideal(apps, sizes):
     x = N_CLUSTERS
 
     fig, ax = plt.subplots(1, len(apps), layout="constrained")
@@ -262,7 +274,7 @@ def baseline_runtime(apps, sizes):
     fig.supylabel('Runtime [ns]')
     plt.show()
 
-def runtime_comparison(apps, sizes):
+def runtime_baseline_vs_multicast(apps, sizes):
     x = N_CLUSTERS
 
     plt.rcParams['font.size'] = '5'
@@ -274,8 +286,10 @@ def runtime_comparison(apps, sizes):
         ax = [ax]
 
     for i, app in enumerate(apps):
+        print(app)
 
         for j, mcast in enumerate(CONFIGS):
+            print(mcast)
             label = 'w/ extensions' if mcast else 'baseline'
             y = [get_total_time(app, mcast=mcast, size=sizes[app], nr_clusters=nr_clusters) for nr_clusters in N_CLUSTERS]
             ax[i].plot(x, y, marker=MARKERS[j], markersize=MARKER_SIZES[j], linestyle='-', linewidth=1, label=label)
@@ -740,9 +754,12 @@ def model_accuracy(apps, nr_clusters, sizes, phase):
 
 
 def main():
+    global rundir
+
     args = parse_args()
     app = args.app
     plot = args.plot
+    rundir = args.run_dir
     print(f"App: {app}")
     print(f"Plot: {plot}")
 
@@ -754,12 +771,14 @@ def main():
     if plot == 'baseline_speedup':
         baseline_speedup('axpy', [1024, 2048])
         baseline_speedup('mc', [256, 512])
-    elif plot == 'baseline_runtime':
-        sizes = {'axpy': [512, 1024], 'mc': [256, 512]}
-        baseline_runtime(apps, sizes)
-    elif plot == 'runtime_comparison':
-        sizes = {'axpy': 1024, 'mc': 256, 'gemm': 1}
-        runtime_comparison(apps, sizes)
+    elif plot == 'runtime_baseline_vs_ideal':
+        # sizes = {'axpy': [512, 1024], 'mc': [256, 512]}
+        sizes = {'axpy': [1024]}
+        runtime_baseline_vs_ideal(apps, sizes)
+    # Fig. 9
+    elif plot == 'runtime_baseline_vs_multicast':
+        sizes = {'axpy': 1024}#, 'mc': 256, 'gemm': 1}
+        runtime_baseline_vs_multicast(apps, sizes)
     elif plot == 'weak_scaling':
         weak_scaling(app)
     elif plot == 'strong_scaling':
@@ -768,6 +787,7 @@ def main():
         sizes_per_cluster = {'axpy': [32, 64, 128], 'mc': [32, 64, 128]}
         # sizes_per_cluster = {'axpy': [32, 64, 128, 256], 'mc': [32, 64, 128, 256]}
         mcast_speedup(apps, sizes_per_cluster)
+    # Fig. 11
     elif plot == 'breakdown':
         breakdown(app)
     elif plot == 'mape':

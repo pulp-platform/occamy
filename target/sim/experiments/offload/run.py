@@ -5,28 +5,34 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
+import json
+import json5
 import os
 from pathlib import Path
 import signal
 import subprocess
 import sys
 import yaml
+import tempfile
 from termcolor import cprint, colored
+from mako.template import Template
 
-sys.path.append(str(Path(__file__).parent / '../../../../../../deps/snitch_cluster/util/sim/'))
+sys.path.append(str(Path(__file__).parent / '../../../../deps/snitch_cluster/util/sim/'))
 import sim_utils  # noqa: E402
 from Simulator import QuestaSimulator  # noqa: E402
 
 FILE_DIR = Path(__file__).parent.resolve()
-AXPY_VERIFY_PY = FILE_DIR / '../../../../../../deps/snitch_cluster/sw/blas/axpy/verify.py'
-GEMM_VERIFY_PY = FILE_DIR / '../../../../../../deps/snitch_cluster/sw/blas/gemm/verify.py'
-BUILD_DIR = FILE_DIR / 'build'
-TARGET_DIR = FILE_DIR / '../../../../'
+TARGET_DIR = FILE_DIR / '../../'
+AXPY_VERIFY_PY = TARGET_DIR / '../../deps/snitch_cluster/sw/blas/axpy/verify.py'
+GEMM_VERIFY_PY = TARGET_DIR / '../../deps/snitch_cluster/sw/blas/gemm/verify.py'
 APP = 'experimental_offload'
-DEVICE_ELF = FILE_DIR / f'../../../device/apps/{APP}/build/{APP}.elf'
+SOURCE_BUILD_DIR = TARGET_DIR / f'sw/host/apps/{APP}/build'
+TARGET_BUILD_DIR = FILE_DIR / 'build'
+DEVICE_ELF = TARGET_DIR / f'sw/device/apps/{APP}/build/{APP}.elf'
 CFG_DIR = TARGET_DIR / 'cfg'
 BIN_DIR = Path('bin')
 VSIM_BUILDDIR = Path('work-vsim')
+ROI_SPEC_TPL = FILE_DIR / 'roi_spec.json.tpl'
 
 
 def run(cmd, env=None, dry_run=False):
@@ -53,17 +59,17 @@ def build_sw(tests, dry_run=False):
     run(['make', '-C', TARGET_DIR, 'clean-sw'], dry_run=dry_run)
     for test in tests:
         prefix = test['prefix']
-        build_dir = BUILD_DIR / prefix
+        build_dir = SOURCE_BUILD_DIR / prefix
         tmp_build_dir = Path('tmp', prefix)
         cprint(f'Build software {colored(build_dir, "cyan")}', attrs=["bold"])
-        run(['make', '-C', TARGET_DIR, 'DEBUG=ON', f'CFG_OVERRIDE={test["hw_cfg"]}', 'sw'],
+        run(['make', '-C', TARGET_DIR, 'DEBUG=ON', f'CFG_OVERRIDE={test["hw_cfg"]}', 'sw', '-B'],
             env=test['env'], dry_run=dry_run)
         run(['mkdir', '-p', tmp_build_dir.parent], dry_run=dry_run)
-        run(['mv', 'build/', tmp_build_dir], dry_run=dry_run)
+        run(['mv', SOURCE_BUILD_DIR, tmp_build_dir], dry_run=dry_run)
         run(['cp', DEVICE_ELF, tmp_build_dir / 'device.elf'], dry_run=dry_run)
     # Rename tmp/ to build/
-    run(['rm', '-rf', 'build'], dry_run=dry_run)
-    run(['mv', 'tmp', 'build'], dry_run=dry_run)
+    run(['rm', '-rf', str(TARGET_BUILD_DIR)], dry_run=dry_run)
+    run(['mv', 'tmp', str(TARGET_BUILD_DIR)], dry_run=dry_run)
 
 
 def build_hw(tests, dry_run=False):
@@ -82,19 +88,35 @@ def post_process_traces(test, dry_run=False):
     n_clusters_to_use = test['n_clusters_to_use']
     logdir = test['run_dir'] / 'logs'
     device_elf = test['device_elf']
-    layout = test['layout']
+    hw_cfg = test['hw_cfg']
+    roi_spec = logdir / 'roi_spec.json'
+    # Read and render specification template JSON
+    with open(ROI_SPEC_TPL, 'r') as f:
+        spec_template = Template(f.read())
+        rendered_spec = spec_template.render(nr_clusters=n_clusters_to_use)
+        spec = json5.loads(rendered_spec)
+    with open(roi_spec, 'w') as f:
+        json.dump(spec, f, indent=4)
+    # Build traces and benchmark
     cprint(f'Build traces {colored(logdir, "cyan")}', attrs=["bold"])
-    run(['make', '-C', TARGET_DIR, f'LOGS_DIR={logdir}', 'traces', '-j'], dry_run=dry_run)
     run(['make', '-C', TARGET_DIR, f'LOGS_DIR={logdir}', f'BINARY={device_elf}', 'annotate', '-j'],
         dry_run=dry_run)
-    run(['make', '-C', TARGET_DIR, f'LOGS_DIR={logdir}', 'perf-csv'], dry_run=dry_run)
-    run(['make', '-C', TARGET_DIR, f'LOGS_DIR={logdir}', 'event-csv'], dry_run=dry_run)
-    if layout.exists():
-        flags = []
-        flags.append(f'LOGS_DIR={logdir}')
-        flags.append(f'LAYOUT_EVENTS_FLAGS=--num-clusters={n_clusters_to_use}')
-        flags.append(f'LAYOUT_FILE={layout}')
-        run(['make', '-C', TARGET_DIR, *flags, 'layout'], dry_run=dry_run)
+    run(['make', '-C', TARGET_DIR, f'LOGS_DIR={logdir}', f'ROI_SPEC={roi_spec}',
+        f'CFG_OVERRIDE={hw_cfg}', 'trace-view'], dry_run=dry_run)
+
+
+def get_gemm_cfg(n):
+    filled_template = Template(filename=str(GEMM_CFG_TEMPLATE)).render(N=n)
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+        temp_file.write(filled_template)
+        return temp_file.name
+
+
+def get_gemm_cfg(n):
+    filled_template = Template(filename=str(GEMM_CFG_TEMPLATE)).render(N=n)
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+        temp_file.write(filled_template)
+        return temp_file.name
 
 
 # Get tests from a test list file
@@ -117,34 +139,31 @@ def get_tests(testlist, run_dir, hw_cfg):
         # Resolve derived test parameters
         mcast_prefix = "M" if multicast else "U"
         prefix = f'{app}/L{length}/{mcast_prefix}/N{n_clusters_to_use}'
-        build_dir = BUILD_DIR / prefix
         full_hw_cfg = f'{mcast_prefix}-{hw_cfg}'
         hw_cfg_file = CFG_DIR / f'{full_hw_cfg}.hjson'
         vsim_builddir = VSIM_BUILDDIR / f'{full_hw_cfg}'
         unique_run_dir = Path(run_dir).resolve() / prefix
-        elf = build_dir / f'{APP}.elf'
-        device_elf = build_dir / 'device.elf'
+        unique_build_dir = TARGET_BUILD_DIR / prefix
+        elf = unique_build_dir / f'{APP}.elf'
+        device_elf = unique_build_dir / 'device.elf'
         sim_bin = TARGET_DIR / BIN_DIR / full_hw_cfg / 'occamy_top.vsim'
         cflags = f'-DN_CLUSTERS_TO_USE={n_clusters_to_use}'
         if multicast:
-            cflags += ' -DMULTICAST'
+            cflags += ' -DUSE_MULTICAST'
         if app == 'axpy':
             cflags += ' -DOFFLOAD_AXPY'
-            layout = 'layout.csv'
         elif app == 'gemm':
             cflags += ' -DOFFLOAD_GEMM'
-            layout = 'layout.csv'
         elif app == 'mc':
             cflags += f' -DOFFLOAD_MONTECARLO -DMC_LENGTH={length}'
-            layout = 'layout_mc.csv'
         env = extend_environment(
             RISCV_CFLAGS=cflags,
             LENGTH=f'{length}',
             SECTION=".wide_spm",
             OFFLOAD=app)
         if app == 'gemm':
-            env = extend_environment(env, DATA_CFG=FILE_DIR / 'gemm' / f'{length}.hjson')
-        layout = FILE_DIR / layout
+            gemm_cfg_file = get_gemm_cfg(length)
+            env = extend_environment(env, DATA_CFG=gemm_cfg_file)
 
         # Extend test with derived parameters
         test['sim_bin'] = sim_bin
@@ -162,7 +181,6 @@ def get_tests(testlist, run_dir, hw_cfg):
         test['cflags'] = cflags
         test['vsim_builddir'] = vsim_builddir
         test['hw_cfg'] = hw_cfg_file
-        test['layout'] = layout
 
     return tests
 
@@ -182,6 +200,7 @@ def main():
         help='Does not run the simulations, only post-processes the traces')
     parser.add_argument(
         '--hw-cfg',
+        default='Q8C4',
         help='Occamy configuration string e.g. Q6C4 for 6 quadrants 4 clusters')
     args = parser.parse_args()
 
