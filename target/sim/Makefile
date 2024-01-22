@@ -30,6 +30,7 @@ SNITCH_ROOT := $(shell bender path snitch_cluster)
 
 TARGET = occamy_top
 
+# Definitions to be parsed before common.mk rule definitions
 CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
 CVA6_PERF_DUMP       = $(LOGS_DIR)/hart_00000_perf.json
 CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
@@ -472,25 +473,11 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 
 CVA6_BINARY ?= $(shell cat $(LOGS_DIR)/.rtlbinary)
 
-CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
-CVA6_PERF_DUMP       = $(LOGS_DIR)/hart_00000_perf.json
-CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
-CVA6_DIFF_TRACE      = $(LOGS_DIR)/trace_hart_00000.diff
-
-PERF_DUMPS       += $(CVA6_PERF_DUMP)
-ANNOTATED_TRACES += $(CVA6_ANNOTATED_TRACE)
-DIFF_TRACES      += $(CVA6_DIFF_TRACE)
-
-traces: $(CVA6_TXT_TRACE) $(CVA6_PERF_DUMP)
-annotate: $(CVA6_ANNOTATED_TRACE)
-
 # CVA6 traces require different handling
 $(CVA6_PERF_DUMP): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
 $(CVA6_ANNOTATED_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
 	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $<
-$(CVA6_DIFF_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
-	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $< -d
 
 #############
 # Verilator #
