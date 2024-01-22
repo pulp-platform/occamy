@@ -5,76 +5,49 @@
 #include "offload.h"
 #include "snrt.h"
 
-#define N_JOB_TYPES 3
-
 // Other variables
 __thread usr_data_t* volatile usr_data_ptr;
-__thread uint32_t l1_job_ptr;
-__thread uint32_t remote_job_ptr;
+__thread uint32_t local_job_addr;
+__thread uint32_t remote_job_addr;
 
 #include "axpy_job.h"
 #include "gemm_job.h"
 #include "montecarlo_job.h"
 
 // Job function type
-typedef void (*job_func_t)(job_t* job);
+typedef void (*job_func_t)(job_args_t* args);
 
-// Job function arrays
-__thread job_func_t jobs_dm_core[N_JOB_TYPES] = {
-    axpy_job_dm_core, gemm_job_dm_core, mc_job_dm_core};
-__thread job_func_t jobs_compute_core[N_JOB_TYPES] = {
-    axpy_job_compute_core, gemm_job_compute_core, mc_job_compute_core};
+// Job function array
+// __thread job_func_t jobs[N_JOB_TYPES] = {axpy_job_unified};
+__thread job_func_t jobs[1] = {axpy_job_unified};
 
 static inline void run_job() {
-    // Force compiler to assign fallthrough path of the branch to
-    // the DM core. This way the cache miss latency due to the branch
-    // is incurred by the compute cores, and overlaps with the data
-    // movement performed by the DM core.
-    asm goto("bnez %0, %l[run_job_compute_core]"
-             :
-             : "r"(snrt_is_compute_core())
-             :
-             : run_job_compute_core);
-
-#ifndef OFFLOAD_NONE
-    // Retrieve job data pointer
-#ifdef MULTICAST
-    job_t* job = (job_t*)l1_job_ptr;
-#else
-    job_t* job = (job_t*)remote_job_ptr;
-#endif
-
     // Invoke job
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
+    job_t* job = (job_t *)local_job_addr;
     uint32_t job_id = job->id;
-    jobs_dm_core[job_id](job);
-
+    if (snrt_is_dm_core())
+        snrt_mcycle();
+    jobs[job_id](&job->args);
+    if (snrt_is_dm_core())
+        return_to_cva6_accelerated(job->offload_id);
 #else
-    return_to_cva6(SYNC_ALL);
-#endif
-
-    goto run_job_end;
-
-run_job_compute_core:;
-
-#ifndef OFFLOAD_NONE
-    // Get pointer to local copy of job
-    job_t* job_local = (job_t*)l1_job_ptr;
-
-#ifndef MULTICAST
-    // Synchronize with DM core such that it knows
-    // it can update the l1 alloc pointer, and we know
-    // job information is locally available
+    job_t* remote_job = (job_t*)remote_job_addr;
+    job_t* local_job = (job_t *)local_job_addr;
+    if (snrt_is_dm_core()) {
+        // Load job ID to lookup size of args
+        local_job->id = remote_job->id;
+        snrt_mcycle();
+        // Last cluster finds the data stored by CVA6 in its TCDM,
+        // all other clusters fetch it from there
+        if (snrt_cluster_idx() != (N_CLUSTERS_TO_USE - 1))
+            snrt_dma_start_1d(&local_job->args, &remote_job->args, job_args_size(local_job->id));
+        snrt_dma_wait_all();
+    }
     snrt_cluster_hw_barrier();
+    jobs[local_job->id](&local_job->args);
+    return_to_cva6(SYNC_CLUSTERS);
 #endif
-
-    // Invoke job
-    jobs_compute_core[job_local->id](job_local);
-#else
-    snrt_cluster_hw_barrier();
-    snrt_int_wait_mcip_clr();
-#endif
-
-run_job_end:;
 }
 
 int main() {
@@ -83,16 +56,16 @@ int main() {
         (usr_data_t * volatile) get_communication_buffer()->usr_data_ptr;
 
     // Tell CVA6 where it can store the job ID
-    l1_job_ptr = (uint32_t)snrt_l1_next();
+    local_job_addr = (uint32_t)snrt_l1_next();
     snrt_cluster_hw_barrier();
     if (snrt_is_dm_core()) {
         // Only one core sends the data for all clusters
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
         if (snrt_cluster_idx() == 0)
 #else
         if (snrt_cluster_idx() == (N_CLUSTERS_TO_USE - 1))
 #endif
-            usr_data_ptr->l1_job_ptr = l1_job_ptr;
+            usr_data_ptr->local_job_addr = local_job_addr;
     }
     snrt_cluster_hw_barrier();
 
@@ -105,9 +78,9 @@ int main() {
     return_to_cva6(SYNC_ALL);
     snrt_wfi();
 
-#ifndef MULTICAST
-    // Get pointer to remote job in cluster 0's TCDM
-    remote_job_ptr = usr_data_ptr->l1_job_ptr;
+#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
+    // Get pointer to remote job in last cluster's TCDM
+    remote_job_addr = usr_data_ptr->local_job_addr;
 #endif
 
     // Job loop

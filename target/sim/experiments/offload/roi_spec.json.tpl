@@ -2,9 +2,14 @@
     {
         "thread": "hart_0",
         "roi": [
-            {"idx": 6, "label": "prepare data"},
-            {"idx": 7, "label": "send interrupt"},
-            {"idx": 9, "label": "clr interrupt"}
+            // Iteration 1
+            {"idx": 1, "label": "prepare data"},
+            {"idx": 2, "label": "send interrupt"},
+            {"idx": 4, "label": "clr interrupt"},
+            // Iteration 2
+            {"idx": 5, "label": "prepare data"},
+            {"idx": 6, "label": "send interrupt"},
+            {"idx": 8, "label": "clr interrupt"}
         ]
     },
 % for i in range(0, nr_clusters):

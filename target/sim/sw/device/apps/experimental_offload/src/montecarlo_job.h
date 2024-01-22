@@ -16,15 +16,15 @@ inline void mc_init() {
 }
 
 void mc_job_dm_core(job_t* job) {
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
     mc_job_t* mc_job = (mc_job_t*)job;
 #else
-    mc_job_t* mc_job = (mc_job_t*)l1_job_ptr;
+    mc_job_t* mc_job = (mc_job_t*)local_job_addr;
 #endif
 
     snrt_mcycle();  // Retrieve job information (get job arguments)
 
-#ifndef MULTICAST
+#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
     // Copy job info (cluster 0 already has the data, no need to copy)
     if (snrt_cluster_idx() != (N_CLUSTERS_TO_USE - 1)) {
         snrt_dma_start_1d(mc_job, job, sizeof(mc_job_t));
@@ -35,7 +35,7 @@ void mc_job_dm_core(job_t* job) {
 
     snrt_mcycle();  // Retrieve job operands
 
-#ifndef MULTICAST
+#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
     // Synchronize with compute cores before updating the l1 alloc pointer
     // such that they can retrieve the local job pointer.
     // Also ensures compute cores see the transferred job information.

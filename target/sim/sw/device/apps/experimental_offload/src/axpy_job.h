@@ -5,130 +5,45 @@
 #define XSSR
 #include "axpy.h"
 
-void axpy_job_dm_core(job_t* job) {
-#ifdef MULTICAST
-    axpy_local_job_t* axpy_job = (axpy_local_job_t*)job;
-#else
-    axpy_local_job_t* axpy_job = (axpy_local_job_t*)l1_job_ptr;
-#endif
+void axpy_job_unified(job_args_t* job_args) {
+    double* local_x;
+    double* local_y;
+    double* local_z;
 
-    snrt_mcycle();  // Retrieve job information (get job arguments)
+    axpy_args_t* args = (axpy_args_t *)job_args;
+    local_x = (double*)(ALIGN_UP((uint32_t)args + sizeof(axpy_job_t), 4096));
+    local_y = local_x + args->l;
+    local_z = local_y + args->l;
+    snrt_mcycle();
+    
+    // Copy job operands
+    if (snrt_is_dm_core()) {
+        snrt_dma_load_1d_tile(local_x, (void *)args->x_addr, snrt_cluster_idx(), args->l, sizeof(double));
+        snrt_dma_load_1d_tile(local_y, (void *)args->y_addr, snrt_cluster_idx(), args->l, sizeof(double));
+        snrt_dma_wait_all();
+        snrt_mcycle();
+    }
 
-#ifndef MULTICAST
-    // Copy job info (cluster 0 already has the data, no need to copy)
-    if (snrt_cluster_idx() != (N_CLUSTERS_TO_USE - 1))
-        snrt_dma_start_1d(axpy_job, job, sizeof(axpy_job_t));
-
-    // Get pointer to next free slot in l1 alloc
-    double* x = (double*)(ALIGN_UP(
-        (uint32_t)axpy_job + sizeof(axpy_local_job_t), 4096));
-
-    // Wait for job info transfer to complete
-    snrt_dma_wait_all();
-    snrt_mcycle();  // Retrieve job operands
-#else
-    snrt_mcycle();  // Retrieve job operands
-    // Get pointer to next free slot in l1 alloc
-    double* x = (double*)(ALIGN_UP(
-        (uint32_t)axpy_job + sizeof(axpy_local_job_t), 4096));
-#endif
-
-    // Copy operand x
-    size_t size = axpy_job->args.l * 8;
-    size_t offset = snrt_cluster_idx() * size;
-    void* x_l3_ptr = (void*)(uint32_t)(axpy_job->args.x_l3_ptr + offset);
-    snrt_dma_start_1d(x, x_l3_ptr, size);
-
-#ifndef MULTICAST
-    // Synchronize with compute cores before updating the l1 alloc pointer
-    // such that they can retrieve the local job pointer.
-    // Also ensures compute cores see the transferred job information.
+    // Synchronize with DM core to wait for job operands
     snrt_cluster_hw_barrier();
-#endif
-
-    // Copy operand y
-    double* y = (double*)((uint32_t)x + size);
-    void* y_l3_ptr = (void*)(uint32_t)(axpy_job->args.y_l3_ptr + offset);
-    snrt_dma_start_1d(y, y_l3_ptr, size);
-
-    // Set pointers to local job operands
-    axpy_job->args.x = x;
-    axpy_job->args.y = y;
-    axpy_job->args.z = (double*)((uint32_t)y + size);
-
-    // Synchronize with compute cores again such that they see
-    // also the local job operands locations (x, y, z)
-    snrt_cluster_hw_barrier();
-
-    // Update the L1 alloc pointer
-    void* next = (void*)((uint32_t)(axpy_job->args.z) + size);
-    snrt_l1_update_next(next);
-
-    // Wait for DMA transfers to complete
-    snrt_dma_wait_all();
-
-    snrt_mcycle();  // Barrier
-
-    // Synchronize with compute cores to make sure the data
-    // is available before they can start computing on it
-    snrt_cluster_hw_barrier();
-
-    snrt_mcycle();  // Job execution
-
-    // Synchronize cores to make sure results are available before
-    // DMA starts transfer to L3
-    snrt_cluster_hw_barrier();
-
-    snrt_mcycle();  // Writeback job outputs
-
-    // Transfer data out
-    void* z_l3_ptr = (void*)(uint32_t)(axpy_job->args.z_l3_ptr + offset);
-    snrt_dma_start_1d(z_l3_ptr, axpy_job->args.z, size);
-    snrt_dma_wait_all();
-
     snrt_mcycle();
 
-#ifdef MULTICAST
-    return_to_cva6_accelerated(axpy_job->offload_id);
-#else
-    return_to_cva6(SYNC_CLUSTERS);
-#endif
-}
+    // Compute
+    if (snrt_is_compute_core()) {
+        axpy(args->l, args->a, local_x, local_y, local_z);
+        snrt_mcycle();
+    }
 
-void axpy_job_compute_core(job_t* job) {
-    // Cast local job
-    axpy_local_job_t* axpy_job = (axpy_local_job_t*)job;
-
-    snrt_mcycle();
-
-    // Get args
-    uint32_t l = axpy_job->args.l;
-    double a = axpy_job->args.a;
-
-    // Synchronize with DM core to wait for local job
-    // operand pointers (x, y, z) to be up to date
+    // Synchronize with DM core to wait for job results
     snrt_cluster_hw_barrier();
-
-    double* x = axpy_job->args.x;
-    double* y = axpy_job->args.y;
-    double* z = axpy_job->args.z;
-
     snrt_mcycle();
 
-    // Synchronize with DM core to wait for operands
-    // to be fully transferred in L1
+    // Copy job results
+    if (snrt_is_dm_core()) {
+        snrt_dma_store_1d_tile((void *)args->z_addr, local_z, snrt_cluster_idx(), args->l, sizeof(double));
+        snrt_dma_wait_all();
+        snrt_mcycle();
+    }
+
     snrt_cluster_hw_barrier();
-
-    snrt_mcycle();
-
-    // Run kernel
-    axpy(l, a, x, y, z);
-
-    snrt_mcycle();
-
-    // Synchronize with DM core to make sure results are available
-    // before DMA starts transfer to L3
-    snrt_cluster_hw_barrier();
-
-    snrt_mcycle();
 }
