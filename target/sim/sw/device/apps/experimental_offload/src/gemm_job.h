@@ -65,15 +65,15 @@ void matmul(uint32_t M, uint32_t N, uint32_t K, double* A, double* B,
 }
 
 void gemm_job_dm_core(job_t* job) {
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
     gemm_local_job_t* gemm_job = (gemm_local_job_t*)job;
 #else
-    gemm_local_job_t* gemm_job = (gemm_local_job_t*)l1_job_ptr;
+    gemm_local_job_t* gemm_job = (gemm_local_job_t*)local_job_addr;
 #endif
 
     snrt_mcycle();  // Retrieve job information (get job arguments)
 
-#ifndef MULTICAST
+#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
     // Copy job info (cluster 0 already has the data, no need to copy)
     if (snrt_cluster_idx() != (N_CLUSTERS_TO_USE - 1))
         snrt_dma_start_1d(gemm_job, job, sizeof(gemm_job_t));
@@ -97,7 +97,7 @@ void gemm_job_dm_core(job_t* job) {
     void* b_l3_ptr = (void*)(uint32_t)(gemm_job->args.b_l3_ptr);
     snrt_dma_start_1d(b, b_l3_ptr, size_b);
 
-#ifndef MULTICAST
+#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
     // Synchronize with compute cores before updating the l1 alloc pointer
     // such that they can retrieve the local job pointer.
     // Also ensures compute cores see the transferred job information.
@@ -150,7 +150,7 @@ void gemm_job_dm_core(job_t* job) {
 
     snrt_mcycle();
 
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
     return_to_cva6_accelerated(gemm_job->offload_id);
 #else
     return_to_cva6(SYNC_CLUSTERS);

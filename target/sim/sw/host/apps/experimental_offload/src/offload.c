@@ -38,7 +38,7 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
         case J_AXPY: {
             axpy_args_t args = job->args.axpy;
 
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
             uint64_t mask = ((n_clusters_to_use - 1) << 18);
             enable_multicast(mask);
 #endif
@@ -50,14 +50,14 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
             *((volatile double *)(l1_job_ptr + offsetof(job_t, args) +
                                   offsetof(axpy_args_t, a))) = args.a;
             *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(axpy_args_t, x_ptr))) = args.x_ptr;
+                                    offsetof(axpy_args_t, x_addr))) = args.x_addr;
             *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(axpy_args_t, y_ptr))) = args.y_ptr;
+                                    offsetof(axpy_args_t, y_addr))) = args.y_addr;
             *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(axpy_args_t, z_ptr))) = args.z_ptr;
+                                    offsetof(axpy_args_t, z_addr))) = args.z_addr;
 
             mcycle();  // Wakeup
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
             *((volatile uint32_t *)cluster_clint_set_addr(0)) = 511;
             disable_multicast();
 #else
@@ -68,7 +68,7 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
         case J_GEMM: {
             gemm_args_t args = job->args.gemm;
 
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
             uint64_t mask = ((n_clusters_to_use - 1) << 18);
             enable_multicast(mask);
 #endif
@@ -89,7 +89,7 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
                                     offsetof(gemm_args_t, c_ptr))) = args.c_ptr;
 
             mcycle();  // Wakeup
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
             *((volatile uint32_t *)cluster_clint_set_addr(0)) = 511;
             disable_multicast();
 #else
@@ -100,7 +100,7 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
         case J_MONTECARLO: {
             mc_args_t args = job->args.mc;
 
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
             uint64_t mask = ((n_clusters_to_use - 1) << 18);
             enable_multicast(mask);
 #endif
@@ -115,7 +115,7 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
                 args.result_ptr;
 
             mcycle();  // Wakeup
-#ifdef MULTICAST
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
             *((volatile uint32_t *)cluster_clint_set_addr(0)) = 511;
             disable_multicast();
 #else
@@ -132,11 +132,13 @@ int main() {
     comm_buffer.usr_data_ptr = (uint32_t)(uint64_t)&usr_data;
     fence();
 
+// Define jobs to offload
 #if defined(OFFLOAD_AXPY)
     axpy_args_t axpy_args = {
         l / n_clusters_to_use, a, WIDE_SPM_ADDR((uint64_t)x),
         WIDE_SPM_ADDR((uint64_t)y), WIDE_SPM_ADDR((uint64_t)z)};
     job_t axpy = {J_AXPY, 0, axpy_args};
+    job_t jobs[N_JOBS] = {axpy, axpy};
 #elif defined(OFFLOAD_GEMM)
     gemm_args_t gemm_args = {M / n_clusters_to_use,
                              N,
@@ -147,20 +149,14 @@ int main() {
     job_args_t job_args;
     job_args.gemm = gemm_args;
     job_t gemm = {J_GEMM, 0, job_args};
+    job_t jobs[N_JOBS] = {gemm, gemm};
 #elif defined(OFFLOAD_MONTECARLO)
     mc_args_t mc_args = {MC_LENGTH / (8 * n_clusters_to_use),
                          WIDE_SPM_ADDR((uint64_t)&pi)};
     job_args_t job_args;
     job_args.mc = mc_args;
     job_t mc = {J_MONTECARLO, 0, job_args};
-#endif
-
-#if defined(OFFLOAD_AXPY)
-    job_t jobs[N_JOBS] = {axpy, axpy};
-#elif defined(OFFLOAD_MONTECARLO)
     job_t jobs[N_JOBS] = {mc, mc};
-#elif defined(OFFLOAD_GEMM)
-    job_t jobs[N_JOBS] = {gemm, gemm};
 #endif
 
     volatile uint32_t n_jobs = N_JOBS;
@@ -184,31 +180,21 @@ int main() {
     // Wait for snRuntime initialization to be over
     wait_snitches_done();
 
-    // Retrieve destination for job information in cluster 0's TCDM
-    uint64_t l1_job_ptr = (uint64_t)usr_data.l1_job_ptr;
+    // Retrieve destination for job information in last cluster's TCDM
+    uint64_t l1_job_ptr = (uint64_t)usr_data.local_job_addr;
 
     // Send jobs (first iteration just to heat up I$)
     for (uint32_t i = 0; i < n_jobs; i++) {
-#ifndef OFFLOAD_NONE
         mcycle();  // Send job information
         send_job_and_wakeup(&jobs[i], l1_job_ptr);
-#else
-        mcycle();  // Wakeup
-        wakeup_snitches();
-#endif
+
         mcycle();  // Wait for job done
         wait_sw_interrupt();
 
         mcycle();  // Resume operation on host
-#ifdef OFFLOAD_NONE
         clear_host_sw_interrupt_unsafe();
-        mcycle();
-        wait_host_sw_interrupt_clear();
-#else
-        clear_host_sw_interrupt_unsafe();
-        mcycle();
-#endif
     }
+    mcycle();
 
 #if defined(OFFLOAD_AXPY)
     // Copy results from wide SPM to DRAM for verification

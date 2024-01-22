@@ -3,48 +3,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <stdint.h>
+#include "axpy/src/args.h"
 
 typedef struct {
-    volatile uint32_t l3_job_ptr;
-    volatile uint32_t l1_job_ptr;
+    volatile uint32_t local_job_addr;
 } usr_data_t;
-
-typedef enum { J_AXPY = 0, J_GEMM = 1, J_MONTECARLO = 2 } job_id_t;
 
 //////////
 // AXPY //
 //////////
 
 typedef struct {
-    uint32_t l;
-    double a;
-    uint64_t x_ptr;
-    uint64_t y_ptr;
-    uint64_t z_ptr;
-} axpy_args_t;
-
-typedef struct {
-    uint32_t l;
-    double a;
-    uint64_t x_l3_ptr;
-    uint64_t y_l3_ptr;
-    uint64_t z_l3_ptr;
-    double* x;
-    double* y;
-    double* z;
-} axpy_local_args_t;
-
-typedef struct {
-    job_id_t id;
+    uint32_t id;
     uint8_t offload_id;
     axpy_args_t args;
 } axpy_job_t;
-
-typedef struct {
-    job_id_t id;
-    uint8_t offload_id;
-    axpy_local_args_t args;
-} axpy_local_job_t;
 
 //////////
 // GEMM //
@@ -72,13 +45,13 @@ typedef struct {
 } gemm_local_args_t;
 
 typedef struct {
-    job_id_t id;
+    uint32_t id;
     uint8_t offload_id;
     gemm_args_t args;
 } gemm_job_t;
 
 typedef struct {
-    job_id_t id;
+    uint32_t id;
     uint8_t offload_id;
     gemm_local_args_t args;
 } gemm_local_job_t;
@@ -93,7 +66,7 @@ typedef struct {
 } mc_args_t;
 
 typedef struct {
-    job_id_t id;
+    uint32_t id;
     uint8_t offload_id;
     mc_args_t args;
 } mc_job_t;
@@ -113,7 +86,23 @@ typedef union {
 } job_args_t;
 
 typedef struct {
-    job_id_t id;
+    uint32_t id;
     uint8_t offload_id;
     job_args_t args;
 } job_t;
+
+#define N_JOB_TYPES 3
+typedef enum { J_AXPY = 0, J_GEMM = 1, J_MONTECARLO = 2 } job_id_t;
+
+static inline uint32_t job_args_size(job_id_t job_id) {
+    switch (job_id) {
+    case J_AXPY:
+        return sizeof(axpy_args_t);
+    case J_GEMM:
+        return sizeof(gemm_args_t);
+    case J_MONTECARLO:
+        return sizeof(mc_args_t);
+    default:
+        return 0;
+    }
+}
