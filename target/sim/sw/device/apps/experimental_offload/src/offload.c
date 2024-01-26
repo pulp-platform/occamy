@@ -11,8 +11,8 @@ __thread uint32_t local_job_addr;
 __thread uint32_t remote_job_addr;
 
 #include "axpy_job.h"
-#include "gemm_job.h"
-#include "montecarlo_job.h"
+// #include "gemm_job.h"
+// #include "montecarlo_job.h"
 
 // Job function type
 typedef void (*job_func_t)(job_args_t* args);

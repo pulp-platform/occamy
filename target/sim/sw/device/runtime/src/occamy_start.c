@@ -4,7 +4,6 @@
 
 #define SNRT_INIT_TLS
 #define SNRT_INIT_BSS
-#define SNRT_INIT_CLS
 #define SNRT_CRT0_CALLBACK3
 #define SNRT_INIT_LIBS
 #define SNRT_CRT0_PRE_BARRIER
@@ -23,7 +22,7 @@ static inline uint32_t* snrt_exit_code_destination() {
 
 static inline void snrt_exit_default(int exit_code);
 
-static inline void snrt_exit(int exit_code) {
+void snrt_exit(int exit_code) {
     snrt_exit_default(exit_code);
     if (snrt_global_core_idx() == 0) set_host_sw_interrupt();
 }
