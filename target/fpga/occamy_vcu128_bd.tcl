@@ -1,6 +1,3 @@
-# Copyright 2022 ETH Zurich and University of Bologna.
-# Licensed under the Apache License, Version 2.0, see LICENSE for details.
-# SPDX-License-Identifier: Apache-2.0
 
 ################################################################
 # This is a generated script based on design: occamy_vcu128
@@ -666,8 +663,8 @@ proc create_root_design { parentCell } {
   # Create instance: smc_pcie, and set properties
   set smc_pcie [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smc_pcie ]
   set_property -dict [ list \
-   CONFIG.NUM_CLKS {1} \
-   CONFIG.NUM_MI {5} \
+   CONFIG.NUM_CLKS {2} \
+   CONFIG.NUM_MI {7} \
    CONFIG.NUM_SI {1} \
  ] $smc_pcie
 
@@ -675,7 +672,7 @@ proc create_root_design { parentCell } {
   set smc_spcie [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smc_spcie ]
   set_property -dict [ list \
    CONFIG.NUM_CLKS {2} \
-   CONFIG.NUM_SI {5} \
+   CONFIG.NUM_SI {4} \
  ] $smc_spcie
 
   # Create instance: util_ds_buf, and set properties
@@ -713,11 +710,11 @@ proc create_root_design { parentCell } {
    CONFIG.axist_bypass_scale {Gigabytes} \
    CONFIG.axist_bypass_size {4} \
    CONFIG.axisten_freq {125} \
-   CONFIG.functional_mode {DMA} \
+   CONFIG.functional_mode {AXI_Bridge} \
    CONFIG.pf0_device_id {9014} \
    CONFIG.pl_link_cap_max_link_width {X4} \
    CONFIG.xdma_axi_intf_mm {AXI_Memory_Mapped} \
-   CONFIG.xdma_axilite_slave {false} \
+   CONFIG.xdma_axilite_slave {true} \
  ] $xdma_0
 
   # Create instance: xlslice_0, and set properties
@@ -772,8 +769,9 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net smc_hbm_6_M00_AXI [get_bd_intf_pins hbm_0/SAXI_24] [get_bd_intf_pins smc_hbm_6/M00_AXI]
   connect_bd_intf_net -intf_net smc_hbm_7_M00_AXI [get_bd_intf_pins hbm_0/SAXI_28] [get_bd_intf_pins smc_hbm_7/M00_AXI]
   connect_bd_intf_net -intf_net smc_pcie_M05_AXI [get_bd_intf_pins axi_iic_0/S_AXI] [get_bd_intf_pins smc_pcie/M00_AXI]
-  connect_bd_intf_net -intf_net xdma_0_M_AXI [get_bd_intf_pins smc_spcie/S03_AXI] [get_bd_intf_pins xdma_0/M_AXI]
-  connect_bd_intf_net -intf_net xdma_0_M_AXI_BYPASS [get_bd_intf_pins smc_spcie/S04_AXI] [get_bd_intf_pins xdma_0/M_AXI_BYPASS]
+  connect_bd_intf_net -intf_net smc_pcie_M05_AXI1 [get_bd_intf_pins smc_pcie/M05_AXI] [get_bd_intf_pins xdma_0/S_AXI_B]
+  connect_bd_intf_net -intf_net smc_pcie_M06_AXI [get_bd_intf_pins smc_pcie/M06_AXI] [get_bd_intf_pins xdma_0/S_AXI_LITE]
+  connect_bd_intf_net -intf_net xdma_0_M_AXI_B [get_bd_intf_pins smc_spcie/S03_AXI] [get_bd_intf_pins xdma_0/M_AXI_B]
   connect_bd_intf_net -intf_net xdma_0_pcie_mgt [get_bd_intf_ports pci_express_x4] [get_bd_intf_pins xdma_0/pcie_mgt]
 
   # Create port connections
@@ -819,7 +817,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net util_ds_buf_IBUF_DS_ODIV2 [get_bd_pins util_ds_buf/IBUF_DS_ODIV2] [get_bd_pins xdma_0/sys_clk]
   connect_bd_net -net util_ds_buf_IBUF_OUT [get_bd_pins util_ds_buf/IBUF_OUT] [get_bd_pins xdma_0/sys_clk_gt]
   connect_bd_net -net util_reduced_logic_0_Res [get_bd_pins psr_100/ext_reset_in] [get_bd_pins psr_25/ext_reset_in] [get_bd_pins psr_hbm/ext_reset_in] [get_bd_pins rst_or/Res]
-  connect_bd_net -net xdma_0_axi_aclk [get_bd_pins smc_spcie/aclk1] [get_bd_pins xdma_0/axi_aclk]
+  connect_bd_net -net xdma_0_axi_aclk [get_bd_pins smc_pcie/aclk1] [get_bd_pins smc_spcie/aclk1] [get_bd_pins xdma_0/axi_aclk]
   connect_bd_net -net xlconcat_0_dout [get_bd_pins concat_rst/dout] [get_bd_pins rst_or/Op1]
   connect_bd_net -net xlconcat_1_dout [get_bd_pins concat_irq/dout] [get_bd_pins occamy/ext_irq_i]
   connect_bd_net -net xlconcat_2_dout [get_bd_pins concat_rst_core/dout] [get_bd_pins rst_or_core/Op1]
@@ -875,8 +873,9 @@ proc create_root_design { parentCell } {
   assign_bd_address -offset 0x0011F0000000 -range 0x10000000 -target_address_space [get_bd_addr_spaces occamy/m_axi_hbm_7] [get_bd_addr_segs hbm_0/SAXI_28/HBM_MEM31] -force
   assign_bd_address -offset 0x4CC00000 -range 0x00400000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs hbm_0/SAPB_0/Reg] -force
   assign_bd_address -offset 0x4C800000 -range 0x00400000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs hbm_0/SAPB_1/Reg] -force
-  assign_bd_address -offset 0x00000000 -range 0x0001000000000000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs occamy/s_axi_pcie/reg0] -force
-  assign_bd_address -offset 0x00000000 -range 0x0001000000000000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_BYPASS] [get_bd_addr_segs occamy/s_axi_pcie/reg0] -force
+  assign_bd_address -offset 0x20000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs xdma_0/S_AXI_B/BAR0] -force
+  assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs xdma_0/S_AXI_LITE/CTL0] -force
+  assign_bd_address -offset 0x00000000 -range 0x0001000000000000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_B] [get_bd_addr_segs occamy/s_axi_pcie/reg0] -force
 
   # Exclude Address Segments
   exclude_bd_addr_seg -offset 0xC0000000 -range 0x10000000 -target_address_space [get_bd_addr_spaces occamy/m_axi_hbm_0] [get_bd_addr_segs hbm_0/SAXI_00/HBM_MEM04]
