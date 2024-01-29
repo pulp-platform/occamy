@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include "axpy/src/args.h"
+#include "kmeans/src/args.h"
 
 typedef struct {
     volatile uint32_t local_job_addr;
@@ -18,6 +19,16 @@ typedef struct {
     uint8_t offload_id;
     axpy_args_t args;
 } axpy_job_t;
+
+/////////////
+// K-Means //
+/////////////
+
+typedef struct {
+    uint32_t id;
+    uint8_t offload_id;
+    kmeans_args_t args;
+} kmeans_job_t;
 
 //////////
 // GEMM //
@@ -83,6 +94,7 @@ typedef union {
     axpy_args_t axpy;
     gemm_args_t gemm;
     mc_args_t mc;
+    kmeans_args_t kmeans;
 } job_args_t;
 
 typedef struct {
@@ -91,8 +103,8 @@ typedef struct {
     job_args_t args;
 } job_t;
 
-#define N_JOB_TYPES 3
-typedef enum { J_AXPY = 0, J_GEMM = 1, J_MONTECARLO = 2 } job_id_t;
+#define N_JOB_TYPES 4
+typedef enum { J_AXPY = 0, J_GEMM = 1, J_MONTECARLO = 2, J_KMEANS = 3 } job_id_t;
 
 static inline uint32_t job_args_size(job_id_t job_id) {
     switch (job_id) {
@@ -102,6 +114,8 @@ static inline uint32_t job_args_size(job_id_t job_id) {
         return sizeof(gemm_args_t);
     case J_MONTECARLO:
         return sizeof(mc_args_t);
+    case J_KMEANS:
+        return sizeof(kmeans_args_t);
     default:
         return 0;
     }

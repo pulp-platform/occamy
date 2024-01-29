@@ -8,11 +8,13 @@
 __thread uint32_t seed0, seed1, Ap, Cp;
 
 inline void mc_init() {
-    // Double the sequences as each core produces two random numbers
-    unsigned int num_sequences =
-        2 * snrt_cluster_compute_core_num() * N_CLUSTERS_TO_USE;
-    init_2d_lcg_params(num_sequences, 0, LCG_A, LCG_C, &seed0, &seed1, &Ap,
-                       &Cp);
+    if (snrt_is_compute_core()) {
+        // Double the sequences as each core produces two random numbers
+        unsigned int num_sequences =
+            2 * snrt_cluster_compute_core_num() * N_CLUSTERS_TO_USE;
+        init_2d_lcg_params(num_sequences, 0, LCG_A, LCG_C, &seed0, &seed1, &Ap,
+                        &Cp);
+    }
 }
 
 void mc_job_dm_core(job_t* job) {
