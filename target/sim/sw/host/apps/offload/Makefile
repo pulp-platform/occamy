@@ -18,6 +18,7 @@ APP  = offload
 SRCS = src/offload.c
 DEVICE_APPS  = blas/axpy
 DEVICE_APPS += blas/gemm
+DEVICE_APPS += kmeans
 DEVICE_APPS += mcast
 
 # Compiler toolchain

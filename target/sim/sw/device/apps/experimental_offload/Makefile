@@ -11,6 +11,7 @@ SRCS     = src/offload.c
 INCDIRS  = ../../../host/apps/experimental_offload/src
 INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/blas/axpy/src
 INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/blas/gemm/src
+INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/apps/
 INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/apps/prng
 INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/apps/montecarlo/pi_estimation
 

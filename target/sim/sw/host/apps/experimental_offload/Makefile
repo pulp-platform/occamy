@@ -5,10 +5,12 @@
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
 BLAS_DIR = $(shell bender path snitch_cluster)/sw/blas
+APPS_DIR = $(shell bender path snitch_cluster)/sw/apps
 
 APP  = experimental_offload
 SRCS = src/offload.c
-INCDIRS = $(BLAS_DIR)
+INCDIRS  = $(BLAS_DIR)
+INCDIRS += $(APPS_DIR)
 INCL_DEVICE_BINARY = true
 
 # Define application and number of clusters to use
@@ -23,6 +25,10 @@ endif
 
 ifeq ($(OFFLOAD),gemm)
 include $(BLAS_DIR)/gemm/Makefile
+endif
+
+ifeq ($(OFFLOAD),kmeans)
+include $(APPS_DIR)/kmeans/Makefile
 endif
 
 include ../common.mk

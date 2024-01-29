@@ -13,13 +13,13 @@ __thread uint32_t remote_job_addr;
 #include "axpy_job.h"
 // #include "gemm_job.h"
 // #include "montecarlo_job.h"
+#include "kmeans_job.h"
 
 // Job function type
 typedef void (*job_func_t)(job_args_t* args);
 
 // Job function array
-// __thread job_func_t jobs[N_JOB_TYPES] = {axpy_job_unified};
-__thread job_func_t jobs[1] = {axpy_job_unified};
+__thread job_func_t jobs[N_JOB_TYPES] = {axpy_job_unified, NULL, NULL, kmeans_iteration_job};
 
 static inline void run_job() {
     // Invoke job
@@ -29,6 +29,7 @@ static inline void run_job() {
     if (snrt_is_dm_core())
         snrt_mcycle();
     jobs[job_id](&job->args);
+    snrt_cluster_hw_barrier();
     if (snrt_is_dm_core())
         return_to_cva6_accelerated(job->offload_id);
 #else
@@ -38,15 +39,15 @@ static inline void run_job() {
         // Load job ID to lookup size of args
         local_job->id = remote_job->id;
         snrt_mcycle();
-        // Last cluster finds the data stored by CVA6 in its TCDM,
+        // First cluster finds the data stored by CVA6 in its TCDM,
         // all other clusters fetch it from there
-        if (snrt_cluster_idx() != (N_CLUSTERS_TO_USE - 1))
+        if (snrt_cluster_idx() != 0)
             snrt_dma_start_1d(&local_job->args, &remote_job->args, job_args_size(local_job->id));
         snrt_dma_wait_all();
     }
     snrt_cluster_hw_barrier();
     jobs[local_job->id](&local_job->args);
-    return_to_cva6(SYNC_CLUSTERS);
+    return_to_cva6(SYNC_ALL);
 #endif
 }
 
@@ -60,17 +61,13 @@ int main() {
     snrt_cluster_hw_barrier();
     if (snrt_is_dm_core()) {
         // Only one core sends the data for all clusters
-#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
         if (snrt_cluster_idx() == 0)
-#else
-        if (snrt_cluster_idx() == (N_CLUSTERS_TO_USE - 1))
-#endif
             usr_data_ptr->local_job_addr = local_job_addr;
     }
     snrt_cluster_hw_barrier();
 
 #ifdef OFFLOAD_MONTECARLO
-    if (snrt_is_compute_core()) mc_init();
+    mc_init();
 #endif
 
     // Notify CVA6 when snRuntime initialization is done

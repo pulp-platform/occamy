@@ -25,6 +25,7 @@ FILE_DIR = Path(__file__).parent.resolve()
 TARGET_DIR = FILE_DIR / '../../'
 AXPY_VERIFY_PY = TARGET_DIR / '../../deps/snitch_cluster/sw/blas/axpy/verify.py'
 GEMM_VERIFY_PY = TARGET_DIR / '../../deps/snitch_cluster/sw/blas/gemm/verify.py'
+KMEANS_VERIFY_PY = TARGET_DIR / '../../deps/snitch_cluster/sw/apps/kmeans/verify.py'
 APP = 'experimental_offload'
 SOURCE_BUILD_DIR = TARGET_DIR / f'sw/host/apps/{APP}/build'
 TARGET_BUILD_DIR = FILE_DIR / 'build'
@@ -33,6 +34,7 @@ CFG_DIR = TARGET_DIR / 'cfg'
 BIN_DIR = Path('bin')
 VSIM_BUILDDIR = Path('work-vsim')
 ROI_SPEC_TPL = FILE_DIR / 'roi_spec.json.tpl'
+KMEANS_CFG_TEMPLATE = FILE_DIR / 'kmeans.json.tpl'
 
 
 def run(cmd, env=None, dry_run=False):
@@ -86,7 +88,8 @@ def build_hw(tests, dry_run=False):
 
 def post_process_traces(test, dry_run=False):
     n_clusters_to_use = test['n_clusters_to_use']
-    logdir = test['run_dir'] / 'logs'
+    run_dir = test['run_dir']
+    logdir = run_dir / 'logs'
     device_elf = test['device_elf']
     hw_cfg = test['hw_cfg']
     roi_spec = logdir / 'roi_spec.json'
@@ -99,10 +102,10 @@ def post_process_traces(test, dry_run=False):
         json.dump(spec, f, indent=4)
     # Build traces and benchmark
     cprint(f'Build traces {colored(logdir, "cyan")}', attrs=["bold"])
-    run(['make', '-C', TARGET_DIR, f'LOGS_DIR={logdir}', f'BINARY={device_elf}', 'annotate', '-j'],
+    run(['make', '-C', TARGET_DIR, f'SIM_DIR={run_dir}', f'BINARY={device_elf}', 'annotate', '-j'],
         dry_run=dry_run)
-    run(['make', '-C', TARGET_DIR, f'LOGS_DIR={logdir}', f'ROI_SPEC={roi_spec}',
-        f'CFG_OVERRIDE={hw_cfg}', 'trace-view'], dry_run=dry_run)
+    run(['make', '-C', TARGET_DIR, f'SIM_DIR={run_dir}', f'ROI_SPEC={roi_spec}',
+        f'CFG_OVERRIDE={hw_cfg}', 'visual-trace'], dry_run=dry_run)
 
 
 def get_gemm_cfg(n):
@@ -112,8 +115,8 @@ def get_gemm_cfg(n):
         return temp_file.name
 
 
-def get_gemm_cfg(n):
-    filled_template = Template(filename=str(GEMM_CFG_TEMPLATE)).render(N=n)
+def get_kmeans_cfg(**kwargs):
+    filled_template = Template(filename=str(KMEANS_CFG_TEMPLATE)).render(**kwargs)
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
         temp_file.write(filled_template)
         return temp_file.name
@@ -154,6 +157,8 @@ def get_tests(testlist, run_dir, hw_cfg):
             cflags += ' -DOFFLOAD_AXPY'
         elif app == 'gemm':
             cflags += ' -DOFFLOAD_GEMM'
+        elif app == 'kmeans':
+            cflags += ' -DOFFLOAD_KMEANS'
         elif app == 'mc':
             cflags += f' -DOFFLOAD_MONTECARLO -DMC_LENGTH={length}'
         env = extend_environment(
@@ -164,6 +169,9 @@ def get_tests(testlist, run_dir, hw_cfg):
         if app == 'gemm':
             gemm_cfg_file = get_gemm_cfg(length)
             env = extend_environment(env, DATA_CFG=gemm_cfg_file)
+        elif app == 'kmeans':
+            kmeans_cfg_file = get_kmeans_cfg(n_samples=length)
+            env = extend_environment(env, KMEANS_DATA_CFG=kmeans_cfg_file)
 
         # Extend test with derived parameters
         test['sim_bin'] = sim_bin
@@ -174,6 +182,8 @@ def get_tests(testlist, run_dir, hw_cfg):
             test['cmd'] = [str(AXPY_VERIFY_PY), str(sim_bin), str(elf)]
         elif app == 'gemm':
             test['cmd'] = [str(GEMM_VERIFY_PY), str(sim_bin), str(elf)]
+        elif app == 'kmeans':
+            test['cmd'] = [str(KMEANS_VERIFY_PY), str(sim_bin), str(elf)]
         elif app == 'mc':
             test['sim_bin'] = sim_bin
         test['run_dir'] = unique_run_dir
