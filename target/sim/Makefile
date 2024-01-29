@@ -469,6 +469,9 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 
 CVA6_BINARY ?= $(shell cat $(LOGS_DIR)/.rtlbinary)
 
+$(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
+	cp $< $@
+
 # CVA6 traces require different handling
 $(CVA6_PERF_DUMP): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
@@ -524,12 +527,6 @@ ${VSIM_BUILDDIR}/compile.vsim.tcl: $(VSIM_SOURCES) ${TB_SRCS} ${TB_CC_SOURCES} t
 # Build compilation script and compile all sources for Questasim simulation
 $(BIN_DIR)/occamy_top.vsim: ${VSIM_BUILDDIR}/compile.vsim.tcl work/lib/libfesvr.a
 	$(call QUESTASIM,tb_bin)
-	@# Rename CVA6 trace to align with Snitch trace names
-	@echo "mv ${CVA6_TRACE} $(LOGS_DIR)/trace_hart_00000.txt" >> $@
-	@echo "mv ${CVA6_TRACE} $(LOGS_DIR)/trace_hart_00000.txt" >> $@.gui
-	@# Move all other traces to logs folder as well
-	@echo "mv *trace*.log $(LOGS_DIR)/" >> $@
-	@echo "mv *trace*.log $(LOGS_DIR)/" >> $@.gui
 
 # Clean all build directories and temporary files for Questasim simulation
 clean-vsim: clean-work
