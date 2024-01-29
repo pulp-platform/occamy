@@ -90,6 +90,16 @@ void initialize_bss() {
                            bss_size);
 }
 
+void initialize_wide_spm() {
+    extern volatile uint64_t __wide_spm_start, __wide_spm_end;
+
+    size_t wide_spm_size =
+        (size_t)(&__wide_spm_end) - (size_t)(&__wide_spm_start);
+    if (wide_spm_size)
+        sys_dma_blk_memcpy(SPM_WIDE_BASE_ADDR, (uint64_t)(&__wide_spm_start),
+                           wide_spm_size);
+}
+
 void enable_fpu() {
     uint64_t mstatus;
 
@@ -258,9 +268,15 @@ void wakeup_master_snitches() {
 /**
  * @brief Waits until snitches are done executing
  */
-static inline void wait_snitches_done() {
+static inline int wait_snitches_done() {
     wait_sw_interrupt();
     clear_host_sw_interrupt();
+    int retval = *soc_ctrl_scratch_ptr(3);
+    // LSB signals completion
+    if (retval & 1)
+        return retval >> 1;
+    else
+        return -1;
 }
 
 static inline volatile uint32_t* get_shared_lock() {
