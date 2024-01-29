@@ -473,6 +473,9 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 
 CVA6_BINARY ?= $(shell cat $(LOGS_DIR)/.rtlbinary)
 
+$(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
+	cp $< $@
+
 # CVA6 traces require different handling
 $(CVA6_PERF_DUMP): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
@@ -515,9 +518,9 @@ clean-vlt: clean-work
 	rm -rf work-vlt
 	rm -f $(BIN_DIR)/$(TARGET).vlt
 
-############
+#############
 # Questasim #
-############
+#############
 
 include $(SNITCH_ROOT)/target/common/vsim.mk
 
