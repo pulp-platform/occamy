@@ -44,9 +44,10 @@ include $(SNITCH_ROOT)/target/common/common.mk
 # Programs #
 ############
 
-REGGEN     ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
-OCCAMYGEN  ?= $(ROOT)/util/occamygen/occamygen.py
-ADDRMAPGEN ?= $(ROOT)/util/addrmap/addrmapgen.py
+REGGEN         ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
+OCCAMYGEN      ?= $(ROOT)/util/occamygen/occamygen.py
+ADDRMAPGEN     ?= $(ROOT)/util/addrmap/addrmapgen.py
+CVA6_ADDR2LINE ?= $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-addr2line
 
 CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 
@@ -480,7 +481,7 @@ $(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
 $(CVA6_PERF_DUMP): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
 $(CVA6_ANNOTATED_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
-	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $<
+	$(PYTHON) $(ANNOTATE_PY)  -q --keep-time --addr2line=$(CVA6_ADDR2LINE) -o $@ $(CVA6_BINARY) $<
 
 #############
 # Verilator #

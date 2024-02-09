@@ -15,10 +15,11 @@ DEBUG ?= OFF # ON to turn on debugging symbols
 ###################
 
 # Compiler toolchain
-RISCV_CC      = riscv64-unknown-elf-gcc
-RISCV_OBJCOPY = riscv64-unknown-elf-objcopy
-RISCV_OBJDUMP = riscv64-unknown-elf-objdump
-RISCV_READELF = riscv64-unknown-elf-readelf
+RISCV_GCC_BINROOT ?= $(dir $(shell which riscv64-unknown-elf-gcc))
+RISCV_CC           = $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-gcc
+RISCV_OBJCOPY      = $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objcopy
+RISCV_OBJDUMP      = $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objdump
+RISCV_READELF      = $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-readelf
 
 # Directories
 BUILDDIR    = $(abspath build)
