@@ -472,7 +472,7 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 # Traces #
 ##########
 
-CVA6_BINARY ?= $(shell cat $(LOGS_DIR)/.rtlbinary)
+CVA6_BINARY ?= $(shell cat $(SIM_DIR)/.rtlbinary)
 
 $(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
 	cp $< $@
