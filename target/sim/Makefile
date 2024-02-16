@@ -69,6 +69,7 @@ SOURCE_QUADCTRL_DIR  ?= $(ROOT)/hw/occamy/quadrant_s1_ctrl
 SNITCH_TEST_DIR      ?= $(SNITCH_ROOT)/target/common/test
 TARGET_TEST_DIR      ?= $(ROOT)/target/sim/test
 CVA6_TRACE            = trace_hart_0.log
+BENDER_LOCK           = $(ROOT)/Bender.lock
 
 # If the configuration file is overriden on the command-line (through
 # CFG_OVERRIDE) and this file differs from the least recently used
@@ -519,7 +520,7 @@ clean-vlt: clean-work
 # Modelsim #
 ############
 
-${VSIM_BUILDDIR}/compile.vsim.tcl: $(VSIM_SOURCES) ${TB_SRCS} ${TB_CC_SOURCES} test/bootrom.bin | $(VSIM_BUILDDIR)
+${VSIM_BUILDDIR}/compile.vsim.tcl: $(BENDER_LOCK) $(VSIM_SOURCES) ${TB_SRCS} ${TB_CC_SOURCES} test/bootrom.bin | $(VSIM_BUILDDIR)
 	$(VLIB) $(dir $@)
 	${BENDER} script vsim ${VSIM_BENDER} --vlog-arg="${VLOG_FLAGS} -work $(dir $@) " > $@
 	echo '${VLOG} -work $(dir $@) $(TB_CC_SOURCES) -ccflags "$(TB_CC_FLAGS)"' >> $@
