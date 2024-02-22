@@ -55,6 +55,9 @@ bootrom-spl.bin: bootrom.S $(OBJS_C) bootrom.ld occamy.dtb
 	$(OBJDUMP) -d bootrom-spl.elf > bootrom-spl.dump
 	$(OBJCOPY) -O binary bootrom-spl.elf bootrom-spl.bin
 
+%.coe: %.bin
+	bin2coe -i $< -o $@ -w 32
+
 clean:
 	rm -rf *.bin *.coe *.dump src/*.o *.dtb *.elf *.tcl
 

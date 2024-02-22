@@ -11,18 +11,12 @@ CVA6_SDK    ?= ${ROOT}/../cva6-sdk
 DEBUG       ?= 0
 EXT_JTAG    ?= 0
 VCU         ?= 01
-FPGA_ID     := 091847100576A
-HW_SERVER   := bordcomputer:3231
+FPGA_ID     :=
+HW_SERVER   :=
 BENDER      ?= bender
 VIVADO      ?= vitis-2020.2 vivado
 # Do not proceed with implem (CI)
 XILINX_SYNTHESIS_ONLY ?= 0
-
-# Select VCU128-02
-ifeq ($(VCU),02)
-	FPGA_ID := 091847100638A
-	HW_SERVER := bordcomputer:3232
-endif
 
 VIVADO ?= vivado
 VIVADO_ARGS := XILINX_SYNTHESIS_ONLY=$(XILINX_SYNTHESIS_ONLY)
@@ -36,20 +30,25 @@ LINUX_UIMAGE ?= ${CVA6_SDK}/uImage
 
 DTB = bootrom/occamy.dtb
 
+BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy
+ifeq ($(EXT_JTAG), 0)
+	BENDER_TARGETS += -t bscane
+endif
+
 default: all
 all: occamy_vcu128
 
 vivado_ips/occamy_xilinx:
-	${MAKE} -C vivado_ips occamy_xilinx
+	${MAKE} -C vivado_ips occamy_xilinx DEBUG=$(DEBUG) EXT_JTAG=$(EXT_JTAG)
 
 bootrom/bootrom-spl.coe:
 	${MAKE} -C bootrom
 
 occamy_vcu128: vivado_ips/occamy_xilinx bootrom/bootrom-spl.coe define_defines_includes_no_simset.tcl
-	$(VIVADO_ARGS) ${VIVADO} -mode batch -source occamy_vcu128.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/bootrom/bootrom-spl.coe
+	$(VIVADO_ARGS) ${VIVADO} -mode gui -source occamy_vcu128.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/bootrom/bootrom-spl.coe
 
 define_defines_includes_no_simset.tcl: $(BENDER_FILES)
-	${BENDER} script vivado -t occamy -t cv64a6_imafdc_sv39 --only-defines --only-includes --no-simset > $@
+	${BENDER} script vivado $(BENDER_TARGETS) --only-defines --only-includes --no-simset > $@
 
 program:
 	${VIVADO} -mode batch -source occamy_vcu128_program.tcl -tclargs ${VCU}

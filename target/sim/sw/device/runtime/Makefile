@@ -19,7 +19,9 @@ SNRT_DIR    = $(SNITCH_ROOT)/sw/snRuntime
 
 # Dependencies
 INCDIRS += $(SNRT_DIR)/src
+INCDIRS += $(SNRT_DIR)/src/omp
 INCDIRS += $(SNRT_DIR)/api
+INCDIRS += $(SNRT_DIR)/api/omp
 INCDIRS += $(SNRT_DIR)/vendor/riscv-opcodes
 INCDIRS += $(SW_DIR)/shared/platform
 INCDIRS += $(SW_DIR)/shared/platform/generated

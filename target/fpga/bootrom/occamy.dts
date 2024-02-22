@@ -25,7 +25,7 @@
     #address-cells = <2>;
     #size-cells = <2>;
     ranges;
-    snitch_mem: buffer@c0000000 {
+    snitch_mem: l3_mem@c0000000 {
         reg = <0x0 0xc0000000 0x0 0x10000000>;
     };
   };
@@ -63,7 +63,7 @@
   soc: soc {
     #address-cells = <2>;
     #size-cells = <2>;
-    compatible = "simple-bus";
+    compatible = "eth,occamy-soc", "simple-bus";
     ranges;
     debug@0 {
       compatible = "riscv,debug-013";
@@ -191,9 +191,8 @@
       clock-names = "s_axi_lite_clk", "axis_clk";
       // interrupt and mac_irq
       interrupts-extended = <&PLIC0 1 &PLIC0 6>;
-      // local-mac-address = [ 00 0A 35 04 E1 60 ]; // hero-vcu128-01
-      local-mac-address = [ 00 0A 35 04 E1 52 ]; // hero-vcu128-02
-      mac-address = [ 00 0A 35 04 E1 52 ];
+      local-mac-address = [ 00 0A 35 07 D5 DD ]; // hero-vcu128-03
+      mac-address = [ 00 0A 35 07 D5 DD ]; // hero-vcu128-03
       device_type = "network";
       axistream-connected = <&eth_dma0>;
       axistream-control-connected = <&eth_dma0>;
@@ -237,6 +236,12 @@
       compatible = "eth,occamy-quadrant-control";
       reg-names = "quadrant-control";
       reg = <0x0 0x0b000000 0x0 0x10000>;
+    };
+    // We do not use the spm-narrow (contains OpenSBI code)
+    spm_wide: spm-wide@71000000 {
+      compatible = "eth,occamy-spm-wide";
+      reg-names = "spm-wide";
+      reg = <0x0 0x71000000 0x0 0x100000>;
     };
     // Instantiate a snitch cluster
     snitch-cluster@10000000 {

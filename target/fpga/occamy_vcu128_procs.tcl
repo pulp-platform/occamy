@@ -24,6 +24,17 @@ proc target_02 {} {
   set occ_bit_stem occamy_vcu128/occamy_vcu128.runs/impl_1/occamy_vcu128_wrapper
 }
 
+proc target_03 {} {
+  global occ_hw_server
+  global occ_target_serial
+  global occ_hw_device
+  global occ_bit_stem
+  set occ_hw_server bordcomputer:3233
+  set occ_target_serial 12309159258A
+  set occ_hw_device xcvu37p_0
+  set occ_bit_stem occamy_vcu128/occamy_vcu128.runs/impl_1/occamy_vcu128_wrapper
+}
+
 proc occ_connect { } {
     global occ_hw_server
     global occ_target_serial

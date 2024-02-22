@@ -9,7 +9,7 @@ MK_DIR   := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 SRC_DIR  := $(realpath $(MK_DIR)/src)
 
 APP     ?= omptarget_device
-SRCS    ?= $(SRC_DIR)/main.c
+SRCS    ?= $(SRC_DIR)/main.c $(SRC_DIR)/sw_mailbox.c
 INCDIRS += $(SRC_DIR)
 
 .PHONY: clean
@@ -21,10 +21,12 @@ OBJS    := $(subst $(SRC_DIR), $(BUILDDIR), $(SRCS:.c=.o))
 LIB     := $(BUILDDIR)/libomptarget_device.a
 
 $(BUILDDIR)/origin.ld: | $(BUILDDIR)
-	echo "L3_ORIGIN = 0x80000000;" > $(BUILDDIR)/origin.ld
+	echo "L3_ORIGIN = 0xC0000000;" > $(BUILDDIR)/origin.ld
 
-$(LIB): $(OBJS) | $(BUILDDIR)
-	$(RISCV_AR) $(RISCV_ARFLAGS) $@ $^
+# We first extract objects from libnnruntime and then link them with our objects
+$(BUILDDIR)/libomptarget_device.a: $(OBJS) | $(BUILDDIR)
+	cd $(BUILDDIR) && $(RISCV_AR) -x $(SNRT_LIB_DIR)/lib$(SNRT_LIB_NAME).a
+	$(RISCV_AR) $(RISCV_ARFLAGS) $@ $(BUILDDIR)/*.o
 
 # For this target, only build the library
 all: $(LIB)
