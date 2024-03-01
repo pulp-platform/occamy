@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
+#include "snrt.h"
 
 /***********************************************************************************
  * MACROS
@@ -181,7 +182,12 @@ struct l3_layout {
  ***********************************************************************************/
 int syscall(uint64_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2,
             uint64_t arg3, uint64_t arg4);
-void csleep(uint32_t cycles);
+
+static inline void csleep(uint32_t cycles) {
+    uint32_t start = snrt_mcycle();
+    while ((snrt_mcycle() - start) < cycles) {}
+}
+
 void snrt_hero_exit(int code);
 /**
  * @brief Blocking mailbox read access

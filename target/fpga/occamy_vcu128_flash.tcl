@@ -8,17 +8,17 @@
 # Programs the SPI Flash of the VCU128 board with with two partitions
 # 
 # HW_SERVER  host:port URL to the server where the FPGA board is connected to 
-# FPGA_ID    Serial of the FPGA to target
+# FPGA_PATH  Serial of the FPGA to target
 # MCS        Output flash configuration file
 # OFFSET0    Address offset of partition 0
 # FILE0      File to program to partition 0
 
 # Parse arguments
 if {$argc < 5} {
-    error "usage: occamy_vcu_138_flash.tcl HW_SERVER FPGA_ID MCS OFFSET0 FILE0"
+    error "usage: occamy_vcu_138_flash.tcl HW_SERVER FPGA_PATH MCS OFFSET0 FILE0"
 }
 set HW_SERVER [lindex $argv 0]
-set FPGA_ID   [lindex $argv 1]
+set FPGA_PATH   [lindex $argv 1]
 set MCS       [lindex $argv 2]
 set OFFSET0   [lindex $argv 3]
 set FILE0     [lindex $argv 4]
@@ -38,8 +38,8 @@ write_cfgmem -force -format mcs -size 256 -interface SPIx4 \
 # Open and connect HW manager
 open_hw_manager
 connect_hw_server -url ${HW_SERVER} -allow_non_jtag
-current_hw_target [get_hw_targets */xilinx_tcf/Xilinx/${FPGA_ID}]
-set_property PARAM.FREQUENCY 15000000 [get_hw_targets */xilinx_tcf/Xilinx/${FPGA_ID}]
+current_hw_target [get_hw_targets ${FPGA_PATH}]
+set_property PARAM.FREQUENCY 15000000 [get_hw_targets ${FPGA_PATH}]
 open_hw_target
 current_hw_device [get_hw_devices xcvu37p_0]
 

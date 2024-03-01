@@ -175,6 +175,7 @@ static int gomp_offload_manager() {
 
     // (1) Wait for the offload trigger cmd == MBOX_DEVICE_START
     mailbox_read((unsigned int *)&cmd, 1);
+    cycles = read_csr(mcycle);
     if (MBOX_DEVICE_STOP == cmd) {
       //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)
       //  snrt_trace("Got MBOX_DEVICE_STOP from host, stopping execution now.\n");
@@ -251,11 +252,8 @@ static int gomp_offload_manager() {
     // snrt_reset_perf_counter(SNRT_PERF_CNT1);
     // snrt_start_perf_counter(SNRT_PERF_CNT0, SNRT_PERF_CNT_ISSUE_FPU, core_id);
     // snrt_start_perf_counter(SNRT_PERF_CNT1, SNRT_PERF_CNT_DMA_BUSY, core_id);
-    cycles = read_csr(mcycle);
 
     offloadFn(offloadArgs);
-    
-    cycles = read_csr(mcycle) - cycles;
     // snrt_stop_perf_counter(SNRT_PERF_CNT0);
     // snrt_stop_perf_counter(SNRT_PERF_CNT1);
     // issue_fpu = snrt_get_perf_counter(SNRT_PERF_CNT0);
@@ -268,6 +266,7 @@ static int gomp_offload_manager() {
     //snrt_info("cycles: %d\r\n", cycles);
 
     mailbox_write(MBOX_DEVICE_DONE);
+    cycles = read_csr(mcycle) - cycles;
     mailbox_write(cycles);
 
     //if (DEBUG_LEVEL_OFFLOAD_MANAGER > 0)

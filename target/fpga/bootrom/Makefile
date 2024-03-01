@@ -38,8 +38,8 @@ all: bootrom-spl.coe bootrom.tcl bootrom-spl.tcl
 	$(CC) $(CFLAGS) -DGIT_SHA=\"$(GIT_SHA)\"  $(INCLUDES) -c $<  -o $@
 	@echo "CC    <= $<"
 
-%.dtb: %.dts
-	dtc -I dts $< -O dtb -o $@
+%.dtb: %.dts $(wildcard *.dtsi)
+	dtc -@ -I dts $< -O dtb -o $@
 
 bootrom.elf bootrom.dump bootrom.bin: bootrom.S $(OBJS_C) bootrom.ld occamy.dtb
 	$(CC) $(CFLAGS) $(INCLUDES) -Tbootrom.ld $< $(OBJS_C) -o bootrom.elf

@@ -37,12 +37,12 @@ proc target_03 {} {
 
 proc occ_connect { } {
     global occ_hw_server
-    global occ_target_serial
+    global occ_target_path
     global occ_hw_device
     open_hw_manager
     connect_hw_server -url ${occ_hw_server} -allow_non_jtag
-    current_hw_target [get_hw_targets */xilinx_tcf/Xilinx/${occ_target_serial}]
-    set_property PARAM.FREQUENCY 15000000 [get_hw_targets */xilinx_tcf/Xilinx/${occ_target_serial}]
+    current_hw_target [get_hw_targets ${occ_target_path}]
+    set_property PARAM.FREQUENCY 15000000 [get_hw_targets ${occ_target_path}]
     open_hw_target
     current_hw_device [get_hw_devices ${occ_hw_device}]
     refresh_hw_device -update_hw_probes false [lindex [get_hw_devices ${occ_hw_device}] 0]
