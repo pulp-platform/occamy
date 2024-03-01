@@ -7,12 +7,11 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := ${MKFILE_DIR}../../../..
-CVA6_SDK    ?= ${ROOT}/../cva6-sdk
+CVA6_SDK    ?=
 DEBUG       ?= 0
 EXT_JTAG    ?= 0
-VCU         ?= 01
-FPGA_ID     :=
-HW_SERVER   :=
+FPGA_PATH   := $(XILINX_FPGA_PATH)
+HW_SERVER   := $(XILINX_HOST):$(XILINX_PORT)
 BENDER      ?= bender
 VIVADO      ?= vitis-2020.2 vivado
 # Do not proceed with implem (CI)
@@ -54,12 +53,12 @@ program:
 	${VIVADO} -mode batch -source occamy_vcu128_program.tcl -tclargs ${VCU}
 
 flash: ${FILE}
-	${VIVADO} -mode batch -source occamy_vcu128_flash.tcl -tclargs ${HW_SERVER} ${FPGA_ID} flash.mcs ${OFFSET} ${FILE}
+	${VIVADO} -mode batch -source occamy_vcu128_flash.tcl -tclargs ${HW_SERVER} ${FPGA_PATH} flash.mcs ${OFFSET} ${FILE}
 	rm flash.mcs
 
 # Flash only uboot (made for TFTP bootmode), overwrite the bootrom, and reset the board
 flashrun: ${UBOOT_ITB}
-	${VIVADO} -mode batch -source occamy_vcu128_flashrun.tcl -tclargs ${HW_SERVER} ${FPGA_ID} flash.mcs 6000000 ${UBOOT_ITB}
+	${VIVADO} -mode batch -source occamy_vcu128_flashrun.tcl -tclargs ${HW_SERVER} ${FPGA_PATH} flash.mcs 6000000 ${UBOOT_ITB}
 	rm flash.mcs
 
 flash-u-boot:

@@ -79,7 +79,7 @@ int main() {
             // Copy the DBT at (SPM+4)
 
             print_uart("\r\nCopying DTB at ");
-            print_uart_addr(SPL_DEST + 1);
+            print_uart_addr(SPL_DEST + 4);
             for (int i = 0; i < totalsize; i++)
                 *(uint8_t *)(SPL_DEST + 4 + i) =
                     *(((uint8_t *)__dtb_start) + i);

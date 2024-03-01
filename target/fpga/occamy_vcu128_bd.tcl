@@ -710,8 +710,15 @@ proc create_root_design { parentCell } {
    CONFIG.axist_bypass_scale {Gigabytes} \
    CONFIG.axist_bypass_size {4} \
    CONFIG.axisten_freq {125} \
+   CONFIG.bar_indicator {BAR_1:0} \
    CONFIG.functional_mode {AXI_Bridge} \
+   CONFIG.pf0_bar0_64bit {true} \
+   CONFIG.pf0_bar0_prefetchable {true} \
+   CONFIG.pf0_bar0_scale {Gigabytes} \
+   CONFIG.pf0_bar0_size {4} \
    CONFIG.pf0_device_id {9014} \
+   CONFIG.pf0_msix_cap_pba_bir {BAR_1:0} \
+   CONFIG.pf0_msix_cap_table_bir {BAR_1:0} \
    CONFIG.pl_link_cap_max_link_width {X4} \
    CONFIG.xdma_axi_intf_mm {AXI_Memory_Mapped} \
    CONFIG.xdma_axilite_slave {true} \
@@ -874,7 +881,7 @@ proc create_root_design { parentCell } {
   assign_bd_address -offset 0x4CC00000 -range 0x00400000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs hbm_0/SAPB_0/Reg] -force
   assign_bd_address -offset 0x4C800000 -range 0x00400000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs hbm_0/SAPB_1/Reg] -force
   assign_bd_address -offset 0x20000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs xdma_0/S_AXI_B/BAR0] -force
-  assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs xdma_0/S_AXI_LITE/CTL0] -force
+  assign_bd_address -offset 0x4E000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces occamy/m_axi_pcie] [get_bd_addr_segs xdma_0/S_AXI_LITE/CTL0] -force
   assign_bd_address -offset 0x00000000 -range 0x0001000000000000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_B] [get_bd_addr_segs occamy/s_axi_pcie/reg0] -force
 
   # Exclude Address Segments

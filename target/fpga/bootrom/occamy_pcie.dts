@@ -117,9 +117,15 @@
         reg-names = "quadrant-control";
         reg = <0x0 0x0b000000 0x0 0x10000>;
       };
-      scratchpad-narrow@70000000 {
-        compatible = "eth,scratchpad-narrow";
-        reg = <0x0 0x70000000 0x0 0x80000>;
+      // We do not use the spm-narrow (contains OpenSBI code)
+      spm_wide: spm-wide@71000000 {
+        compatible = "eth,occamy-spm-wide";
+        reg-names = "spm-wide";
+        reg = <0x0 0x71000000 0x0 0x100000>;
+      };
+      pcie_axi_bar_mem: pcie-axi-bar-mem@20000000 {
+        compatible = "eth,pcie-axi-bar-mem";
+        reg = <0x0 0x20000000 0x0 0x40000000>;
       };
       // Instantiate a snitch cluster
       snitch-cluster@10000000 {
