@@ -21,10 +21,21 @@ clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vsim clean-
 # Makefrag #
 ############
 
+# Common definitions used by included Makefiles
+
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := $(MKFILE_DIR)../..
 SNITCH_ROOT := $(shell bender path snitch_cluster)
+
+TARGET = occamy_top
+
+CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
+CVA6_PERF_DUMP       = $(LOGS_DIR)/hart_00000_perf.json
+CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
+TXT_TRACES          += $(CVA6_TXT_TRACE)
+PERF_DUMPS          += $(CVA6_PERF_DUMP)
+ANNOTATED_TRACES    += $(CVA6_ANNOTATED_TRACE)
 
 include $(SNITCH_ROOT)/target/common/common.mk
 
@@ -510,7 +521,7 @@ $(VLT_BUILDDIR)/test/uartdpi/uartdpi.o: test/uartdpi/uartdpi.c
 	$(CC) $(CFLAGS) $(VLT_CFLAGS) -c $< -o $@
 
 # Link verilated archive wich $(VLT_COBJ)
-$(BIN_DIR)/occamy_top.vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
+$(BIN_DIR)/$(TARGET).vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
 	mkdir -p $(dir $@)
 	$(CXX) $(LDFLAGS) -std=c++14 -L ${VLT_BUILDDIR}/lib -o $@ $(VLT_COBJ) $(VLT_AR) -lfesvr -lpthread -lutil
 
@@ -518,40 +529,25 @@ $(BIN_DIR)/occamy_top.vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
 .PHONY: clean-vlt
 clean-vlt: clean-work
 	rm -rf work-vlt
-	rm -f $(BIN_DIR)/occamy_top.vlt
+	rm -f $(BIN_DIR)/$(TARGET).vlt
 
 ############
-# Modelsim #
+# Questasim #
 ############
 
-${VSIM_BUILDDIR}/compile.vsim.tcl: $(VSIM_SOURCES) ${TB_SRCS} ${TB_CC_SOURCES} test/bootrom.bin | $(VSIM_BUILDDIR)
-	$(VLIB) $(dir $@)
-	${BENDER} script vsim ${VSIM_BENDER} --vlog-arg="${VLOG_FLAGS} -work $(dir $@) " > $@
-	echo '${VLOG} -work $(dir $@) $(TB_CC_SOURCES) -ccflags "$(TB_CC_FLAGS)"' >> $@
-	echo 'return 0' >> $@
+include $(SNITCH_ROOT)/target/common/vsim.mk
 
-# Build compilation script and compile all sources for Questasim simulation
-$(BIN_DIR)/occamy_top.vsim: ${VSIM_BUILDDIR}/compile.vsim.tcl work/lib/libfesvr.a
-	$(call QUESTASIM,tb_bin)
-	@# Rename CVA6 trace to align with Snitch trace names
-	@echo "mv ${CVA6_TRACE} $(LOGS_DIR)/trace_hart_00000.txt" >> $@
-	@echo "mv ${CVA6_TRACE} $(LOGS_DIR)/trace_hart_00000.txt" >> $@.gui
-	@# Move all other traces to logs folder as well
-	@echo "mv *trace*.log $(LOGS_DIR)/" >> $@
-	@echo "mv *trace*.log $(LOGS_DIR)/" >> $@.gui
-
-# Clean all build directories and temporary files for Questasim simulation
-clean-vsim: clean-work
-	rm -rf $(BIN_DIR)/occamy_top.vsim $(BIN_DIR)/occamy_top.vsim.gui $(VSIM_BUILDDIR) vsim.wlf
+# Add dependency on bootrom
+$(BIN_DIR)/$(TARGET).vsim: test/bootrom.bin
 
 #######
 # VCS #
 #######
 
 # Build compilation script and compile all sources for VCS simulation
-$(BIN_DIR)/occamy_top.vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} test/bootrom.bin
+$(BIN_DIR)/$(TARGET).vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} test/bootrom.bin
 	mkdir -p bin
-	vcs $(VCS_FLAGS) -o $(BIN_DIR)/occamy_top.vcs tb_bin -cc $(CC) -cpp $(CXX) \
+	vcs $(VCS_FLAGS) -o $(BIN_DIR)/$(TARGET).vcs tb_bin -cc $(CC) -cpp $(CXX) \
 		$(TB_CC_SOURCES) -CFLAGS "$(TB_CC_FLAGS)" -LDFLAGS "-L${FESVR}/lib" -lfesvr -lutil
 
 # Clean all build directories and temporary files for VCS simulation
@@ -559,7 +555,7 @@ $(BIN_DIR)/occamy_top.vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURC
 clean-vcs: clean-work
 	rm -rf AN.DB
 	rm -rf work-vcs
-	rm -f $(BIN_DIR)/occamy_top.vcs
+	rm -f $(BIN_DIR)/$(TARGET).vcs
 
 ########
 # FPGA #
@@ -580,7 +576,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf $(ROOT)/Bender.lock $(ROOT)/.bender/ $(ROOT)/deps
+	rm -rf $(BENDER_LOCK) $(ROOT)/.bender/ $(ROOT)/deps
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/
@@ -594,9 +590,9 @@ help:
 	@echo -e ""
 	@echo -e "${Blue}help           ${Black}Show an overview of all Makefile targets."
 	@echo -e ""
-	@echo -e "${Blue}bin/occamy_top.vcs  ${Black}Build compilation script and compile all sources for VCS simulation. @IIS: vcs-2020.12 make bin/occamy_top.vcs"
-	@echo -e "${Blue}bin/occamy_top.vlt  ${Black}Build compilation script and compile all sources for Verilator simulation."
-	@echo -e "${Blue}bin/occamy_top.vsim ${Black}Build compilation script and compile all sources for Questasim simulation. @IIS: QUESTA_HOME=/usr/pack/modelsim-10.7b-kgf/questasim/ CC=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/gcc CXX=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/g++ LD=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/ld make bin/occamy_top.vsim"
+	@echo -e "${Blue}bin/$(TARGET).vcs  ${Black}Build compilation script and compile all sources for VCS simulation. @IIS: vcs-2020.12 make bin/$(TARGET).vcs"
+	@echo -e "${Blue}bin/$(TARGET).vlt  ${Black}Build compilation script and compile all sources for Verilator simulation."
+	@echo -e "${Blue}bin/$(TARGET).vsim ${Black}Build compilation script and compile all sources for Questasim simulation. @IIS: QUESTA_HOME=/usr/pack/modelsim-10.7b-kgf/questasim/ CC=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/gcc CXX=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/g++ LD=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/ld make bin/$(TARGET).vsim"
 	@echo -e ""
 	@echo -e "${Blue}all            ${Black}Update all SW and HW related sources (by, e.g., re-generating the RegGen registers and their c-header files)."
 	@echo -e "${Blue}fpga           ${Black}Build a small Occamy version (CVA6 + 1xcluster) for the VCU128 FPGA board."
