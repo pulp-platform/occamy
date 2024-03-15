@@ -15,7 +15,7 @@ CFG_OVERRIDE ?=     # Override default config file
 .DEFAULT_GOAL := help
 .PHONY: all clean
 all: rtl sw addrmap
-clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vsim clean-vcs clean-logs
+clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vcs clean-logs
 
 ############
 # Makefrag #
