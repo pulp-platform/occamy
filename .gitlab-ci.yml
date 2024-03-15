@@ -62,6 +62,6 @@ occamy-full-vsim:
   script:
     - cd target/sim
     - make CFG_OVERRIDE=cfg/full.hjson rtl
-    - make LENGTH=384 sw
+    - make sw
     - make bin/occamy_top.vsim
     - ./run.py sw/run-full-occamy.yaml --simulator vsim
