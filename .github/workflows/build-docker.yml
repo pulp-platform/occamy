@@ -6,7 +6,7 @@
 name: build-docker
 on:
   push:
-    branches: [main]
+    branches: [vivianep/sn-cluster-align]
   workflow_dispatch:
 jobs:
   build-docker:
