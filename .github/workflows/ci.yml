@@ -15,7 +15,7 @@ jobs:
     name: Build documentation
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/pulp-platform/occamy
+      image: ghcr.io/pulp-platform/occamy:main
     steps:
       - uses: actions/checkout@v2
       - name: Build docs
@@ -31,7 +31,7 @@ jobs:
     name: Build SW for Occamy
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/pulp-platform/occamy
+      image: ghcr.io/pulp-platform/occamy:main
     steps:
       - uses: actions/checkout@v2
         with:
@@ -48,7 +48,7 @@ jobs:
     name: Generate Occamy RTL sources
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/pulp-platform/occamy
+      image: ghcr.io/pulp-platform/occamy:main
     steps:
       - uses: actions/checkout@v2
         with:
