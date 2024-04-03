@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 overrides:
-  axi:                { git: https://github.com/pulp-platform/axi.git,                rev: feature/multicast-xbar }
+  axi: { path: "working_dir/axi" } # Temporary override by Bender using `bender clone` command
+  snitch_cluster: { path: "working_dir/snitch_cluster" } # Temporary override by Bender using `bender clone` command
+#  axi:                { git: https://github.com/pulp-platform/axi.git,                rev: feature/multicast-xbar }
   common_cells:       { git:  https://github.com/pulp-platform/common_cells.git,      rev: multicast-xbar }
   register_interface: { git: https://github.com/pulp-platform/register_interface.git, version: 0.4.2 }
