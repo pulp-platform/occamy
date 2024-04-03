@@ -415,7 +415,7 @@ module ${name}_soc
   <% in_sys_idma_mst  = soc_wide_xbar.__dict__["in_sys_idma_mst"] %>\
 
   // local regbus definition
-  `REG_BUS_TYPEDEF_ALL(idma_cfg_reg_a${wide_in.aw}_d31, logic [${wide_in.aw-1}:0], logic [31:0], logic [7:0])
+  `REG_BUS_TYPEDEF_ALL(idma_cfg_reg_a${wide_in.aw}_d32, logic [${wide_in.aw-1}:0], logic [31:0], logic [3:0])
 
   // iDMA types
   localparam int unsigned iDMAStrbWidth = ${wide_in.dw} / 32'd8;
@@ -433,7 +433,7 @@ module ${name}_soc
 
   // AXI meta channels
   typedef struct packed {
-    ${out_sys_idma_cfg.ar_chan_type()} ar_chan;
+    ${wide_out.ar_chan_type()} ar_chan;
   } axi_read_meta_channel_t;
 
   typedef struct packed {
@@ -441,7 +441,7 @@ module ${name}_soc
   } read_meta_channel_t;
 
   typedef struct packed {
-    ${out_sys_idma_cfg.aw_chan_type()} aw_chan;
+    ${wide_out.aw_chan_type()} aw_chan;
   } axi_write_meta_channel_t;
 
   typedef struct packed {
@@ -530,10 +530,10 @@ module ${name}_soc
   );
 
   idma_backend_rw_axi #(
-    .DataWidth            ( ${wide_in.dw-1} ),
-    .AddrWidth            ( ${wide_in.aw-1} ),
-    .UserWidth            ( ${wide_in.uw} ),
-    .AxiIdWidth           ( ${wide_in.iw-1} ),
+    .DataWidth            ( ${wide_out.dw} ),
+    .AddrWidth            ( ${wide_out.aw} ),
+    .UserWidth            ( ${wide_out.uw+1} ),
+    .AxiIdWidth           ( ${wide_out.iw} ),
     .NumAxInFlight        ( 32'd64 ),
     .BufferDepth          ( 32'd3 ),
     .TFLenWidth           ( ${wide_in.aw-1} ),
