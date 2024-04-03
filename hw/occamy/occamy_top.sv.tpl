@@ -409,7 +409,7 @@ module ${name}_top
 
   assign sba_addr = sba_addr_long[${regbus_debug.aw-1}:0];
 
-  mem_to_axi_lite #(
+  axi_lite_from_mem #(
     .MemAddrWidth (${regbus_debug.aw}),
     .AxiAddrWidth (${regbus_debug.aw}),
     .DataWidth (${regbus_debug.dw}),
@@ -417,7 +417,7 @@ module ${name}_top
     .AxiProt ('0),
     .axi_req_t (${soc_periph_xbar.in_debug.req_type()}),
     .axi_rsp_t (${soc_periph_xbar.in_debug.rsp_type()})
-  ) i_mem_to_axi_lite (
+  ) i_axi_lite_from_mem (
     .clk_i (${regbus_debug.clk}),
     .rst_ni (${regbus_debug.rst}),
     .mem_req_i (sba_req),
