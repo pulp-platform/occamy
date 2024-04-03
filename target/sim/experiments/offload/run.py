@@ -23,9 +23,10 @@ from Simulator import QuestaSimulator  # noqa: E402
 
 FILE_DIR = Path(__file__).parent.resolve()
 TARGET_DIR = FILE_DIR / '../../'
-AXPY_VERIFY_PY = TARGET_DIR / '../../deps/snitch_cluster/sw/blas/axpy/verify.py'
-GEMM_VERIFY_PY = TARGET_DIR / '../../deps/snitch_cluster/sw/blas/gemm/verify.py'
-KMEANS_VERIFY_PY = TARGET_DIR / '../../deps/snitch_cluster/sw/apps/kmeans/verify.py'
+SNITCH_DIR = TARGET_DIR / '../../deps/snitch_cluster'
+AXPY_VERIFY_PY = SNITCH_DIR / 'sw/blas/axpy/scripts/verify.py'
+GEMM_VERIFY_PY = SNITCH_DIR / 'sw/blas/gemm/scripts/verify.py'
+KMEANS_VERIFY_PY = SNITCH_DIR / 'sw/apps/kmeans/scripts/verify.py'
 APP = 'experimental_offload'
 SOURCE_BUILD_DIR = TARGET_DIR / f'sw/host/apps/{APP}/build'
 TARGET_BUILD_DIR = FILE_DIR / 'build'
@@ -33,8 +34,11 @@ DEVICE_ELF = TARGET_DIR / f'sw/device/apps/{APP}/build/{APP}.elf'
 CFG_DIR = TARGET_DIR / 'cfg'
 BIN_DIR = Path('bin')
 VSIM_BUILDDIR = Path('work-vsim')
-ROI_SPEC_TPL = FILE_DIR / 'roi_spec.json.tpl'
-KMEANS_CFG_TEMPLATE = FILE_DIR / 'kmeans.json.tpl'
+
+KMEANS_CFG_TEMPLATE = FILE_DIR / 'data' / 'kmeans.json.tpl'
+
+KMEANS_ROI_TEMPLATE = FILE_DIR / 'roi' / 'kmeans.json.tpl'
+GEMM_ROI_TEMPLATE = FILE_DIR / 'roi' / 'gemm.json.tpl'
 
 
 def run(cmd, env=None, dry_run=False):
@@ -94,7 +98,11 @@ def post_process_traces(test, dry_run=False):
     hw_cfg = test['hw_cfg']
     roi_spec = logdir / 'roi_spec.json'
     # Read and render specification template JSON
-    with open(ROI_SPEC_TPL, 'r') as f:
+    if test['app'] == 'gemm':
+        roi_spec_tpl = GEMM_ROI_TEMPLATE
+    elif test['app'] == 'kmeans':
+        roi_spec_tpl = KMEANS_ROI_TEMPLATE
+    with open(roi_spec_tpl, 'r') as f:
         spec_template = Template(f.read())
         rendered_spec = spec_template.render(nr_clusters=n_clusters_to_use)
         spec = json5.loads(rendered_spec)
@@ -183,7 +191,7 @@ def get_tests(testlist, run_dir, hw_cfg):
         elif app == 'gemm':
             test['cmd'] = [str(GEMM_VERIFY_PY), str(sim_bin), str(elf)]
         elif app == 'kmeans':
-            test['cmd'] = [str(KMEANS_VERIFY_PY), str(sim_bin), str(elf)]
+            test['cmd'] = [str(KMEANS_VERIFY_PY), str(sim_bin), str(elf), '--no-gui']
         elif app == 'mc':
             test['sim_bin'] = sim_bin
         test['run_dir'] = unique_run_dir

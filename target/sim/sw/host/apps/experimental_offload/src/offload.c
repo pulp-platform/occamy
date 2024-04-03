@@ -253,6 +253,7 @@ int main() {
         clear_host_sw_interrupt_unsafe();
 
 #ifdef OFFLOAD_KMEANS
+        mcycle();
         kmeans_host(l1_job_ptr, (kmeans_args_t *)&(jobs[i].args));
 #endif
     }

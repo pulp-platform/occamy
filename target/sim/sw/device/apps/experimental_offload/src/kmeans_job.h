@@ -16,6 +16,8 @@ void kmeans_iteration_job(job_args_t* job_args) {
     void *samples = (void *)(args->samples_addr);
     void *centroids = (void *)(args->centroids_addr);
 
+    snrt_mcycle();
+
     // Initialize variables only on first iteration
     if (first_iter) {
         // Distribute work
@@ -23,13 +25,15 @@ void kmeans_iteration_job(job_args_t* job_args) {
         n_samples_per_core = n_samples_per_cluster / snrt_cluster_compute_core_num();
 
         // Dynamically allocate space in TCDM
-        // Update L1 next pointer to take into account args occupation
-        snrt_l1_alloc_cluster_local(sizeof(kmeans_args_t), sizeof(double));
         // First core's partial centroids will store final centroids
-        final_centroids = (double *)ALIGN_UP((uint32_t)snrt_l1_next(), sizeof(double));
-        final_centroids = snrt_remote_l1_ptr(final_centroids, snrt_cluster_idx(), 0);
         partial_centroids = snrt_l1_alloc_compute_core_local(
             n_clusters * n_features * sizeof(double), sizeof(double));
+        final_centroids = snrt_compute_core_local_ptr(
+            partial_centroids,
+            0,
+            n_clusters * n_features * sizeof(double)
+        );
+        final_centroids = snrt_remote_l1_ptr(final_centroids, snrt_cluster_idx(), 0);
         partial_membership_cnt = snrt_l1_alloc_compute_core_local(
             n_clusters * sizeof(uint32_t), sizeof(uint32_t));
         local_samples = snrt_l1_alloc_cluster_local(
@@ -38,6 +42,8 @@ void kmeans_iteration_job(job_args_t* job_args) {
             n_clusters * n_features * sizeof(double), sizeof(double));
         membership = snrt_l1_alloc_cluster_local(
             n_samples_per_cluster * sizeof(uint32_t), sizeof(uint32_t));
+
+        snrt_mcycle();
     }
 
     // Transfer samples and initial centroids with DMA
@@ -57,7 +63,7 @@ void kmeans_iteration_job(job_args_t* job_args) {
 
     snrt_cluster_hw_barrier();
 
-    // snrt_mcycle();
+    snrt_mcycle();
 
     kmeans_iteration(n_samples_per_core, n_clusters, n_features, local_samples, membership, partial_membership_cnt, local_centroids, partial_centroids);
 }

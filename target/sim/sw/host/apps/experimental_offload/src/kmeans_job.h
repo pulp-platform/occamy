@@ -13,8 +13,7 @@ void kmeans_host(uint64_t device_l1_base, kmeans_args_t* args) {
     volatile double *centroids = (volatile double *)(args->centroids_addr);
 
     // Retrieve partial_centroids and partial_membership_cnt base addresses
-    size_t args_size = sizeof(kmeans_args_t);
-    uint64_t partial_centroids_addr = ALIGN_UP(device_l1_base + args_size, sizeof(double));
+    uint64_t partial_centroids_addr = ALIGN_UP(device_l1_base + sizeof(job_t), sizeof(double));
     size_t partial_centroids_size = 8 * n_clusters * n_features * sizeof(double);
     uint64_t partial_membership_cnt_addr = ALIGN_UP(partial_centroids_addr + partial_centroids_size, sizeof(uint32_t));
 
@@ -46,6 +45,8 @@ void kmeans_host(uint64_t device_l1_base, kmeans_args_t* args) {
             }
         }
     }
+
+    mcycle();
 
     // Normalize results
     for (uint32_t centroid_idx = 0; centroid_idx < n_clusters; centroid_idx++) {

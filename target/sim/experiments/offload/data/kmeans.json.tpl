@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 {
-    n_clusters: 3,
-    n_features: 2,
+    n_clusters: 1,
+    n_features: 1,
     n_samples: ${n_samples},
-    max_iter: 1,
+    max_iter: 2,
     seed: 42
 }
