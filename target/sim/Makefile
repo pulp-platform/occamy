@@ -93,6 +93,8 @@ VSIM_FLAGS += -do "log -r /*; run -a"
 # TODO: Workaround; revise
 VSIM_FLAGS += -warning 8386
 
+VOPT_FLAGS += +acc
+
 VCS_FLAGS += +nospecify
 VCS_FLAGS += -Mdir=work-vcs
 VCS_FLAGS += -Mlib=work-vcs
@@ -402,7 +404,7 @@ clean-addrmap:
 	rm -rf $(TARGET_ADDRMAP_DIR)
 
 $(TARGET_ADDRMAP_DIR):
-	mkdir $@
+	mkdir -p $@
 
 ADDRMAP_OCCAMYGEN_TARGETS = $(ADDRMAP_DOT) $(ADDRMAP_CSV)
 $(ADDRMAP_OCCAMYGEN_TARGETS): .addrmap_occamygen_targets_group
