@@ -5,7 +5,7 @@ __thread uint32_t n_samples_per_cluster, n_samples_per_core;
 __thread double *local_samples, *local_centroids, *final_centroids, *partial_centroids;
 __thread uint32_t *membership, *partial_membership_cnt;
 
-void kmeans_iteration_job(job_args_t* job_args) {
+void kmeans_iteration_job(void* job_args) {
     kmeans_args_t *args = (kmeans_args_t *)job_args;
 
     // Aliases

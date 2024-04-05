@@ -24,9 +24,6 @@ from Simulator import QuestaSimulator  # noqa: E402
 FILE_DIR = Path(__file__).parent.resolve()
 TARGET_DIR = FILE_DIR / '../../'
 SNITCH_DIR = TARGET_DIR / '../../deps/snitch_cluster'
-AXPY_VERIFY_PY = SNITCH_DIR / 'sw/blas/axpy/scripts/verify.py'
-GEMM_VERIFY_PY = SNITCH_DIR / 'sw/blas/gemm/scripts/verify.py'
-KMEANS_VERIFY_PY = SNITCH_DIR / 'sw/apps/kmeans/scripts/verify.py'
 APP = 'experimental_offload'
 SOURCE_BUILD_DIR = TARGET_DIR / f'sw/host/apps/{APP}/build'
 TARGET_BUILD_DIR = FILE_DIR / 'build'
@@ -34,11 +31,6 @@ DEVICE_ELF = TARGET_DIR / f'sw/device/apps/{APP}/build/{APP}.elf'
 CFG_DIR = TARGET_DIR / 'cfg'
 BIN_DIR = Path('bin')
 VSIM_BUILDDIR = Path('work-vsim')
-
-KMEANS_CFG_TEMPLATE = FILE_DIR / 'data' / 'kmeans.json.tpl'
-
-KMEANS_ROI_TEMPLATE = FILE_DIR / 'roi' / 'kmeans.json.tpl'
-GEMM_ROI_TEMPLATE = FILE_DIR / 'roi' / 'gemm.json.tpl'
 
 
 def run(cmd, env=None, dry_run=False):
@@ -92,19 +84,19 @@ def build_hw(tests, dry_run=False):
 
 def post_process_traces(test, dry_run=False):
     n_clusters_to_use = test['n_clusters_to_use']
+    multicast = test['multicast']
     run_dir = test['run_dir']
     logdir = run_dir / 'logs'
     device_elf = test['device_elf']
     hw_cfg = test['hw_cfg']
     roi_spec = logdir / 'roi_spec.json'
+    app = test['app']
     # Read and render specification template JSON
-    if test['app'] == 'gemm':
-        roi_spec_tpl = GEMM_ROI_TEMPLATE
-    elif test['app'] == 'kmeans':
-        roi_spec_tpl = KMEANS_ROI_TEMPLATE
+    if app in ['gemm', 'kmeans', 'atax', 'correlation', 'covariance']:
+        roi_spec_tpl = FILE_DIR / 'roi' / f'{app}.json.tpl'
     with open(roi_spec_tpl, 'r') as f:
         spec_template = Template(f.read())
-        rendered_spec = spec_template.render(nr_clusters=n_clusters_to_use)
+        rendered_spec = spec_template.render(nr_clusters=n_clusters_to_use, multicast=multicast)
         spec = json5.loads(rendered_spec)
     with open(roi_spec, 'w') as f:
         json.dump(spec, f, indent=4)
@@ -113,21 +105,26 @@ def post_process_traces(test, dry_run=False):
     run(['make', '-C', TARGET_DIR, f'SIM_DIR={run_dir}', f'BINARY={device_elf}', 'annotate', '-j'],
         dry_run=dry_run)
     run(['make', '-C', TARGET_DIR, f'SIM_DIR={run_dir}', f'ROI_SPEC={roi_spec}',
-        f'CFG_OVERRIDE={hw_cfg}', 'visual-trace'], dry_run=dry_run)
+        f'CFG_OVERRIDE={hw_cfg}', f'BINARY={device_elf}', 'visual-trace'], dry_run=dry_run)
 
 
-def get_gemm_cfg(n):
-    filled_template = Template(filename=str(GEMM_CFG_TEMPLATE)).render(N=n)
+def get_data_cfg(test):
+    app = test['app']
+    cfg_template = str(FILE_DIR / 'data' / f'{app}.json.tpl')
+    filled_template = Template(filename=cfg_template).render(**test)
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
         temp_file.write(filled_template)
         return temp_file.name
 
 
-def get_kmeans_cfg(**kwargs):
-    filled_template = Template(filename=str(KMEANS_CFG_TEMPLATE)).render(**kwargs)
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-        temp_file.write(filled_template)
-        return temp_file.name
+def get_data_cfg_prefix(test):
+    app = test['app']
+    if app == 'kmeans':
+        return f'L{test["n_samples"]}'
+    elif app in ['atax']:
+        return f'L{test["N"]}'
+    elif app in ['correlation', 'covariance']:
+        return f'L{test["M"]}'
 
 
 # Get tests from a test list file
@@ -142,14 +139,15 @@ def get_tests(testlist, run_dir, hw_cfg):
     for test in tests:
 
         # Alias test parameters
-        length = test['length']
+        if 'length' in test:
+            length = test['length']
         n_clusters_to_use = test['n_clusters_to_use']
         multicast = test['multicast']
         app = test['app']
 
         # Resolve derived test parameters
         mcast_prefix = "M" if multicast else "U"
-        prefix = f'{app}/L{length}/{mcast_prefix}/N{n_clusters_to_use}'
+        prefix = f'{app}/{get_data_cfg_prefix(test)}/{mcast_prefix}/N{n_clusters_to_use}'
         full_hw_cfg = f'{mcast_prefix}-{hw_cfg}'
         hw_cfg_file = CFG_DIR / f'{full_hw_cfg}.hjson'
         vsim_builddir = VSIM_BUILDDIR / f'{full_hw_cfg}'
@@ -161,37 +159,34 @@ def get_tests(testlist, run_dir, hw_cfg):
         cflags = f'-DN_CLUSTERS_TO_USE={n_clusters_to_use}'
         if multicast:
             cflags += ' -DUSE_MULTICAST'
-        if app == 'axpy':
-            cflags += ' -DOFFLOAD_AXPY'
-        elif app == 'gemm':
-            cflags += ' -DOFFLOAD_GEMM'
-        elif app == 'kmeans':
-            cflags += ' -DOFFLOAD_KMEANS'
-        elif app == 'mc':
+        if app == 'mc':
             cflags += f' -DOFFLOAD_MONTECARLO -DMC_LENGTH={length}'
+        else:
+            cflags += f' -DOFFLOAD_{app.upper()}'
         env = extend_environment(
             RISCV_CFLAGS=cflags,
-            LENGTH=f'{length}',
             SECTION=".wide_spm",
             OFFLOAD=app)
-        if app == 'gemm':
-            gemm_cfg_file = get_gemm_cfg(length)
-            env = extend_environment(env, DATA_CFG=gemm_cfg_file)
+        if app in ['axpy', 'gemm', 'atax', 'correlation', 'covariance']:
+            data_cfg = get_data_cfg(test)
+            env = extend_environment(env, DATA_CFG=data_cfg)
         elif app == 'kmeans':
-            kmeans_cfg_file = get_kmeans_cfg(n_samples=length)
-            env = extend_environment(env, KMEANS_DATA_CFG=kmeans_cfg_file)
+            data_cfg = get_data_cfg(test)
+            env = extend_environment(env, KMEANS_DATA_CFG=data_cfg)
 
         # Extend test with derived parameters
         test['sim_bin'] = sim_bin
         test['prefix'] = prefix
         test['elf'] = elf
         test['device_elf'] = device_elf
-        if app == 'axpy':
-            test['cmd'] = [str(AXPY_VERIFY_PY), str(sim_bin), str(elf)]
-        elif app == 'gemm':
-            test['cmd'] = [str(GEMM_VERIFY_PY), str(sim_bin), str(elf)]
-        elif app == 'kmeans':
-            test['cmd'] = [str(KMEANS_VERIFY_PY), str(sim_bin), str(elf), '--no-gui']
+        if app in ['axpy', 'gemm']:
+            verify_py = str(SNITCH_DIR / f'sw/blas/{app}/scripts/verify.py')
+            test['cmd'] = [verify_py, str(sim_bin), str(elf)]
+        elif app in ['kmeans', 'atax', 'correlation', 'covariance']:
+            verify_py = str(SNITCH_DIR / f'sw/apps/{app}/scripts/verify.py')
+            test['cmd'] = [verify_py, str(sim_bin), str(elf)]
+            if app == 'kmeans':
+                test['cmd'].append('--no-gui')
         elif app == 'mc':
             test['sim_bin'] = sim_bin
         test['run_dir'] = unique_run_dir

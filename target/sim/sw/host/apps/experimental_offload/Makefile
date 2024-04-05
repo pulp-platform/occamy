@@ -31,6 +31,18 @@ ifeq ($(OFFLOAD),kmeans)
 include $(APPS_DIR)/kmeans/Makefile
 endif
 
+ifeq ($(OFFLOAD),atax)
+include $(APPS_DIR)/atax/Makefile
+endif
+
+ifeq ($(OFFLOAD),correlation)
+include $(APPS_DIR)/correlation/Makefile
+endif
+
+ifeq ($(OFFLOAD),covariance)
+include $(APPS_DIR)/covariance/Makefile
+endif
+
 include ../common.mk
 
 ifneq ($(OFFLOAD),mc)

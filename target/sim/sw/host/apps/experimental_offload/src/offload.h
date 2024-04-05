@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include "axpy/src/args.h"
 #include "kmeans/src/args.h"
+#include "atax/src/args.h"
+#include "correlation/src/args.h"
+#include "covariance/src/args.h"
 
 typedef struct {
     volatile uint32_t local_job_addr;
@@ -82,6 +85,36 @@ typedef struct {
     mc_args_t args;
 } mc_job_t;
 
+//////////
+// ATAX //
+//////////
+
+typedef struct {
+    uint32_t id;
+    uint8_t offload_id;
+    atax_args_t args;
+} atax_job_t;
+
+/////////////////
+// Correlation //
+/////////////////
+
+typedef struct {
+    uint32_t id;
+    uint8_t offload_id;
+    correlation_args_t args;
+} correlation_job_t;
+
+////////////////
+// Covariance //
+////////////////
+
+typedef struct {
+    uint32_t id;
+    uint8_t offload_id;
+    covariance_args_t args;
+} covariance_job_t;
+
 /////////////
 // Generic //
 /////////////
@@ -95,6 +128,9 @@ typedef union {
     gemm_args_t gemm;
     mc_args_t mc;
     kmeans_args_t kmeans;
+    atax_args_t atax;
+    correlation_args_t correlation;
+    covariance_args_t covariance;
 } job_args_t;
 
 typedef struct {
@@ -103,8 +139,16 @@ typedef struct {
     job_args_t args;
 } job_t;
 
-#define N_JOB_TYPES 4
-typedef enum { J_AXPY = 0, J_GEMM = 1, J_MONTECARLO = 2, J_KMEANS = 3 } job_id_t;
+#define N_JOB_TYPES 7
+typedef enum {
+    J_AXPY = 0,
+    J_GEMM = 1,
+    J_MONTECARLO = 2,
+    J_KMEANS = 3,
+    J_ATAX = 4,
+    J_CORRELATION = 5,
+    J_COVARIANCE = 6
+} job_id_t;
 
 static inline uint32_t job_args_size(job_id_t job_id) {
     switch (job_id) {
@@ -116,6 +160,12 @@ static inline uint32_t job_args_size(job_id_t job_id) {
         return sizeof(mc_args_t);
     case J_KMEANS:
         return sizeof(kmeans_args_t);
+    case J_ATAX:
+        return sizeof(atax_args_t);
+    case J_CORRELATION:
+        return sizeof(correlation_args_t);
+    case J_COVARIANCE:
+        return sizeof(covariance_args_t);
     default:
         return 0;
     }

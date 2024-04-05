@@ -20,6 +20,12 @@ const int n_clusters_to_use = N_CLUSTERS;
 #elif defined(OFFLOAD_KMEANS)
 #include "kmeans/data/data.h"
 #include "kmeans_job.h"
+#elif defined(OFFLOAD_ATAX)
+#include "atax/data/data.h"
+#elif defined(OFFLOAD_CORRELATION)
+#include "correlation/data/data.h"
+#elif defined(OFFLOAD_COVARIANCE)
+#include "covariance/data/data.h"
 #endif
 
 #ifdef OFFLOAD_KMEANS
@@ -162,6 +168,92 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
 #endif
             break;
         }
+        case J_ATAX: {
+            atax_args_t args = job->args.atax;
+
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
+            uint64_t mask = ((n_clusters_to_use - 1) << 18);
+            enable_multicast(mask);
+#endif
+            *((volatile uint64_t *)(l1_job_ptr)) = job->id;
+            *((volatile uint8_t *)(l1_job_ptr + offsetof(job_t, offload_id))) =
+                job->offload_id;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(atax_args_t, M))) = args.M;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(atax_args_t, N))) = args.N;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(atax_args_t, A_addr))) = args.A_addr;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(atax_args_t, x_addr))) = args.x_addr;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(atax_args_t, y_addr))) = args.y_addr;
+
+            mcycle();  // Wakeup
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
+            *((volatile uint32_t *)cluster_clint_set_addr(0)) = 511;
+            disable_multicast();
+#else
+            wakeup_snitches();
+#endif
+            break;
+        }
+        case J_CORRELATION: {
+            correlation_args_t args = job->args.correlation;
+
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
+            uint64_t mask = ((n_clusters_to_use - 1) << 18);
+            enable_multicast(mask);
+#endif
+            *((volatile uint64_t *)(l1_job_ptr)) = job->id;
+            *((volatile uint8_t *)(l1_job_ptr + offsetof(job_t, offload_id))) =
+                job->offload_id;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(correlation_args_t, N))) = args.N;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(correlation_args_t, M))) = args.M;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(correlation_args_t, data_addr))) = args.data_addr;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(correlation_args_t, corr_addr))) = args.corr_addr;
+
+            mcycle();  // Wakeup
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
+            *((volatile uint32_t *)cluster_clint_set_addr(0)) = 511;
+            disable_multicast();
+#else
+            wakeup_snitches();
+#endif
+            break;
+        }
+        case J_COVARIANCE: {
+            covariance_args_t args = job->args.covariance;
+
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
+            uint64_t mask = ((n_clusters_to_use - 1) << 18);
+            enable_multicast(mask);
+#endif
+            *((volatile uint64_t *)(l1_job_ptr)) = job->id;
+            *((volatile uint8_t *)(l1_job_ptr + offsetof(job_t, offload_id))) =
+                job->offload_id;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(covariance_args_t, N))) = args.N;
+            *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(covariance_args_t, M))) = args.M;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(covariance_args_t, data_addr))) = args.data_addr;
+            *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
+                                    offsetof(covariance_args_t, cov_addr))) = args.cov_addr;
+
+            mcycle();  // Wakeup
+#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
+            *((volatile uint32_t *)cluster_clint_set_addr(0)) = 511;
+            disable_multicast();
+#else
+            wakeup_snitches();
+#endif
+            break;
+        }
     }
 }
 
@@ -215,6 +307,37 @@ int main() {
     job_t jobs[N_JOBS];
     jobs[0] = first_iter_kmeans;
     for (uint32_t i = 1; i < N_JOBS; i++) jobs[i] = succ_iter_kmeans;
+#elif defined(OFFLOAD_ATAX)
+    // TODO should we divide M and N by n_cluster_to_use?
+    atax_args_t atax_args = {M,
+                             N,
+                             WIDE_SPM_ADDR((uint64_t)A),
+                             WIDE_SPM_ADDR((uint64_t)x),
+                             WIDE_SPM_ADDR((uint64_t)y)};
+    job_args_t job_args;
+    job_args.atax = atax_args;
+    job_t atax = {J_ATAX, 0, job_args};
+    job_t jobs[N_JOBS] = {atax, atax};
+#elif defined(OFFLOAD_CORRELATION)
+    // TODO should we divide M and N by n_cluster_to_use?
+    correlation_args_t correlation_args = {N,
+                                           M,
+                                           WIDE_SPM_ADDR((uint64_t)data),
+                                           WIDE_SPM_ADDR((uint64_t)corr)};
+    job_args_t job_args;
+    job_args.correlation = correlation_args;
+    job_t correlation = {J_CORRELATION, 0, job_args};
+    job_t jobs[N_JOBS] = {correlation, correlation};
+#elif defined(OFFLOAD_COVARIANCE)
+    // TODO should we divide M and N by n_cluster_to_use?
+    covariance_args_t covariance_args = {N,
+                                         M,
+                                         WIDE_SPM_ADDR((uint64_t)data),
+                                         WIDE_SPM_ADDR((uint64_t)cov)};
+    job_args_t job_args;
+    job_args.covariance = covariance_args;
+    job_t covariance = {J_COVARIANCE, 0, job_args};
+    job_t jobs[N_JOBS] = {covariance, covariance};
 #endif
 
     volatile uint32_t n_jobs = N_JOBS;
@@ -275,6 +398,18 @@ int main() {
     double pi_estimate = *((double *)mc_args.result_ptr);
     double err = fabs(pi_estimate - 3.14);
     if (err > 0.5) return 1;
+#elif defined(OFFLOAD_ATAX)
+    // Copy results from wide SPM to DRAM for verification
+    sys_dma_blk_memcpy((uint64_t)y, WIDE_SPM_ADDR((uint64_t)y),
+                       N * sizeof(double));
+#elif defined(OFFLOAD_CORRELATION)
+    // Copy results from wide SPM to DRAM for verification
+    sys_dma_blk_memcpy((uint64_t)corr, WIDE_SPM_ADDR((uint64_t)corr),
+                       M * M * sizeof(double));
+#elif defined(OFFLOAD_COVARIANCE)
+    // Copy results from wide SPM to DRAM for verification
+    sys_dma_blk_memcpy((uint64_t)cov, WIDE_SPM_ADDR((uint64_t)cov),
+                       M * M * sizeof(double));
 #endif
 
     // Exit routine

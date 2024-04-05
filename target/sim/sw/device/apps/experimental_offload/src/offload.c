@@ -10,28 +10,44 @@ __thread usr_data_t* volatile usr_data_ptr;
 __thread uint32_t local_job_addr;
 __thread uint32_t remote_job_addr;
 
+// Job arguments are already in TCDM, no need to load them with the DMA
+#define JOB_ARGS_PRELOADED
+
 #include "axpy_job.h"
 // #include "gemm_job.h"
 // #include "montecarlo_job.h"
 #include "kmeans_job.h"
+#include "atax/src/atax.h"
+#include "correlation/src/correlation.h"
+#include "covariance/src/covariance.h"
 
 // Job function type
-typedef void (*job_func_t)(job_args_t* args);
+typedef void (*job_func_t)(void* args);
 
 // Job function array
-__thread job_func_t jobs[N_JOB_TYPES] = {axpy_job_unified, NULL, NULL, kmeans_iteration_job};
+__thread job_func_t jobs[N_JOB_TYPES] = {
+    axpy_job_unified,
+    NULL,
+    NULL,
+    kmeans_iteration_job,
+    atax_job,
+    correlation_job,
+    covariance_job
+};
 
 static inline void run_job() {
     // Invoke job
 #if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
     job_t* job = (job_t *)local_job_addr;
     uint32_t job_id = job->id;
-    if (snrt_is_dm_core())
-        snrt_mcycle();
-    jobs[job_id](&job->args);
+    if (snrt_is_dm_core()) snrt_mcycle();
+    if (snrt_is_dm_core()) snrt_mcycle();
+    jobs[job_id]((void *)&job->args);
     snrt_cluster_hw_barrier();
-    if (snrt_is_dm_core())
+    if (snrt_is_dm_core()) {
+        snrt_mcycle();
         return_to_cva6_accelerated(job->offload_id);
+    }
 #else
     job_t* remote_job = (job_t*)remote_job_addr;
     job_t* local_job = (job_t *)local_job_addr;
@@ -44,9 +60,11 @@ static inline void run_job() {
         if (snrt_cluster_idx() != 0)
             snrt_dma_start_1d(&local_job->args, &remote_job->args, job_args_size(local_job->id));
         snrt_dma_wait_all();
+        snrt_mcycle();
     }
     snrt_cluster_hw_barrier();
-    jobs[local_job->id](&local_job->args);
+    jobs[local_job->id]((void *)&local_job->args);
+    if (snrt_is_dm_core()) snrt_mcycle();
     return_to_cva6(SYNC_ALL);
 #endif
 }
@@ -76,7 +94,7 @@ int main() {
     snrt_wfi();
 
 #if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
-    // Get pointer to remote job in last cluster's TCDM
+    // Get pointer to remote job in first cluster's TCDM
     remote_job_addr = usr_data_ptr->local_job_addr;
 #endif
 

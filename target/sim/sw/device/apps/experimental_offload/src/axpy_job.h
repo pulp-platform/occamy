@@ -5,7 +5,7 @@
 #define XSSR
 #include "axpy.h"
 
-void axpy_job_unified(job_args_t* job_args) {
+void axpy_job_unified(void* job_args) {
     double* local_x;
     double* local_y;
     double* local_z;
