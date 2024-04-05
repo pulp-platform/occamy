@@ -5,11 +5,11 @@
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
 # Add user applications to APPS variable
-APPS  = blas/axpy
-APPS += blas/gemm
-APPS += kmeans
-APPS += mcast
-APPS += experimental_offload
+# APPS  = blas/axpy
+# APPS += blas/gemm
+# APPS += kmeans
+# APPS += mcast
+APPS = experimental_offload
 
 TARGET ?= all
 
