@@ -56,10 +56,6 @@ RISCV_LDFLAGS += -T$(BASE_LD)
 # Link snRuntime library
 RISCV_LDFLAGS += -L$(SNRT_LIB_DIR)
 RISCV_LDFLAGS += -l$(SNRT_LIB_NAME)
-# Link math library
-RISCV_LDFLAGS += -L$(MATH_DIR)/build
-RISCV_LDFLAGS += -lmath
-
 
 # Objcopy flags
 OBJCOPY_FLAGS  = -O binary
