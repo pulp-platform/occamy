@@ -53,7 +53,7 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
             *((volatile uint8_t *)(l1_job_ptr + offsetof(job_t, offload_id))) =
                 job->offload_id;
             *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(axpy_args_t, l))) = args.l;
+                                    offsetof(axpy_args_t, n))) = args.n;
             *((volatile double *)(l1_job_ptr + offsetof(job_t, args) +
                                   offsetof(axpy_args_t, a))) = args.a;
             *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
@@ -174,7 +174,7 @@ int main() {
 // Define jobs to offload
 #if defined(OFFLOAD_AXPY)
     axpy_args_t axpy_args = {
-        l / n_clusters_to_use, a, WIDE_SPM_ADDR((uint64_t)x),
+        n / n_clusters_to_use, a, WIDE_SPM_ADDR((uint64_t)x),
         WIDE_SPM_ADDR((uint64_t)y), WIDE_SPM_ADDR((uint64_t)z)};
     job_t axpy = {J_AXPY, 0, axpy_args};
     job_t jobs[N_JOBS] = {axpy, axpy};
@@ -262,7 +262,7 @@ int main() {
 #if defined(OFFLOAD_AXPY)
     // Copy results from wide SPM to DRAM for verification
     sys_dma_blk_memcpy((uint64_t)z, WIDE_SPM_ADDR((uint64_t)z),
-                       l * sizeof(double));
+                       n * sizeof(double));
 #elif defined(OFFLOAD_GEMM)
     // Copy results from wide SPM to DRAM for verification
     sys_dma_blk_memcpy((uint64_t)c, WIDE_SPM_ADDR((uint64_t)c),
