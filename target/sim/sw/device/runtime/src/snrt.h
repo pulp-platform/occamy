@@ -5,6 +5,9 @@
 #ifndef SNRT_H
 #define SNRT_H
 
+
+#define OCCAMY
+
 #include <stddef.h>
 #include <stdint.h>
 

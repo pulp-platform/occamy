@@ -9,13 +9,13 @@ typedef enum { SYNC_ALL, SYNC_CLUSTERS, SYNC_NONE } sync_t;
 // Could become cluster-local to save storage
 extern __thread volatile uint32_t ct_barrier_cnt __attribute__((aligned(8)));
 
-inline void ocrt_compute_thread_num(uint32_t* tnum) {
+inline __attribute__((always_inline)) void ocrt_compute_thread_num(uint32_t* tnum) {
     tnum[0] = SNRT_CLUSTER_CORE_NUM - SNRT_CLUSTER_DM_CORE_NUM;
     tnum[1] = N_CLUSTERS_PER_QUAD;
     tnum[2] = N_QUADS;
 }
 
-inline void ocrt_thread_idx(uint32_t* tid) {
+inline __attribute__((always_inline)) void ocrt_thread_idx(uint32_t* tid) {
     const uint32_t tidg = snrt_global_core_idx();
     
     tid[0] = tidg % SNRT_CLUSTER_CORE_NUM;

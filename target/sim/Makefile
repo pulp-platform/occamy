@@ -237,7 +237,7 @@ test/testharness.sv: test/testharness.sv.tpl $(CFG)
 # 	@echo "[SOLDER] Device Tree"
 # 	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
 
-$(TARGET_PLIC_DIR) $(TARGET_CLINT_DIR) $(TARGET_SOCCTRL_DIR) $(TARGET_HBMCTRL_DIR) $(TARGET_QUADCTRL_DIR) ${VSIM_BUILDDIR} ${LOGS_DIR}:
+$(TARGET_PLIC_DIR) $(TARGET_CLINT_DIR) $(TARGET_SOCCTRL_DIR) $(TARGET_HBMCTRL_DIR) $(TARGET_QUADCTRL_DIR) ${LOGS_DIR}:
 	@mkdir -p $@
 
 CLINTROOT = $(shell $(BENDER) path clint)
@@ -575,7 +575,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf $(ROOT)/Bender.lock $(ROOT)/.bender/ $(ROOT)/deps
+	rm -rf $(ROOT)/.bender/ $(ROOT)/deps
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/

@@ -79,8 +79,9 @@ ELF         = $(abspath $(BUILDDIR)/$(APP).elf)
 DEP         = $(abspath $(BUILDDIR)/$(APP).d)
 BIN         = $(abspath $(BUILDDIR)/$(APP).bin)
 DUMP        = $(abspath $(BUILDDIR)/$(APP).dump)
+# DUMPA       = $(abspath $(BUILDDIR)/$(APP).dumpa)
 DWARF       = $(abspath $(BUILDDIR)/$(APP).dwarf)
-ALL_OUTPUTS = $(BIN) $(DUMP) $(DWARF)
+ALL_OUTPUTS = $(BIN) $(DUMP) $(DWARF) #$(DUMPA)
 
 #########
 # Rules #
@@ -110,6 +111,9 @@ $(DUMP): $(ELF) | $(BUILDDIR)
 
 $(DWARF): $(ELF) | $(BUILDDIR)
 	$(RISCV_DWARFDUMP) $< > $@
+
+# $(DUMPA): $(DUMP) $(ELF) | $(BUILDDIR)
+# 	$(PYTHON) $(SNITCH_ROOT)/util/trace/annotate.py --is-objdump -q -o $@ $(DUMP) $(ELF)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)

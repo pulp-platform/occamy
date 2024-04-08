@@ -3,9 +3,7 @@
 % for j in range(0, 8):
     {
         "thread": "${f'hart_{9*i+j +1}'}",
-        "roi": [
-            {"idx": 1, "label": "${f'compute_hart_{9*i+j +1}'}"}
-        ]
+        "roi": "*"
     },
 % endfor
     {
