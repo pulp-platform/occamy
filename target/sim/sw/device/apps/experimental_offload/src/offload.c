@@ -57,7 +57,7 @@ int main() {
         (usr_data_t * volatile) get_communication_buffer()->usr_data_ptr;
 
     // Tell CVA6 where it can store the job ID
-    local_job_addr = (uint32_t)snrt_l1_next();
+    local_job_addr = (uint32_t)snrt_l1_alloc_cluster_local(sizeof(job_t), 1);
     snrt_cluster_hw_barrier();
     if (snrt_is_dm_core()) {
         // Only one core sends the data for all clusters
