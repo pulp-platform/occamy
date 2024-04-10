@@ -450,7 +450,7 @@ $(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
 $(CVA6_PERF_DUMP): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
 $(CVA6_ANNOTATED_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
-	$(PYTHON) $(ANNOTATE_PY)  -q --keep-time --addr2line=$(CVA6_ADDR2LINE) -o $@ $(CVA6_BINARY) $<
+	$(PYTHON) $(ANNOTATE_PY) -f cva6 -q --keep-time --addr2line=$(CVA6_ADDR2LINE) -o $@ $(CVA6_BINARY) $<
 
 #############
 # Verilator #
