@@ -21,16 +21,16 @@ clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vcs clean-l
 # Makefrag #
 ############
 
-# Common definitions used by included Makefiles
-
+# Files and directories
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := $(MKFILE_DIR)../..
 SNITCH_ROOT := $(shell bender path snitch_cluster)
+CFG_DIR      = $(MKFILE_DIR)/cfg
 
-TARGET = occamy_top
-
-# Definitions to be parsed before common.mk rule definitions
+# Other variables needed before Makefile inclusion
+TARGET               = occamy_top
+DEFAULT_CFG          = $(CFG_DIR)/U-Q6C4.hjson
 CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
 CVA6_PERF_DUMP       = $(LOGS_DIR)/hart_00000_perf.json
 CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
@@ -73,14 +73,6 @@ SOURCE_QUADCTRL_DIR  ?= $(ROOT)/hw/occamy/quadrant_s1_ctrl
 SNITCH_TEST_DIR      ?= $(SNITCH_ROOT)/target/common/test
 TARGET_TEST_DIR      ?= $(ROOT)/target/sim/test
 CVA6_TRACE            = trace_hart_0.log
-
-# If the configuration file is overriden on the command-line (through
-# CFG_OVERRIDE) and this file differs from the least recently used
-# (LRU) config, all targets depending on the configuration file have
-# to be rebuilt. This file is used to express this condition as a
-# prerequisite for other rules.
-CFG = cfg/lru.hjson
-DEFAULT_CFG = cfg/U-Q6C4.hjson
 
 #####################
 # Simulator options #
@@ -150,29 +142,6 @@ VLT_COBJ += $(VLT_BUILDDIR)/test/bootdata.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_dpi.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
-
-#################
-# Prerequisites #
-#################
-
-$(CFG): FORCE
-	@# If the LRU config file doesn't exist, we use the default config.
-	@if [ ! -e $@ ] ; then \
-		DEFAULT_CFG=$(DEFAULT_CFG); \
-		echo "Using default config file: $$DEFAULT_CFG"; \
-		cp $$DEFAULT_CFG $@; \
-	fi
-	@# If a config file is provided on the command-line and it differs
-	@# from the LRU config file then we override the LRU file with it
-	@if [ $(CFG_OVERRIDE) ] ; then \
-		echo "Overriding config file with: $(CFG_OVERRIDE)"; \
-		if cmp -s $(CFG_OVERRIDE) $@ ; then \
-			echo "Override and LRU config files are equivalent. Nothing to be done."; \
-		else \
-			cp $(CFG_OVERRIDE) $@; \
-		fi \
-	fi
-FORCE:
 
 ############
 # Boot ROM #
