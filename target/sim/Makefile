@@ -84,7 +84,15 @@ CFG = cfg/lru.hjson
 #####################
 
 VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
+# We need to change the Bender.yml of the snax_gemm repo
+# The original target: snax-gemm will trigger the questasim error
+# So i change it to snax_gemm
+VSIM_BENDER += -t snax_gemm
+# This target is to match the header of the snax_gemm_wrapper.sv
+VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
 VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
+VLT_BENDER  += -t snax_gemm
+VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
@@ -214,6 +222,7 @@ MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
 
 MISC_OCCAMYGEN_SV_TARGETS  = $(addprefix $(TARGET_SRC_DIR)/,$(notdir $(basename $(MISC_OCCAMYGEN_SV_TEMPLATES))))
 MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_cluster_wrapper.sv
+MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_gemm_cluster_wrapper.sv
 
 MISC_OCCAMYGEN_TARGETS  = $(MISC_OCCAMYGEN_SV_TARGETS)
 MISC_OCCAMYGEN_TARGETS += $(TARGET_SRC_DIR)/occamy_memories.json
@@ -531,12 +540,19 @@ clean-vlt: clean-work
 	rm -rf work-vlt
 	rm -f $(BIN_DIR)/$(TARGET).vlt
 
-############
+#############
 # Questasim #
-############
+#############
 
-include $(SNITCH_ROOT)/target/common/vsim.mk
+# include $(SNITCH_ROOT)/target/common/vsim.mk
 
+$(VSIM_BUILDDIR):
+	mkdir -p $@
+
+$(VSIM_BUILDDIR)/compile.vsim.tcl: $(BENDER_LOCK) | $(VSIM_BUILDDIR)
+	$(BENDER) script vsim $(VSIM_BENDER) --vlog-arg="$(VLOG_FLAGS) -work $(dir $@) " > $@
+	echo '$(VLOG) -work $(dir $@) $(TB_CC_SOURCES) -vv -ccflags "$(TB_CC_FLAGS)"' >> $@
+	echo 'return 0' >> $@
 # Add dependency on bootrom
 $(BIN_DIR)/$(TARGET).vsim: test/bootrom.bin
 
@@ -576,7 +592,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf $(BENDER_LOCK) $(ROOT)/.bender/ $(ROOT)/deps
+	rm -rf $(ROOT)/Bender.lock $(ROOT)/.bender/ $(ROOT)/deps
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/

@@ -148,13 +148,25 @@ def main():
     outdir = args.outdir
     outdir.mkdir(parents=True, exist_ok=True)
 
+    # if args.wrapper:
+    #     with open(outdir / f"{args.name}_cluster_wrapper.sv", "w") as f:
+    #         f.write(occamy.render_wrapper())
     if args.wrapper:
-        with open(outdir / f"{args.name}_cluster_wrapper.sv", "w") as f:
-            f.write(occamy.render_wrapper())
+        for i in range(nr_s1_clusters):
+            cluster_name = occamy.cfg["clusters"][i]["name"]
+            print(cluster_name)
+            with open(outdir / f"{cluster_name}_wrapper.sv", "w") as f: 
+                f.write(occamy.render_wrappers(i))
+
+    # if args.memories:
+    #     with open(outdir / f"{args.name}_memories.json", "w") as f:
+    #         f.write(occamy.cluster.memory_cfg())
 
     if args.memories:
-        with open(outdir / f"{args.name}_memories.json", "w") as f:
-            f.write(occamy.cluster.memory_cfg())
+        for i in range(nr_s1_clusters):
+            cluster_name = occamy.cfg["clusters"][i]["name"]
+            with open(outdir / f"{cluster_name}_memories.json", "w") as f:
+                f.write(occamy.clusters[i].memory_cfg())
 
     ####################
     # Address Map (AM) #

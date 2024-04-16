@@ -224,12 +224,13 @@ module ${name}_quadrant_s1
     wide_cluster_in = wide_xbar_quadrant_s1.__dict__["out_cluster_{}".format(i)].change_iw(context, cfg["cluster"]["dma_id_width_in"], "wide_in_iwc_{}".format(i), max_txns_per_id=wide_trans).cut(context, cuts_widex_with_cluster)
     wide_cluster_out = wide_xbar_quadrant_s1.__dict__["in_cluster_{}".format(i)].copy(name="wide_out_{}".format(i)).declare(context)
     wide_cluster_out.cut(context, cuts_widex_with_cluster, to=wide_xbar_quadrant_s1.__dict__["in_cluster_{}".format(i)])
+    cluster_name = cfg["clusters"][i]["name"]
   %>
 
   logic [9:0] hart_base_id_${i};
   assign hart_base_id_${i} = HartIdOffset + tile_id_i * NrCoresS1Quadrant + ${i} * NrCoresCluster;
 
-  ${name}_cluster_wrapper i_${name}_cluster_${i} (
+  ${cluster_name}_wrapper i_${name}_cluster_${i} (
     .clk_i (clk_quadrant),
     .rst_ni (rst_quadrant_n),
     .meip_i (meip_i[${i}*NrCoresCluster+:NrCoresCluster]),
