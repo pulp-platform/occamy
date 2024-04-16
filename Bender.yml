@@ -98,6 +98,7 @@ sources:
       # occamy
       - target/sim/src/occamy_cluster_wrapper.sv
       - target/sim/src/snax_gemm_cluster_wrapper.sv
+      - target/sim/src/snax_streamer_gemm_cluster_wrapper.sv
       - target/sim/src/occamy_pkg.sv
       - target/sim/src/occamy_quadrant_s1_ctrl.sv
       - target/sim/src/occamy_quadrant_s1.sv

@@ -90,9 +90,12 @@ VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
 VSIM_BENDER += -t snax_gemm
 # This target is to match the header of the snax_gemm_wrapper.sv
 VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
+# This target is to snax-streamer-gemm-dev
+VSIM_BENDER += -t snax_streamer_gemm_dev
 VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
 VLT_BENDER  += -t snax_gemm
 VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
+VLT_BENDER  += -t snax_streamer_gemm_dev
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
