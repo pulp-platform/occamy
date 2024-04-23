@@ -87,11 +87,15 @@ VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
 # We need to change the Bender.yml of the snax_gemm repo
 # The original target: snax-gemm will trigger the questasim error
 # So i change it to snax_gemm
-VSIM_BENDER += -t snax_gemm
+# VSIM_BENDER += -t snax_gemm
 # This target is to match the header of the snax_gemm_wrapper.sv
-VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
+# VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
 # This target is to snax-streamer-gemm-dev
+
 VSIM_BENDER += -t snax_streamer_gemm_dev
+VSIM_BENDER += -t QUESTA_SIM_XYI
+VSIM_BENDER += -t snax_data_reshuffler_dev
+
 VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
 VLT_BENDER  += -t snax_gemm
 VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
@@ -225,7 +229,8 @@ MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
 
 MISC_OCCAMYGEN_SV_TARGETS  = $(addprefix $(TARGET_SRC_DIR)/,$(notdir $(basename $(MISC_OCCAMYGEN_SV_TEMPLATES))))
 MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_cluster_wrapper.sv
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_gemm_cluster_wrapper.sv
+# MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_gemm_cluster_wrapper.sv
+MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_streamer_gemm_cluster_wrapper.sv
 
 MISC_OCCAMYGEN_TARGETS  = $(MISC_OCCAMYGEN_SV_TARGETS)
 MISC_OCCAMYGEN_TARGETS += $(TARGET_SRC_DIR)/occamy_memories.json
@@ -556,6 +561,9 @@ $(VSIM_BUILDDIR)/compile.vsim.tcl: $(BENDER_LOCK) | $(VSIM_BUILDDIR)
 	$(BENDER) script vsim $(VSIM_BENDER) --vlog-arg="$(VLOG_FLAGS) -work $(dir $@) " > $@
 	echo '$(VLOG) -work $(dir $@) $(TB_CC_SOURCES) -vv -ccflags "$(TB_CC_FLAGS)"' >> $@
 	echo 'return 0' >> $@
+
+clean-vsim: clean-work
+	rm -rf $(BIN_DIR)/$(TARGET).vsim $(BIN_DIR)/$(TARGET).vsim.gui $(VSIM_BUILDDIR) vsim.wlf
 # Add dependency on bootrom
 $(BIN_DIR)/$(TARGET).vsim: test/bootrom.bin
 

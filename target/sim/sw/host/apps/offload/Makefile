@@ -18,7 +18,7 @@ APP  = offload
 SRCS = src/offload.c
 DEVICE_APPS  = blas/axpy
 DEVICE_APPS += blas/gemm
-
+DEVICE_APPS += snax/snax-wide-gemm-data-reshuffler
 # Compiler toolchain
 RISCV_CC      = riscv64-unknown-elf-gcc
 RISCV_OBJCOPY = riscv64-unknown-elf-objcopy

@@ -19,7 +19,7 @@ SNITCH_ROOT = $(shell bender path snitch_cluster)
 APPSDIR     = $(abspath $(MK_DIR))
 RUNTIME_DIR = $(ROOT)/target/sim/sw/device/runtime
 SNRT_DIR    = $(SNITCH_ROOT)/sw/snRuntime
-SW_DIR      = $(ROOT)/target/sim/sw/
+SW_DIR      = $(ROOT)/target/sim/sw
 MATH_DIR    = $(ROOT)/target/sim/sw/device/math
 
 # Paths relative to the app including this Makefile
@@ -53,6 +53,7 @@ LD_SRCS       = $(BASE_LD) $(MEMORY_LD) $(ORIGIN_LD) $(SNRT_LIB)
 RISCV_LDFLAGS += -L$(APPSDIR)
 RISCV_LDFLAGS += -L$(BUILDDIR)
 RISCV_LDFLAGS += -T$(BASE_LD)
+# RISCV_LDFLAGS += -T$(MEMORY_LD)
 # Link snRuntime library
 RISCV_LDFLAGS += -L$(SNRT_LIB_DIR)
 RISCV_LDFLAGS += -l$(SNRT_LIB_NAME)
