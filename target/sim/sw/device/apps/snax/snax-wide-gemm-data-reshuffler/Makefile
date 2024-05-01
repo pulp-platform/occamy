@@ -1,7 +1,7 @@
 
 APP     = snax-wide-gemm-data-reshuffler
 
-INCDIRS = data
+INCDIRS += data
 
 INCDIRS += ../../../snax/streamer-gemm/include
 INCDIRS += ../../../snax/gemm/include

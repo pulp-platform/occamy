@@ -14,7 +14,7 @@ include $(MK_DIR)/../common.mk
 ## Outputs #
 ############
 
-OBJS        = $(BUILDDIR)/mac.o
+OBJS        = $(BUILDDIR)/snax-mac-lib.o
 ALL_OUTPUTS = $(OBJS)
 INCDIRS += $(abspath include)
 

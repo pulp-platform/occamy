@@ -193,7 +193,7 @@ FORCE:
 # Boot ROM #
 ############
 
-BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin
+BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin test/bootdata.cc
 
 .PHONY: bootrom clean-bootrom
 
@@ -201,13 +201,17 @@ bootrom: $(BOOTROM_TARGETS)
 
 clean-bootrom:
 	rm -rf $(BOOTROM_TARGETS)
-
+	
+test/bootdata.cc:
+	@$(OCCAMYGEN) --cfg $(CFG) --bootdata test/bootdata.cc.tpl -o test/
 test/bootrom.elf: test/bootrom.S test/bootrom.ld
 	riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -Ttest/bootrom.ld $< -o test/bootrom.elf
 test/bootrom.dump: test/bootrom.elf
 	riscv64-unknown-elf-objdump -D $< > $@
 test/bootrom.bin: test/bootrom.elf
 	riscv64-unknown-elf-objcopy -O binary $< $@
+
+	
 
 ###############
 # RTL sources #

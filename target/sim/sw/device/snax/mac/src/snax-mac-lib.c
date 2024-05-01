@@ -4,7 +4,7 @@
 //
 // Josse Van Delm <jvandelm@esat.kuleuven.be>
 
-#include "mac.h"
+#include "snax-mac-lib.h"
 #include <stdint.h>
 #include "snrt.h"
 

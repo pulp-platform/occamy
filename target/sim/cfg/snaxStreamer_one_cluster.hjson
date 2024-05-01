@@ -342,6 +342,7 @@
     },
     snax_streamer_gemm_cluster_template:{
         name: "snax_streamer_gemm_cluster"
+        nr_cores: 3
         boot_addr: 4096, // 0x1000
         cluster_base_addr: 268435456, // 0x10000000
         cluster_base_offset: 262144 // 0x40000

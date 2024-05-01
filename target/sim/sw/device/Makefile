@@ -31,4 +31,4 @@ $(SUBDIRS):
 	$(MAKE) -C $@ $(TARGET)
 
 # Explicit dependency of apps on runtime
-$(APP_SUBDIRS): runtime math snax/data-reshuffler snax/gemm snax/mac snax/streamer-gemm snax/streamer-simd
+$(APP_SUBDIRS): runtime math snax
