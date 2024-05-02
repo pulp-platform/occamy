@@ -49,7 +49,7 @@ int syscall(uint64_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2,
         ret = rb_device_put(rb, (void *)magic_mem);
         if (ret) {
             ++retries;
-            csleep(1000000);
+            csleep(10);
         }
     } while (ret != 0);
     return retries;
