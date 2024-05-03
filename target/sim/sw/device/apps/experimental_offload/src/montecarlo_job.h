@@ -17,75 +17,22 @@ inline void mc_init() {
     }
 }
 
-void mc_job_dm_core(job_t* job) {
-#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
-    mc_job_t* mc_job = (mc_job_t*)job;
-#else
-    mc_job_t* mc_job = (mc_job_t*)local_job_addr;
-#endif
-
-    snrt_mcycle();  // Retrieve job information (get job arguments)
-
-#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
-    // Copy job info (cluster 0 already has the data, no need to copy)
-    if (snrt_cluster_idx() != (N_CLUSTERS_TO_USE - 1)) {
-        snrt_dma_start_1d(mc_job, job, sizeof(mc_job_t));
-        // Wait for job info transfer to complete
-        snrt_dma_wait_all();
-    }
-#endif
-
-    snrt_mcycle();  // Retrieve job operands
-
-#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
-    // Synchronize with compute cores before updating the l1 alloc pointer
-    // such that they can retrieve the local job pointer.
-    // Also ensures compute cores see the transferred job information.
-    snrt_cluster_hw_barrier();
-#endif
-
-    // Update the L1 alloc pointer
-    void* next = (void*)((uint32_t)(mc_job) + sizeof(mc_job_t));
-    snrt_l1_update_next(next);
-
-    snrt_mcycle();  // Barrier
-
-    // Synchronize with compute cores to make sure the
-    // L1 pointer is up to date before they can start computing
-    snrt_cluster_hw_barrier();
-
-    snrt_mcycle();  // Job execution
-
-    // Intra-cluster barrier
-    snrt_cluster_hw_barrier();
-}
-
-void mc_job_compute_core(job_t* job) {
-    // Cast local job
-    mc_job_t* mc_job = (mc_job_t*)job;
-
-    snrt_mcycle();
-
-    // Get args
-    uint32_t n_samples = mc_job->args.n_samples;
-    double* result_ptr = (double*)(mc_job->args.result_ptr);
-
-    snrt_mcycle();
-
-    // Synchronize with DM core to make sure the
-    // L1 pointer is up to date before they can start computing
-    snrt_cluster_hw_barrier();
-
+void montecarlo_job_unified(void* job_args) {
+    mc_args_t* args = (mc_args_t*)job_args;
+    uint32_t n_samples = args->n_samples;
+    double* result_ptr = (double*)(args->result_ptr);
     snrt_mcycle();
 
     // Get addresses of partial sum arrays
-    uint32_t* reduction_array = (uint32_t*)snrt_l1_next();
-    uint32_t* global_reduction_array =
-        reduction_array + snrt_cluster_compute_core_num();
+    uint32_t* core_sum = (uint32_t*)snrt_l1_alloc_compute_core_local(
+        sizeof(uint32_t), sizeof(uint32_t));
+    uint32_t* global_reduction_array = (uint32_t*)snrt_l1_alloc_cluster_local(
+        sizeof(uint32_t), sizeof(uint32_t));
 
     // Run core-local kernel
-    reduction_array[snrt_cluster_core_idx()] =
-        calculate_partial_sum(seed0, seed1, Ap, Cp, n_samples);
+    if (snrt_is_compute_core()) {
+        *core_sum = calculate_partial_sum(seed0, seed1, Ap, Cp, n_samples);
+    }
 
     snrt_mcycle();
 
@@ -100,7 +47,7 @@ void mc_job_compute_core(job_t* job) {
 
         // Intra-cluster reduction
         for (int i = 0; i < snrt_cluster_compute_core_num(); i++) {
-            sum += reduction_array[i];
+            sum += core_sum[i];
         }
 
         snrt_mcycle();  // Exchange partial sums
@@ -150,6 +97,5 @@ void mc_job_compute_core(job_t* job) {
     }
 
     snrt_mcycle();
-
-    if (snrt_global_core_idx() == 0) set_host_sw_interrupt();
+    snrt_cluster_hw_barrier();
 }

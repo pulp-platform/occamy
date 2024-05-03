@@ -27,8 +27,8 @@ typedef void (*job_func_t)(void* args);
 // Job function array
 __thread job_func_t jobs[N_JOB_TYPES] = {
     axpy_job_unified,
-    NULL,
-    NULL,
+    gemm_job_unified,
+    montecarlo_job_unified,
     kmeans_iteration_job,
     atax_job,
     correlation_job,
@@ -65,7 +65,11 @@ static inline void run_job() {
     snrt_cluster_hw_barrier();
     jobs[local_job->id]((void *)&local_job->args);
     if (snrt_is_dm_core()) snrt_mcycle();
+#ifdef OFFLOAD_MONTECARLO
+    return_to_cva6(SYNC_NONE);
+#else
     return_to_cva6(SYNC_ALL);
+#endif
 #endif
 }
 

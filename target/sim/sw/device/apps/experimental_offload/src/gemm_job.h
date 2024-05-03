@@ -64,134 +64,77 @@ void matmul(uint32_t M, uint32_t N, uint32_t K, double* A, double* B,
     snrt_ssr_disable();
 }
 
-void gemm_job_dm_core(job_t* job) {
-#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
-    gemm_local_job_t* gemm_job = (gemm_local_job_t*)job;
-#else
-    gemm_local_job_t* gemm_job = (gemm_local_job_t*)local_job_addr;
-#endif
+void gemm_job_unified(void* job_args) {
+    size_t size_a;
+    size_t size_b;
+    size_t size_c;
+    double* local_a;
+    double* local_b;
+    double* local_c;
 
-    snrt_mcycle();  // Retrieve job information (get job arguments)
+    gemm_args_t* args = (gemm_args_t *)job_args;
+    size_a = args->m * args->k * sizeof(double);
+    size_b = args->k * args->n * sizeof(double);
+    size_c = args->m * args->n * sizeof(double);
+    local_a = (double*)snrt_l1_alloc_cluster_local(size_a, 4096);
+    local_b = (double*)snrt_l1_alloc_cluster_local(size_b, 4096);
+    local_c = (double*)snrt_l1_alloc_cluster_local(size_c, 4096);
+    snrt_mcycle();
+    
+    // Copy job operands (row block of A and full B)
+    if (snrt_is_dm_core()) {
+        snrt_dma_load_2d_tile(
+            local_a,
+            (void *)args->a_ptr,
+            snrt_cluster_idx(),
+            0,
+            args->m,
+            args->k,
+            args->k,
+            sizeof(double)
+        );
+        snrt_dma_load_2d_tile(
+            local_b,
+            (void *)args->b_ptr,
+            0,
+            0,
+            args->k,
+            args->n,
+            args->n,
+            sizeof(double));
+        snrt_dma_wait_all();
+        snrt_mcycle();
+    }
 
-#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
-    // Copy job info (cluster 0 already has the data, no need to copy)
-    if (snrt_cluster_idx() != (N_CLUSTERS_TO_USE - 1))
-        snrt_dma_start_1d(gemm_job, job, sizeof(gemm_job_t));
-
-    // Get pointer to next free slot in l1 alloc
-    double* b = (double*)(ALIGN_UP(
-        (uint32_t)gemm_job + sizeof(gemm_local_job_t), 4096));
-
-    // Wait for job info transfer to complete
-    snrt_dma_wait_all();
-    snrt_mcycle();  // Retrieve job operands
-#else
-    snrt_mcycle();  // Retrieve job operands
-    // Get pointer to next free slot in l1 alloc
-    double* b = (double*)(ALIGN_UP(
-        (uint32_t)gemm_job + sizeof(gemm_local_job_t), 4096));
-#endif
-
-    // Copy operand b
-    size_t size_b = gemm_job->args.n * gemm_job->args.k * 8;
-    void* b_l3_ptr = (void*)(uint32_t)(gemm_job->args.b_l3_ptr);
-    snrt_dma_start_1d(b, b_l3_ptr, size_b);
-
-#if !defined(SUPPORTS_MULTICAST) || !defined(USE_MULTICAST)
-    // Synchronize with compute cores before updating the l1 alloc pointer
-    // such that they can retrieve the local job pointer.
-    // Also ensures compute cores see the transferred job information.
+    // Synchronize with DM core to wait for job operands
     snrt_cluster_hw_barrier();
-#endif
-
-    // Copy operand a
-    size_t size_a = gemm_job->args.m * gemm_job->args.k * 8;
-    size_t offset_a = snrt_cluster_idx() * size_a;
-    void* a_l3_ptr = (void*)(uint32_t)(gemm_job->args.a_l3_ptr + offset_a);
-    double* a = (double*)(ALIGN_UP((uint32_t)b + size_b, 4096));
-    snrt_dma_start_1d(a, a_l3_ptr, size_a);
-
-    // Set pointers to local job operands
-    gemm_job->args.b = b;
-    gemm_job->args.a = a;
-    gemm_job->args.c = (double*)((uint32_t)a + size_a);
-
-    // Synchronize with compute cores again such that they see
-    // also the local job operands locations (a, b, c)
-    snrt_cluster_hw_barrier();
-
-    // Update the L1 alloc pointer
-    size_t size_c = gemm_job->args.m * gemm_job->args.n * 8;
-    size_t offset_c = snrt_cluster_idx() * size_c;
-    void* next = (void*)((uint32_t)(gemm_job->args.c) + size_c);
-    snrt_l1_update_next(next);
-
-    // Wait for DMA transfers to complete
-    snrt_dma_wait_all();
-
-    snrt_mcycle();  // Barrier
-
-    // Synchronize with compute cores to make sure the data
-    // is available before they can start computing on it
-    snrt_cluster_hw_barrier();
-
-    snrt_mcycle();  // Job execution
-
-    // Synchronize cores to make sure results are available before
-    // DMA starts transfer to L3
-    snrt_cluster_hw_barrier();
-
-    snrt_mcycle();  // Writeback job outputs
-
-    // Transfer data out
-    void* c_l3_ptr = (void*)(uint32_t)(gemm_job->args.c_l3_ptr + offset_c);
-    snrt_dma_start_1d(c_l3_ptr, gemm_job->args.c, size_c);
-    snrt_dma_wait_all();
-
     snrt_mcycle();
 
-#if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
-    return_to_cva6_accelerated(gemm_job->offload_id);
-#else
-    return_to_cva6(SYNC_CLUSTERS);
-#endif
-}
+    // Compute
+    if (snrt_is_compute_core()) {
+        matmul(args->m, args->n, args->k, local_a, local_b, local_c);
+        snrt_mcycle();
+    }
 
-void gemm_job_compute_core(job_t* job) {
-    // Cast local job
-    gemm_local_job_t* gemm_job = (gemm_local_job_t*)job;
-
-    snrt_mcycle();
-
-    // Get args
-    uint32_t m = gemm_job->args.m;
-    uint32_t n = gemm_job->args.n;
-    uint32_t k = gemm_job->args.k;
-
-    // Synchronize with DM core to wait for local job
-    // operand pointers (a, b, c) to be up to date
+    // Synchronize with DM core to wait for job results
     snrt_cluster_hw_barrier();
-
-    double* a = gemm_job->args.a;
-    double* b = gemm_job->args.b;
-    double* c = gemm_job->args.c;
-
     snrt_mcycle();
 
-    // Synchronize with DM core to wait for operands
-    // to be fully transferred in L1
+    // Copy job results
+    if (snrt_is_dm_core()) {
+        snrt_dma_store_2d_tile(
+            (void *)args->c_ptr,
+            local_c,
+            snrt_cluster_idx(),
+            0,
+            args->m,
+            args->n,
+            args->n,
+            sizeof(double)
+        );
+        snrt_dma_wait_all();
+        snrt_mcycle();
+    }
+
     snrt_cluster_hw_barrier();
-
-    snrt_mcycle();
-
-    // Run kernel
-    matmul(m, n, k, (void*)a, (void*)b, (void*)c);
-
-    snrt_mcycle();
-
-    // Synchronize with DM core to make sure results are available
-    // before DMA starts transfer to L3
-    snrt_cluster_hw_barrier();
-
-    snrt_mcycle();
 }

@@ -59,10 +59,10 @@ inline void return_to_cva6(sync_t sync) {
             }
         }
     }
-    // Otherwise assume cores are already synchronized and only
-    // one core calls this function
+    // Otherwise assume cores are already synchronized
     else {
-        set_host_sw_interrupt();
+        if (snrt_is_dm_core() && (snrt_cluster_idx() == 0))
+            set_host_sw_interrupt();
     }
 }
 
