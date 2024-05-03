@@ -9,9 +9,6 @@
 #include "correlation/src/args.h"
 #include "covariance/src/args.h"
 
-// Snitch types present in offload arguments
-typedef enum { FP64 = 8, FP32 = 4, FP16 = 2, FP8 = 1 } precision_t;
-
 typedef struct {
     volatile uint32_t local_job_addr;
 } usr_data_t;

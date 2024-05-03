@@ -40,5 +40,6 @@
 #include "ssr.h"
 #include "sync.h"
 #include "team.h"
+#include "types.h"
 
 #endif  // SNRT_H

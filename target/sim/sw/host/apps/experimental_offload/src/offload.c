@@ -13,6 +13,9 @@ const int n_clusters_to_use = N_CLUSTERS_TO_USE;
 const int n_clusters_to_use = N_CLUSTERS;
 #endif
 
+// Snitch types present in offload arguments
+typedef enum { FP64 = 8, FP32 = 4, FP16 = 2, FP8 = 1 } precision_t;
+
 #if defined(OFFLOAD_AXPY)
 #include "axpy/data/data.h"
 #elif defined(OFFLOAD_GEMM)
