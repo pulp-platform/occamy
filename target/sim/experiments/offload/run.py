@@ -32,6 +32,9 @@ CFG_DIR = TARGET_DIR / 'cfg'
 BIN_DIR = Path('bin')
 VSIM_BUILDDIR = Path('work-vsim')
 
+#############
+# Utilities #
+#############
 
 def run(cmd, env=None, dry_run=False):
     cmd = [str(arg) for arg in cmd]
@@ -50,6 +53,9 @@ def extend_environment(env=None, **kwargs):
     env.update(kwargs)
     return env
 
+###########
+# Targets #
+###########
 
 def build_sw(tests, dry_run=False):
     # Use build/ as temporary build directory for every test, then move to unique
@@ -107,6 +113,9 @@ def post_process_traces(test, dry_run=False):
     run(['make', '-C', TARGET_DIR, f'SIM_DIR={run_dir}', f'ROI_SPEC={roi_spec}',
         f'CFG_OVERRIDE={hw_cfg}', f'BINARY={device_elf}', 'visual-trace'], dry_run=dry_run)
 
+###############
+# Experiments #
+###############
 
 def get_data_cfg(test):
     app = test['app']
@@ -119,12 +128,14 @@ def get_data_cfg(test):
 
 def get_data_cfg_prefix(test):
     app = test['app']
-    if app == 'kmeans':
+    if app in ['kmeans', 'montecarlo']:
         return f'L{test["n_samples"]}'
-    elif app in ['atax']:
+    elif app in ['atax', 'gemm']:
         return f'L{test["N"]}'
     elif app in ['correlation', 'covariance']:
         return f'L{test["M"]}'
+    elif app in ['axpy']:
+        return f'L{test["n"]}'
 
 
 # Get tests from a test list file
@@ -139,8 +150,6 @@ def get_tests(testlist, run_dir, hw_cfg):
     for test in tests:
 
         # Alias test parameters
-        if 'length' in test:
-            length = test['length']
         n_clusters_to_use = test['n_clusters_to_use']
         multicast = test['multicast']
         app = test['app']
@@ -157,17 +166,14 @@ def get_tests(testlist, run_dir, hw_cfg):
         device_elf = unique_build_dir / 'device.elf'
         sim_bin = TARGET_DIR / BIN_DIR / full_hw_cfg / 'occamy_top.vsim'
         cflags = f'-DN_CLUSTERS_TO_USE={n_clusters_to_use}'
+        cflags += f' -DOFFLOAD_{app.upper()}'
         if multicast:
             cflags += ' -DUSE_MULTICAST'
-        if app == 'mc':
-            cflags += f' -DOFFLOAD_MONTECARLO -DMC_LENGTH={length}'
-        else:
-            cflags += f' -DOFFLOAD_{app.upper()}'
         env = extend_environment(
             RISCV_CFLAGS=cflags,
             SECTION=".wide_spm",
             OFFLOAD=app)
-        if app in ['axpy', 'gemm', 'atax', 'correlation', 'covariance']:
+        if app in ['axpy', 'gemm', 'atax', 'correlation', 'covariance', 'montecarlo']:
             data_cfg = get_data_cfg(test)
             env = extend_environment(env, DATA_CFG=data_cfg)
         elif app == 'kmeans':
@@ -187,8 +193,6 @@ def get_tests(testlist, run_dir, hw_cfg):
             test['cmd'] = [verify_py, str(sim_bin), str(elf)]
             if app == 'kmeans':
                 test['cmd'].append('--no-gui')
-        elif app == 'mc':
-            test['sim_bin'] = sim_bin
         test['run_dir'] = unique_run_dir
         test['env'] = env
         test['cflags'] = cflags

@@ -43,6 +43,10 @@ ifeq ($(OFFLOAD),covariance)
 include $(APPS_DIR)/covariance/Makefile
 endif
 
+ifeq ($(OFFLOAD),montecarlo)
+include $(APPS_DIR)/montecarlo/pi_estimation/Makefile
+endif
+
 include ../common.mk
 
 ifneq ($(OFFLOAD),mc)

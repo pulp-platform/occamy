@@ -13,7 +13,7 @@ INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/blas/axpy/src
 INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/blas/gemm/src
 INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/apps/
 INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/apps/prng
-INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/apps/montecarlo/pi_estimation
+INCDIRS += $(SNITCH_CLUSTER_DIR)/sw/apps/montecarlo/pi_estimation/src
 
 # Define application and number of clusters to use
 RISCV_CFLAGS ?= -DOFFLOAD_AXPY -DN_CLUSTERS_TO_USE=1

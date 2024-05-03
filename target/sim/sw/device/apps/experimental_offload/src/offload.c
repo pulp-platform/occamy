@@ -14,8 +14,8 @@ __thread uint32_t remote_job_addr;
 #define JOB_ARGS_PRELOADED
 
 #include "axpy_job.h"
-// #include "gemm_job.h"
-// #include "montecarlo_job.h"
+#include "gemm_job.h"
+#include "montecarlo_job.h"
 #include "kmeans_job.h"
 #include "atax/src/atax.h"
 #include "correlation/src/correlation.h"

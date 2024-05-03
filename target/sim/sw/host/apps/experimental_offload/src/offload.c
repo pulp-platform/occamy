@@ -29,6 +29,8 @@ typedef enum { FP64 = 8, FP32 = 4, FP16 = 2, FP8 = 1 } precision_t;
 #include "correlation/data/data.h"
 #elif defined(OFFLOAD_COVARIANCE)
 #include "covariance/data/data.h"
+#elif defined(OFFLOAD_MONTECARLO)
+#include "montecarlo/pi_estimation/data/data.h"
 #endif
 
 #ifdef OFFLOAD_KMEANS
@@ -285,7 +287,7 @@ int main() {
     job_t gemm = {J_GEMM, 0, job_args};
     job_t jobs[N_JOBS] = {gemm, gemm};
 #elif defined(OFFLOAD_MONTECARLO)
-    mc_args_t mc_args = {MC_LENGTH / (8 * n_clusters_to_use),
+    mc_args_t mc_args = {n_samples / (8 * n_clusters_to_use),
                          WIDE_SPM_ADDR((uint64_t)&pi)};
     job_args_t job_args;
     job_args.mc = mc_args;
