@@ -28,15 +28,20 @@ ROOT        := $(MKFILE_DIR)../..
 SNITCH_ROOT := $(shell bender path snitch_cluster)
 CFG_DIR      = $(MKFILE_DIR)/cfg
 
+# Programs required before Makefile inclusion
+CVA6_ADDR2LINE ?= $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-addr2line
+
 # Other variables needed before Makefile inclusion
 TARGET               = occamy_top
 DEFAULT_CFG          = $(CFG_DIR)/U-Q6C4.hjson
 CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
 CVA6_PERF_DUMP       = $(LOGS_DIR)/hart_00000_perf.json
 CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
+CVA6_BINARY         ?= $(shell cat $(SIM_DIR)/.rtlbinary)
 TXT_TRACES          += $(CVA6_TXT_TRACE)
 PERF_DUMPS          += $(CVA6_PERF_DUMP)
 ANNOTATED_TRACES    += $(CVA6_ANNOTATED_TRACE)
+VISUALIZE_PY_FLAGS  += --tracevis "$(CVA6_BINARY) $(CVA6_TXT_TRACE) --addr2line $(CVA6_ADDR2LINE) -f cva6"
 
 include $(SNITCH_ROOT)/target/common/common.mk
 
@@ -47,7 +52,6 @@ include $(SNITCH_ROOT)/target/common/common.mk
 REGGEN         ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
 OCCAMYGEN      ?= $(ROOT)/util/occamygen/occamygen.py
 ADDRMAPGEN     ?= $(ROOT)/util/addrmap/addrmapgen.py
-CVA6_ADDR2LINE ?= $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-addr2line
 
 CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 
@@ -440,8 +444,6 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 ##########
 # Traces #
 ##########
-
-CVA6_BINARY ?= $(shell cat $(SIM_DIR)/.rtlbinary)
 
 $(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
 	cp $< $@
