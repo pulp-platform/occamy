@@ -6,7 +6,7 @@
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-ROOT        := ${MKFILE_DIR}../../../../..
+ROOT        := ${MKFILE_DIR}../../..
 DEBUG       ?= 0
 
 VIVADO ?= vivado
@@ -20,7 +20,8 @@ endif
 include $(ROOT)/util/Makefrag
 
 occamy_xilinx: define-sources.tcl
-	$(MAKE) -C ../../ update-source
+	# $(MAKE) -C ../../ update-source
+	$(MAKE) -C ../../sim rtl
 	${VIVADO} -mode batch -source occamy_xilinx.tcl -tclargs $(DEBUG) $(EXT_JTAG)
 
 define-sources.tcl:

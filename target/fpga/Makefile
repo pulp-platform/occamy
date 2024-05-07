@@ -6,7 +6,7 @@
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-ROOT        := ${MKFILE_DIR}../../../..
+ROOT        := ${MKFILE_DIR}../..
 CVA6_SDK    ?= ${ROOT}/../cva6-sdk
 DEBUG       ?= 0
 EXT_JTAG    ?= 0

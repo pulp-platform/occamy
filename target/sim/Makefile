@@ -595,7 +595,7 @@ clean-vcs: clean-work
 # Build a small Occamy version (CVA6 + 1 cluster) for the VCU128 FPGA board
 .PHONY: fpga
 fpga:
-	${MAKE} -C fpga occamy_vcu128
+	${MAKE} -C ../fpga occamy_vcu128
 
 ########
 # Util #

@@ -3,3 +3,4 @@ build/
 *.jou
 *.zip
 *.str
+define-sources.tcl
