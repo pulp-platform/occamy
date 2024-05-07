@@ -21,7 +21,6 @@ void montecarlo_job_unified(void* job_args) {
     mc_args_t* args = (mc_args_t*)job_args;
     uint32_t n_samples = args->n_samples;
     double* result_ptr = (double*)(args->result_ptr);
-    snrt_mcycle();
 
     // Get addresses of partial sum arrays
     uint32_t* core_sum = (uint32_t*)snrt_l1_alloc_compute_core_local(
@@ -31,6 +30,7 @@ void montecarlo_job_unified(void* job_args) {
 
     // Run core-local kernel
     if (snrt_is_compute_core()) {
+        snrt_mcycle();
         *core_sum = calculate_partial_sum(seed0, seed1, Ap, Cp, n_samples);
     }
 
@@ -75,7 +75,6 @@ void montecarlo_job_unified(void* job_args) {
                 // Send interrupt to cluster 0
                 *(cluster_clint_set_ptr(0)) = 1;
             }
-
         } else {
             // Wait other clusters on inter-cluster barrier
             if (N_CLUSTERS_TO_USE > 1) {
@@ -94,8 +93,9 @@ void montecarlo_job_unified(void* job_args) {
                                                snrt_cluster_compute_core_num());
             snrt_fpu_fence();
         }
+
+        snrt_mcycle();
     }
 
-    snrt_mcycle();
     snrt_cluster_hw_barrier();
 }

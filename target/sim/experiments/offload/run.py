@@ -98,8 +98,7 @@ def post_process_traces(test, dry_run=False):
     roi_spec = logdir / 'roi_spec.json'
     app = test['app']
     # Read and render specification template JSON
-    if app in ['gemm', 'kmeans', 'atax', 'correlation', 'covariance']:
-        roi_spec_tpl = FILE_DIR / 'roi' / f'{app}.json.tpl'
+    roi_spec_tpl = FILE_DIR / 'roi' / f'{app}.json.tpl'
     with open(roi_spec_tpl, 'r') as f:
         spec_template = Template(f.read())
         rendered_spec = spec_template.render(nr_clusters=n_clusters_to_use, multicast=multicast)

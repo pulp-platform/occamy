@@ -79,7 +79,6 @@ void gemm_job_unified(void* job_args) {
     local_a = (double*)snrt_l1_alloc_cluster_local(size_a, 4096);
     local_b = (double*)snrt_l1_alloc_cluster_local(size_b, 4096);
     local_c = (double*)snrt_l1_alloc_cluster_local(size_c, 4096);
-    snrt_mcycle();
     
     // Copy job operands (row block of A and full B)
     if (snrt_is_dm_core()) {
@@ -103,15 +102,15 @@ void gemm_job_unified(void* job_args) {
             args->n,
             sizeof(double));
         snrt_dma_wait_all();
-        snrt_mcycle();
     }
 
     // Synchronize with DM core to wait for job operands
-    snrt_cluster_hw_barrier();
     snrt_mcycle();
+    snrt_cluster_hw_barrier();
 
     // Compute
     if (snrt_is_compute_core()) {
+        snrt_mcycle();
         matmul(args->m, args->n, args->k, local_a, local_b, local_c);
         snrt_mcycle();
     }

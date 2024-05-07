@@ -61,7 +61,7 @@
             {"idx": 13, "label": "copy data in"},
             {"idx": 14, "label": "barrier"},
             {"idx": 15, "label": "copy data out"},
-            {"idx": 16, "label": "return"},
+            {"idx": 16, "label": "return"}
         ]
     },
 

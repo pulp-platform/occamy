@@ -14,22 +14,21 @@ void axpy_job_unified(void* job_args) {
     local_x = (double*)(ALIGN_UP((uint32_t)args + sizeof(axpy_job_t), 4096));
     local_y = local_x + args->n;
     local_z = local_y + args->n;
-    snrt_mcycle();
     
     // Copy job operands
     if (snrt_is_dm_core()) {
         snrt_dma_load_1d_tile(local_x, (void *)args->x_addr, snrt_cluster_idx(), args->n, sizeof(double));
         snrt_dma_load_1d_tile(local_y, (void *)args->y_addr, snrt_cluster_idx(), args->n, sizeof(double));
         snrt_dma_wait_all();
-        snrt_mcycle();
     }
 
     // Synchronize with DM core to wait for job operands
-    snrt_cluster_hw_barrier();
     snrt_mcycle();
+    snrt_cluster_hw_barrier();
 
     // Compute
     if (snrt_is_compute_core()) {
+        snrt_mcycle();
         axpy(args->n, args->a, local_x, local_y, local_z);
         snrt_mcycle();
     }
