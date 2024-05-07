@@ -61,19 +61,22 @@ def build_sw(tests, dry_run=False):
     # Use build/ as temporary build directory for every test, then move to unique
     # tmp/ subdirectory
     run(['make', '-C', TARGET_DIR, 'clean-sw'], dry_run=dry_run)
+    run(['rm', '-rf', 'tmp/'], dry_run=dry_run)
     for test in tests:
         prefix = test['prefix']
-        build_dir = SOURCE_BUILD_DIR / prefix
+        source_build_dir = SOURCE_BUILD_DIR / prefix
+        target_build_dir = TARGET_BUILD_DIR / prefix
         tmp_build_dir = Path('tmp', prefix)
-        cprint(f'Build software {colored(build_dir, "cyan")}', attrs=["bold"])
+        cprint(f'Build software {colored(source_build_dir, "cyan")}', attrs=["bold"])
         run(['make', '-C', TARGET_DIR, 'DEBUG=ON', f'CFG_OVERRIDE={test["hw_cfg"]}', 'sw', '-B'],
             env=test['env'], dry_run=dry_run)
         run(['mkdir', '-p', tmp_build_dir.parent], dry_run=dry_run)
         run(['mv', SOURCE_BUILD_DIR, tmp_build_dir], dry_run=dry_run)
         run(['cp', DEVICE_ELF, tmp_build_dir / 'device.elf'], dry_run=dry_run)
-    # Rename tmp/ to build/
-    run(['rm', '-rf', str(TARGET_BUILD_DIR)], dry_run=dry_run)
-    run(['mv', 'tmp', str(TARGET_BUILD_DIR)], dry_run=dry_run)
+        # Move from tmp/ to build/
+        run(['rm', '-rf', str(target_build_dir)], dry_run=dry_run)
+        run(['mkdir', '-p', str(target_build_dir.parent)], dry_run=dry_run)
+        run(['mv', str(tmp_build_dir), str(target_build_dir)], dry_run=dry_run)
 
 
 def build_hw(tests, dry_run=False):
