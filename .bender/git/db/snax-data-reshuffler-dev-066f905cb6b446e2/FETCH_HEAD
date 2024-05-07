@@ -1,0 +1,14 @@
+74f7fc81d0e56934bce57aad86f5347d1e386ec7	not-for-merge	branch 'Joren/streamer-testcases' of https://github.com/KULeuven-MICAS/snax-dev
+f6da37ca2e97a96fa5a9464c5247487b21b60e54	not-for-merge	branch 'init-snitch' of https://github.com/KULeuven-MICAS/snax-dev
+10f73ac1c298c30f98aed1a467a9c1910b6a8400	not-for-merge	branch 'joren/fix-snax-streamer-gemm-dev' of https://github.com/KULeuven-MICAS/snax-dev
+65e37d8faf551be773fef90644e9698065573800	not-for-merge	branch 'main' of https://github.com/KULeuven-MICAS/snax-dev
+f91f456d4025a54a5023e685796a3345e1cf7e4f	not-for-merge	branch 'ryan/update-clang' of https://github.com/KULeuven-MICAS/snax-dev
+7f1e93da4e8ce2e9decc7d7e70a3b78a19e7d32e	not-for-merge	branch 'ryan/vsim' of https://github.com/KULeuven-MICAS/snax-dev
+445fa35bd118c31959e2058a87a46be9cdd4dd87	not-for-merge	branch 'snax-stream-gemm-dev' of https://github.com/KULeuven-MICAS/snax-dev
+2548bae2c2a53badccc120b78ffb365202526f77	not-for-merge	branch 'snax-streamer-gemm-dev' of https://github.com/KULeuven-MICAS/snax-dev
+a5f21edf8d1916d3eae7191e941bf37e870dabf2	not-for-merge	branch 'snax-streamer-simd-dev' of https://github.com/KULeuven-MICAS/snax-dev
+990d6254d375892d0aef06324c3e26185068593c	not-for-merge	branch 'xyi/fix-pack-narrow2wide' of https://github.com/KULeuven-MICAS/snax-dev
+76b92b0abccc4e7f9d6ba984c40956c16fbda8c1	not-for-merge	branch 'xyi/fix-snax-stream-gemm-dev' of https://github.com/KULeuven-MICAS/snax-dev
+39b2bc18be846e7fc29c4a67d44ea3ca0c4547fe	not-for-merge	branch 'xyi/integrate-data-reshuffler' of https://github.com/KULeuven-MICAS/snax-dev
+b38a5c3ddb551eb5225deb807a6a4c8ede1daada	not-for-merge	branch 'xyi/rename-modules-streamer-gemm' of https://github.com/KULeuven-MICAS/snax-dev
+a59fa866f35d3c4a3fb467777ec2129b72e300b5	not-for-merge	branch 'xyi/streamer-simd' of https://github.com/KULeuven-MICAS/snax-dev

@@ -1,0 +1,7 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+[remote "origin"]
+	url = https://github.com/pulp-platform/axi_riscv_atomics
+	fetch = +refs/heads/*:refs/remotes/origin/*
