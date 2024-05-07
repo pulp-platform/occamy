@@ -17,19 +17,26 @@ inline void mc_init() {
     }
 }
 
+// Note: this implementation is not 100% safe. It only works if cluster 0
+// enters WFI state, before the interrupt is actually sent.
+// To make sure this works in all cases, instead of sending an interrupt
+// you can write to a fixed location, which cluster 0 would poll.
 void montecarlo_job_unified(void* job_args) {
+    uint32_t *global_reduction_array, *remote_global_reduction_array;
+    uint32_t* core_sum;
+
     mc_args_t* args = (mc_args_t*)job_args;
     uint32_t n_samples = args->n_samples;
     double* result_ptr = (double*)(args->result_ptr);
 
-    // Get addresses of partial sum arrays
-    uint32_t* core_sum = (uint32_t*)snrt_l1_alloc_compute_core_local(
-        sizeof(uint32_t), sizeof(uint32_t));
-    uint32_t* global_reduction_array = (uint32_t*)snrt_l1_alloc_cluster_local(
-        sizeof(uint32_t), sizeof(uint32_t));
-
-    // Run core-local kernel
     if (snrt_is_compute_core()) {
+        // Get addresses of partial sum arrays
+        global_reduction_array = (uint32_t*)snrt_l1_alloc_cluster_local(
+            sizeof(uint32_t), sizeof(uint32_t));
+        core_sum = (uint32_t*)snrt_l1_alloc_compute_core_local(
+            sizeof(uint32_t), sizeof(uint32_t));
+
+        // Run core-local kernel
         snrt_mcycle();
         *core_sum = calculate_partial_sum(seed0, seed1, Ap, Cp, n_samples);
     }
@@ -54,12 +61,11 @@ void montecarlo_job_unified(void* job_args) {
 
         if (snrt_cluster_idx() != 0) {
             // Calculate address of cluster 0's reduction array
-            global_reduction_array =
-                (uint32_t*)(((uint32_t)global_reduction_array) -
-                            snrt_cluster_idx() * cluster_offset);
+            remote_global_reduction_array = (uint32_t *)snrt_remote_l1_ptr(
+                global_reduction_array, snrt_cluster_idx(), 0);
 
             // Store partial sum to cluster 0's reduction array
-            global_reduction_array[snrt_cluster_idx()] = sum;
+            remote_global_reduction_array[snrt_cluster_idx()] = sum;
 
             // Inter-cluster barrier
             uint32_t barrier_ptr = (uint32_t)(&ct_barrier_cnt);
@@ -98,4 +104,7 @@ void montecarlo_job_unified(void* job_args) {
     }
 
     snrt_cluster_hw_barrier();
+
+    // Free memory
+    snrt_l1_update_next_v2(global_reduction_array);
 }

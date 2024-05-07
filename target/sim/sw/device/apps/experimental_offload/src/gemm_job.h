@@ -136,4 +136,7 @@ void gemm_job_unified(void* job_args) {
     }
 
     snrt_cluster_hw_barrier();
+
+    // Free memory
+    snrt_l1_update_next_v2(local_a);
 }
