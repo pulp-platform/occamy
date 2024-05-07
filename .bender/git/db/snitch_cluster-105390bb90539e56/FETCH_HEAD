@@ -16,14 +16,15 @@ dbeabc89fb58b44e652cb9ef5db5bb581c6441a7	not-for-merge	branch 'debug/fix' of htt
 bcab870cceeea22c7ce9a1a4e6c856495a9c04c5	not-for-merge	branch 'docker/update-container' of https://github.com/KULeuven-MICAS/snitch_cluster
 e374a904b82c9b4610551e28af30934180d91195	not-for-merge	branch 'docs' of https://github.com/KULeuven-MICAS/snitch_cluster
 bb9396cfd93d1d4d3a9e15595da10c01a43f3ab2	not-for-merge	branch 'fanchen/occamy_snax_integration' of https://github.com/KULeuven-MICAS/snitch_cluster
-8816900992441d4d94f159becc9250a0a705489f	not-for-merge	branch 'gh-pages' of https://github.com/KULeuven-MICAS/snitch_cluster
+8ca6195aaa5e75b513263b8036484ee4b05a51f5	not-for-merge	branch 'gh-pages' of https://github.com/KULeuven-MICAS/snitch_cluster
 1b26ff3ff4a2ff1439ca51fc963a9de366bb723d	not-for-merge	branch 'ipc-verification' of https://github.com/KULeuven-MICAS/snitch_cluster
+fb259fbf69861dcdf714715f82f9d02064b160d1	not-for-merge	branch 'joren/add-structure-doc' of https://github.com/KULeuven-MICAS/snitch_cluster
 4df71cf145a7f7348f5018dd7a709f9bb5c3dbb2	not-for-merge	branch 'joren/docker-add-prebuilts' of https://github.com/KULeuven-MICAS/snitch_cluster
 35a8247d52a15bed04196690051a8432c465f5b7	not-for-merge	branch 'joren/fix-docker-tags' of https://github.com/KULeuven-MICAS/snitch_cluster
 f9c93e1358ae25c32b919efe1e0ea838a045801f	not-for-merge	branch 'joren/live-at-head' of https://github.com/KULeuven-MICAS/snitch_cluster
 772b86ae84ec0d5a6f1e755cb524ba0aae2cefc3	not-for-merge	branch 'kul_main' of https://github.com/KULeuven-MICAS/snitch_cluster
 ed79e3e40b508f99441a0b75e866d7825e6c5608	not-for-merge	branch 'local-new-gemm' of https://github.com/KULeuven-MICAS/snitch_cluster
-89e7bda6a8b8ba6177711a508b71510af89977f6	not-for-merge	branch 'main' of https://github.com/KULeuven-MICAS/snitch_cluster
+431b6637b96b27e721cbb39c5dbcf408a2f1d49d	not-for-merge	branch 'main' of https://github.com/KULeuven-MICAS/snitch_cluster
 772b86ae84ec0d5a6f1e755cb524ba0aae2cefc3	not-for-merge	branch 'main-old' of https://github.com/KULeuven-MICAS/snitch_cluster
 19827705148d3e2d9e09b534359777a49c371dad	not-for-merge	branch 'mem' of https://github.com/KULeuven-MICAS/snitch_cluster
 55884f79d7004975c8adcc545cbb6a2c8e911e9a	not-for-merge	branch 'occamy' of https://github.com/KULeuven-MICAS/snitch_cluster
@@ -31,7 +32,7 @@ ed79e3e40b508f99441a0b75e866d7825e6c5608	not-for-merge	branch 'local-new-gemm' o
 03225eabd2e157d985b135b8d08d331bc58ed3dd	not-for-merge	branch 'pauling/snDNN' of https://github.com/KULeuven-MICAS/snitch_cluster
 0901978a2f086804659429b62d60708504e6d86d	not-for-merge	branch 'rx/add-gemm-sw' of https://github.com/KULeuven-MICAS/snitch_cluster
 5674fb1df2121393720bceee6f7cb201a7ee91c9	not-for-merge	branch 'rx/add-snax-gemm' of https://github.com/KULeuven-MICAS/snitch_cluster
-f79e4de969e32bde42c9051d63a55e08a0791c2c	not-for-merge	branch 'ry/templategen' of https://github.com/KULeuven-MICAS/snitch_cluster
+fd512e8e842187f989bd6dd1d865ddc052631d3b	not-for-merge	branch 'ry/templategen' of https://github.com/KULeuven-MICAS/snitch_cluster
 0cdd4d2d5c0349f753e4435474142b40601f43d7	not-for-merge	branch 'ryan/acc-barrier' of https://github.com/KULeuven-MICAS/snitch_cluster
 54fb2c9a20893f75866fc3d9930746c067757fa9	not-for-merge	branch 'ryan/add-sw-mac' of https://github.com/KULeuven-MICAS/snitch_cluster
 a341281187e8300aa4d14483470bacdc1815bfeb	not-for-merge	branch 'ryan/add-sw-mac-old' of https://github.com/KULeuven-MICAS/snitch_cluster

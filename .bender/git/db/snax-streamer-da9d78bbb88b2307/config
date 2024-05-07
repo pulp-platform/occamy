@@ -1,7 +1,0 @@
-[core]
-	repositoryformatversion = 0
-	filemode = true
-	bare = true
-[remote "origin"]
-	url = https://github.com/KULeuven-MICAS/snax-streamer
-	fetch = +refs/heads/*:refs/remotes/origin/*
