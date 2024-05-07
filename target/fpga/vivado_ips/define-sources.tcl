@@ -1,5 +1,5 @@
 # This script was generated automatically by bender.
-set ROOT "/home/ivean/SNAX"
+set ROOT "/users/micas/ydeng/Desktop/SNAX/occamy"
 add_files -norecurse -fileset [current_fileset] [list \
     $ROOT/.bender/git/checkouts/tech_cells_generic-8ec0cf131c1245eb/src/fpga/pad_functional_xilinx.sv \
     $ROOT/.bender/git/checkouts/tech_cells_generic-8ec0cf131c1245eb/src/fpga/tc_clk_xilinx.sv \
