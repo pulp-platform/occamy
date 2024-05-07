@@ -156,6 +156,7 @@ def get_tests(testlist, run_dir, hw_cfg):
         # Resolve derived test parameters
         mcast_prefix = "M" if multicast else "U"
         prefix = f'{app}/{get_data_cfg_prefix(test)}/{mcast_prefix}/N{n_clusters_to_use}'
+        name = f'{APP}-{prefix.replace("/", "-")}'
         full_hw_cfg = f'{mcast_prefix}-{hw_cfg}'
         hw_cfg_file = CFG_DIR / f'{full_hw_cfg}.hjson'
         vsim_builddir = VSIM_BUILDDIR / f'{full_hw_cfg}'
@@ -180,6 +181,7 @@ def get_tests(testlist, run_dir, hw_cfg):
             env = extend_environment(env, KMEANS_DATA_CFG=data_cfg)
 
         # Extend test with derived parameters
+        test['name'] = name
         test['sim_bin'] = sim_bin
         test['prefix'] = prefix
         test['elf'] = elf
