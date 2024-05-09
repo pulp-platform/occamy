@@ -1031,7 +1031,8 @@ def main():
                 input=dts_str,
                 stdout=file,
                 shell=True,
-                text=True)
+                # text=True)
+                universal_newlines=True)  # In Python3.7 and newer, universal_newlines has the alias of text
 
     # Emit the address map as a dot file if requested.
     if args.graph:

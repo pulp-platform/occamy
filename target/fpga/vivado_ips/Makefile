@@ -12,7 +12,7 @@ DEBUG       ?= 0
 VIVADO ?= vivado
 BENDER ?= bender
 
-BENDER_TARGETS += -t cv64a6_imafdc_sv39
+BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy -t snax_streamer_gemm -t snax-streamer-gemm-dev -t snax-data-reshuffler-dev
 ifeq ($(EXT_JTAG), 0)
 	BENDER_TARGETS += -t bscane
 endif
@@ -21,7 +21,8 @@ include $(ROOT)/util/Makefrag
 
 occamy_xilinx: define-sources.tcl
 	# $(MAKE) -C ../../ update-source
-	$(MAKE) -C ../../sim rtl
+	# $(MAKE) -C ../../sim rtl
+
 	${VIVADO} -mode batch -source occamy_xilinx.tcl -tclargs $(DEBUG) $(EXT_JTAG)
 
 define-sources.tcl:

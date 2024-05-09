@@ -70,6 +70,7 @@ SOURCE_HBMCTRL_DIR   ?= $(ROOT)/hw/occamy/hbm_xbar_ctrl
 SOURCE_QUADCTRL_DIR  ?= $(ROOT)/hw/occamy/quadrant_s1_ctrl
 SNITCH_TEST_DIR      ?= $(SNITCH_ROOT)/target/common/test
 TARGET_TEST_DIR      ?= $(ROOT)/target/sim/test
+TARGET_DTS_DIR		 ?= $(ROOT)/target/fpga/bootrom
 CVA6_TRACE            = trace_hart_0.log
 
 # If the configuration file is overriden on the command-line (through
@@ -239,7 +240,8 @@ MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_streamer_gemm_cluster_wrappe
 MISC_OCCAMYGEN_TARGETS  = $(MISC_OCCAMYGEN_SV_TARGETS)
 MISC_OCCAMYGEN_TARGETS += $(TARGET_SRC_DIR)/occamy_memories.json
 
-soc: $(MISC_OCCAMYGEN_TARGETS)
+
+soc: $(MISC_OCCAMYGEN_TARGETS) chisel_targets
 clean-soc:
 	rm -rf $(MISC_OCCAMYGEN_TARGETS) .misc_occamygen_targets_group
 
@@ -255,9 +257,21 @@ $(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
 		--quadrant-s1      $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1.sv.tpl \
 		--quadrant-s1-ctrl $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1_ctrl.sv.tpl \
 		--xilinx-sv        $(SOURCE_OCCAMY_DIR)/occamy_xilinx.sv.tpl \
-		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
+		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl \
+		--dts 			   $(TARGET_DTS_DIR)/occamy.dts
 	@$(VERIBLE_FMT) --inplace $(MISC_OCCAMYGEN_SV_TARGETS)
+# File included by occamy_xilinx needs to be put in the same folder
+	cp -f $(SOURCE_OCCAMY_DIR)/axi_flat.sv $(TARGET_SRC_DIR)
+	cp -f $(SOURCE_OCCAMY_DIR)/apb_flat.sv $(TARGET_SRC_DIR)	
 	@touch $@
+
+.PHONY: chisel_targets
+chisel_targets:
+# Place all Chisel files that need to be generated header
+# Todo in the future for module desginer: please consider using relative path in the Makefile
+	# $(MAKE) -C `bender path snax-streamer-simd-dev` rtl/streamer-simd/streamer_simd_wrapper.sv
+	$(MAKE) -C `bender path snax-data-reshuffler-dev` `bender path snax-data-reshuffler-dev`/tests/tb/tb_stream_dev_reshuffler.sv
+	$(MAKE) -C `bender path snax-streamer-gemm-dev` `bender path snax-streamer-gemm-dev`/rtl/streamer-gemm/streamer_gemm_wrapper.sv
 
 tb: test/testharness.sv
 clean-tb:
@@ -272,7 +286,7 @@ test/testharness.sv: test/testharness.sv.tpl $(CFG)
 # 	@$(OCCAMYGEN) --cfg $(CFG) \
 # 		--bootdata       ../../ip/snitch_cluster/test/bootdata.cc.tpl
 # 	@echo "[SOLDER] Device Tree"
-# 	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
+	# @$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
 
 $(TARGET_PLIC_DIR) $(TARGET_CLINT_DIR) $(TARGET_SOCCTRL_DIR) $(TARGET_HBMCTRL_DIR) $(TARGET_QUADCTRL_DIR):
 	@mkdir -p $@
@@ -594,7 +608,7 @@ clean-vcs: clean-work
 
 # Build a small Occamy version (CVA6 + 1 cluster) for the VCU128 FPGA board
 .PHONY: fpga
-fpga:
+fpga: rtl
 	${MAKE} -C ../fpga occamy_vcu128
 
 ########
