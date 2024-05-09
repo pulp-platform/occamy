@@ -84,7 +84,7 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
             break;
         }
         case J_GEMM: {
-            gemm_args_t args = job->args.gemm;
+            offload_gemm_args_t args = job->args.gemm;
 
 #if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
             uint64_t mask = ((n_clusters_to_use - 1) << 18);
@@ -94,17 +94,17 @@ static inline void send_job_and_wakeup(job_t *job, uint64_t l1_job_ptr) {
             *((volatile uint8_t *)(l1_job_ptr + offsetof(job_t, offload_id))) =
                 job->offload_id;
             *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(gemm_args_t, m))) = args.m;
+                                    offsetof(offload_gemm_args_t, m))) = args.m;
             *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(gemm_args_t, n))) = args.n;
+                                    offsetof(offload_gemm_args_t, n))) = args.n;
             *((volatile uint32_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(gemm_args_t, k))) = args.k;
+                                    offsetof(offload_gemm_args_t, k))) = args.k;
             *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(gemm_args_t, a_ptr))) = args.a_ptr;
+                                    offsetof(offload_gemm_args_t, a_ptr))) = args.a_ptr;
             *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(gemm_args_t, b_ptr))) = args.b_ptr;
+                                    offsetof(offload_gemm_args_t, b_ptr))) = args.b_ptr;
             *((volatile uint64_t *)(l1_job_ptr + offsetof(job_t, args) +
-                                    offsetof(gemm_args_t, c_ptr))) = args.c_ptr;
+                                    offsetof(offload_gemm_args_t, c_ptr))) = args.c_ptr;
 
             mcycle();  // Wakeup
 #if defined(SUPPORTS_MULTICAST) && defined(USE_MULTICAST)
@@ -276,7 +276,7 @@ int main() {
     job_t axpy = {J_AXPY, 0, axpy_args};
     job_t jobs[N_JOBS] = {axpy, axpy};
 #elif defined(OFFLOAD_GEMM)
-    gemm_args_t gemm_args = {M / n_clusters_to_use,
+    offload_gemm_args_t gemm_args = {M / n_clusters_to_use,
                              N,
                              K,
                              WIDE_SPM_ADDR((uint64_t)a),

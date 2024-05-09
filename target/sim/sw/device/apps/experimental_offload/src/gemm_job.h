@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #define XSSR
-#include "gemm.h"
+// #include "gemm.h"
 
 void matmul(uint32_t M, uint32_t N, uint32_t K, double* A, double* B,
             double* C) {
@@ -72,7 +72,7 @@ void gemm_job_unified(void* job_args) {
     double* local_b;
     double* local_c;
 
-    gemm_args_t* args = (gemm_args_t *)job_args;
+    offload_gemm_args_t* args = (offload_gemm_args_t *)job_args;
     size_a = args->m * args->k * sizeof(double);
     size_b = args->k * args->n * sizeof(double);
     size_c = args->m * args->n * sizeof(double);

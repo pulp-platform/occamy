@@ -44,7 +44,7 @@ typedef struct {
     uint64_t a_ptr;
     uint64_t b_ptr;
     uint64_t c_ptr;
-} gemm_args_t;
+} offload_gemm_args_t;
 
 typedef struct {
     uint32_t m;
@@ -61,7 +61,7 @@ typedef struct {
 typedef struct {
     uint32_t id;
     uint8_t offload_id;
-    gemm_args_t args;
+    offload_gemm_args_t args;
 } gemm_job_t;
 
 typedef struct {
@@ -125,7 +125,7 @@ typedef struct {
 
 typedef union {
     axpy_args_t axpy;
-    gemm_args_t gemm;
+    offload_gemm_args_t gemm;
     mc_args_t mc;
     kmeans_args_t kmeans;
     atax_args_t atax;
@@ -155,7 +155,7 @@ static inline uint32_t job_args_size(job_id_t job_id) {
     case J_AXPY:
         return sizeof(axpy_args_t);
     case J_GEMM:
-        return sizeof(gemm_args_t);
+        return sizeof(offload_gemm_args_t);
     case J_MONTECARLO:
         return sizeof(mc_args_t);
     case J_KMEANS:
