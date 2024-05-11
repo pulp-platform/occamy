@@ -235,7 +235,8 @@ MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
 MISC_OCCAMYGEN_SV_TARGETS  = $(addprefix $(TARGET_SRC_DIR)/,$(notdir $(basename $(MISC_OCCAMYGEN_SV_TEMPLATES))))
 MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_cluster_wrapper.sv
 # MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_gemm_cluster_wrapper.sv
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_streamer_gemm_cluster_wrapper.sv
+# MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_streamer_gemm_cluster_wrapper.sv
+MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_cluster_wrapper.sv
 
 MISC_OCCAMYGEN_TARGETS  = $(MISC_OCCAMYGEN_SV_TARGETS)
 MISC_OCCAMYGEN_TARGETS += $(TARGET_SRC_DIR)/occamy_memories.json
@@ -267,6 +268,7 @@ $(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
 
 .PHONY: chisel_targets
 chisel_targets:
+# Temporary solution; this should be considered to be finished when bender is triggered. This can be done by the plugin in the bender.yml inside each accelerator
 # Place all Chisel files that need to be generated header
 # Todo in the future for module desginer: please consider using relative path in the Makefile
 	# $(MAKE) -C `bender path snax-streamer-simd-dev` rtl/streamer-simd/streamer_simd_wrapper.sv
@@ -281,12 +283,11 @@ test/testharness.sv: test/testharness.sv.tpl $(CFG)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir test --testharness-sv $<
 	@$(VERIBLE_FMT) --inplace $@
-
-# TODO
-# 	@$(OCCAMYGEN) --cfg $(CFG) \
-# 		--bootdata       ../../ip/snitch_cluster/test/bootdata.cc.tpl
-# 	@echo "[SOLDER] Device Tree"
-	# @$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
+	
+	# @$(OCCAMYGEN) --cfg $(CFG) \
+ 	# 	--bootdata       ../../ip/snitch_cluster/test/bootdata.cc.tpl
+	@echo "[SOLDER] Device Tree"
+	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
 
 $(TARGET_PLIC_DIR) $(TARGET_CLINT_DIR) $(TARGET_SOCCTRL_DIR) $(TARGET_HBMCTRL_DIR) $(TARGET_QUADCTRL_DIR):
 	@mkdir -p $@

@@ -198,8 +198,8 @@
 
     clusters: [
         { $ref: "#/snitch_cluster_template" },
-        { $ref: "#/snax_gemm_cluster_template" },
-        { $ref: "#/snax_streamer_gemm_cluster_template" }      
+        { $ref: "#/snitch_cluster_template" },
+        { $ref: "#/snitch_cluster_template" }      
     ],
     // Cluster Templates
     snitch_cluster_template:{

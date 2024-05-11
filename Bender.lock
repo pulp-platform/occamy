@@ -165,7 +165,7 @@ packages:
     dependencies:
     - snax-streamer
   snax-gemm:
-    revision: 9b4ff9f069508578d41ce993321357ef847eb37c
+    revision: 263d250b81e7f8bd003fb69c4a3e04c9fce35d5b
     version: null
     source:
       Git: https://github.com/KULeuven-MICAS/snax-gemm

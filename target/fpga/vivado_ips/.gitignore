@@ -1,5 +1,6 @@
 build/
 .Xil/
+occamy_xilinx/
 *.jou
 *.log
 *.zip

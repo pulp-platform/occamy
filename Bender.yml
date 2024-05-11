@@ -118,6 +118,11 @@ sources:
   - target: any(snax_streamer_gemm_dev, snax_data_reshuffler_dev)
     files:
       - target/sim/src/snax_streamer_gemm_cluster_wrapper.sv 
+
+  - target: snax_cluster
+    files:
+      - target/sim/src/snax_cluster_wrapper.sv 
+  
   # target/fpga
   - target: xilinx
     files:
