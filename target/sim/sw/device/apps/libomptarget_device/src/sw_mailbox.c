@@ -51,10 +51,13 @@ int syscall(uint64_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2,
     return retries;
 }
 
+#define MBOX_DEVICE_PRINT (0x05U)
+
 void snrt_putchar(char c) {
-    *(volatile uint32_t *)0x2002000 = c;
-    csleep(10000);
-    //syscall(SYS_write, 1, c, 1, 0, 0);
+    //*(volatile uint32_t *)0x2002000 = c;
+    mailbox_write(MBOX_DEVICE_PRINT);
+    csleep(1000);
+    mailbox_write(c);
 }
 
 void snrt_hero_exit(int code) { syscall(SYS_exit, code, 0, 0, 0, 0); }

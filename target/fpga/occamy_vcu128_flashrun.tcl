@@ -39,7 +39,7 @@ open_hw_manager
 connect_hw_server -url ${HW_SERVER} -allow_non_jtag
 
 current_hw_target [get_hw_targets *${FPGA_PATH}]
-set_property PARAM.FREQUENCY 15000000 [get_hw_targets *${FPGA_PATH}]
+set_property PARAM.FREQUENCY 10000000 [get_hw_targets *${FPGA_PATH}]
 open_hw_target
 current_hw_device [get_hw_devices xcvu37p_0]
 
