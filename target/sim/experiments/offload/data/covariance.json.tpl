@@ -3,6 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 {
-    M: 16,
-    N: 8
+    M: ${M},
+    N: ${N}
 }

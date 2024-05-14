@@ -16,17 +16,19 @@ import yaml
 import tempfile
 from termcolor import cprint, colored
 from mako.template import Template
+import common
 
-sys.path.append(str(Path(__file__).parent / '../../../../deps/snitch_cluster/util/sim/'))
+
+sys.path.append(str(Path(__file__).parent / '../../../../../deps/snitch_cluster/util/sim/'))
 import sim_utils  # noqa: E402
 from Simulator import QuestaSimulator  # noqa: E402
 
 FILE_DIR = Path(__file__).parent.resolve()
-TARGET_DIR = FILE_DIR / '../../'
+TARGET_DIR = FILE_DIR / '../../../'
 SNITCH_DIR = TARGET_DIR / '../../deps/snitch_cluster'
 APP = 'experimental_offload'
 SOURCE_BUILD_DIR = TARGET_DIR / f'sw/host/apps/{APP}/build'
-TARGET_BUILD_DIR = FILE_DIR / 'build'
+TARGET_BUILD_DIR = FILE_DIR / '../build'
 DEVICE_ELF = TARGET_DIR / f'sw/device/apps/{APP}/build/{APP}.elf'
 CFG_DIR = TARGET_DIR / 'cfg'
 BIN_DIR = Path('bin')
@@ -87,7 +89,7 @@ def build_hw(tests, dry_run=False):
         vsim_builddir = test['vsim_builddir']
         cprint(f'Build hardware {colored(sim_bin, "cyan")}', attrs=["bold"])
         run(['make', '-C', TARGET_DIR, f'CFG_OVERRIDE={hw_cfg}', 'rtl'], dry_run=dry_run)
-        run(['make', '-C', TARGET_DIR, f'VSIM_BUILDDIR={vsim_builddir}', f'BIN_DIR={bin_dir}',
+        run(['make', '-C', TARGET_DIR, f'DEBUG=ON', f'VSIM_BUILDDIR={vsim_builddir}', f'BIN_DIR={bin_dir}',
             sim_bin], dry_run=dry_run)
 
 
@@ -100,8 +102,9 @@ def post_process_traces(test, dry_run=False):
     hw_cfg = test['hw_cfg']
     roi_spec = logdir / 'roi_spec.json'
     app = test['app']
+    cprint(f'Build traces {colored(logdir, "cyan")}', attrs=["bold"])
     # Read and render specification template JSON
-    roi_spec_tpl = FILE_DIR / 'roi' / f'{app}.json.tpl'
+    roi_spec_tpl = FILE_DIR / '../roi' / f'{app}.json.tpl'
     with open(roi_spec_tpl, 'r') as f:
         spec_template = Template(f.read())
         rendered_spec = spec_template.render(nr_clusters=n_clusters_to_use, multicast=multicast)
@@ -109,7 +112,6 @@ def post_process_traces(test, dry_run=False):
     with open(roi_spec, 'w') as f:
         json.dump(spec, f, indent=4)
     # Build traces and benchmark
-    cprint(f'Build traces {colored(logdir, "cyan")}', attrs=["bold"])
     run(['make', '-C', TARGET_DIR, f'SIM_DIR={run_dir}', f'BINARY={device_elf}', 'annotate', '-j'],
         dry_run=dry_run)
     run(['make', '-C', TARGET_DIR, f'SIM_DIR={run_dir}', f'ROI_SPEC={roi_spec}',
@@ -121,23 +123,30 @@ def post_process_traces(test, dry_run=False):
 
 def get_data_cfg(test):
     app = test['app']
-    cfg_template = str(FILE_DIR / 'data' / f'{app}.json.tpl')
+    cfg_template = str(FILE_DIR / '../data' / f'{app}.json.tpl')
     filled_template = Template(filename=cfg_template).render(**test)
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
         temp_file.write(filled_template)
         return temp_file.name
 
 
-def get_data_cfg_prefix(test):
-    app = test['app']
-    if app in ['kmeans', 'montecarlo']:
-        return f'L{test["n_samples"]}'
-    elif app in ['atax', 'gemm']:
-        return f'L{test["N"]}'
-    elif app in ['correlation', 'covariance']:
-        return f'L{test["M"]}'
-    elif app in ['axpy']:
-        return f'L{test["n"]}'
+def fill_default_test_values(test):
+    if test['app'] == 'gemm':
+        if 'M' not in test:
+            test['M'] = 256
+        if 'N' not in test:
+            test['N'] = 4
+    elif test['app'] == 'atax':
+        if 'N' not in test:
+            test['N'] = 256
+        if 'M' not in test:
+            test['M'] = 1
+    elif test['app'] in ['covariance', 'correlation']:
+        if 'N' not in test:
+            test['N'] = 256
+        if 'M' not in test:
+            test['M'] = 1
+    return test
 
 
 # Get tests from a test list file
@@ -151,14 +160,17 @@ def get_tests(testlist, run_dir, hw_cfg):
     # Derive information required for simulation
     for test in tests:
 
+        # Fill default test values
+        test = fill_default_test_values(test)
+
         # Alias test parameters
         n_clusters_to_use = test['n_clusters_to_use']
         multicast = test['multicast']
         app = test['app']
 
         # Resolve derived test parameters
-        mcast_prefix = "M" if multicast else "U"
-        prefix = f'{app}/{get_data_cfg_prefix(test)}/{mcast_prefix}/N{n_clusters_to_use}'
+        mcast_prefix = common.get_mcast_prefix(multicast)
+        prefix = common.get_prefix(test)
         name = f'{APP}-{prefix.replace("/", "-")}'
         full_hw_cfg = f'{mcast_prefix}-{hw_cfg}'
         hw_cfg_file = CFG_DIR / f'{full_hw_cfg}.hjson'
@@ -235,7 +247,7 @@ def main():
     # Build HW and SW for every test and run simulations
     if not args.post_process_only:
         build_sw(tests, dry_run=args.dry_run)
-        build_hw(tests, dry_run=args.dry_run)
+        # build_hw(tests, dry_run=args.dry_run)
         status = sim_utils.run_simulations(simulations,
                                            n_procs=args.n_procs,
                                            dry_run=args.dry_run,
