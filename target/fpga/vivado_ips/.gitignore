@@ -1,6 +1,7 @@
 build/
 .Xil/
 occamy_xilinx/
+component.xml
 *.jou
 *.log
 *.zip

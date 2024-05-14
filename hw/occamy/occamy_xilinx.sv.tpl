@@ -164,6 +164,16 @@ import ${name}_pkg::*;
     .hbi_wide_rsp_i ('0),
     .hbi_narrow_req_i ('0),
     .hbi_narrow_rsp_i ('0),
+    .sram_cfgs_i ('0),
+    .hbi_wide_cfg_req_o(),
+    .hbi_narrow_cfg_req_o(),
+    .hbm_cfg_req_o(),
+    .pcie_cfg_req_o(),
+    .chip_ctrl_req_o(),
+    .hbi_wide_req_o(),
+    .hbi_wide_rsp_o(),
+    .hbi_narrow_req_o(),
+    .hbi_narrow_rsp_o(),
     .*
   );
 
