@@ -6,7 +6,7 @@
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-ROOT        := ${MKFILE_DIR}../../../..
+ROOT        := ${MKFILE_DIR}../..
 CVA6_SDK    ?= ${ROOT}/../cva6-sdk
 DEBUG       ?= 0
 EXT_JTAG    ?= 0
@@ -31,6 +31,8 @@ LINUX_UIMAGE ?= ${CVA6_SDK}/uImage
 
 DTB = bootrom/occamy.dtb
 
+BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster -t snax-streamer-gemm-dev -t snax-data-reshuffler-dev
+
 default: all
 all: occamy_vcu128
 
@@ -42,11 +44,18 @@ vivado_ips/occamy_xilinx:
 bootrom/bootrom-spl.coe:
 	${MAKE} -C bootrom
 
-occamy_vcu128: vivado_ips/occamy_xilinx bootrom/bootrom-spl.coe define_defines_includes_no_simset.tcl
+.PHONY:occamy_vcu128 occamy_vcu128_2023
+
+occamy_vcu128: vivado_ips/occamy_xilinx define_defines_includes_no_simset.tcl # bootrom/bootrom-spl.coe 
+# We may generate bootrom from other method, as we donot use Linux at present
 	${VIVADO} -mode batch -source occamy_vcu128.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/bootrom/bootrom-spl.coe
 
+occamy_vcu128_2023: vivado_ips/occamy_xilinx define_defines_includes_no_simset.tcl # bootrom/bootrom-spl.coe 
+# We may generate bootrom from other method, as we donot use Linux at present
+	${VIVADO} -mode batch -source occamy_vcu128_2023.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/bootrom/bootrom-spl.coe
+
 define_defines_includes_no_simset.tcl: $(BENDER_FILES)
-	${BENDER} script vivado -t cv64a6_imafdc_sv39 --only-defines --only-includes --no-simset > $@
+	${BENDER} script vivado $(BENDER_TARGETS) --only-defines --only-includes --no-simset > $@
 
 program:
 	${VIVADO} -mode batch -source occamy_vcu128_program.tcl -tclargs ${VCU}

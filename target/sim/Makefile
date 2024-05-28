@@ -70,6 +70,7 @@ SOURCE_HBMCTRL_DIR   ?= $(ROOT)/hw/occamy/hbm_xbar_ctrl
 SOURCE_QUADCTRL_DIR  ?= $(ROOT)/hw/occamy/quadrant_s1_ctrl
 SNITCH_TEST_DIR      ?= $(SNITCH_ROOT)/target/common/test
 TARGET_TEST_DIR      ?= $(ROOT)/target/sim/test
+TARGET_DTS_DIR		 ?= $(ROOT)/target/fpga/bootrom
 CVA6_TRACE            = trace_hart_0.log
 
 # If the configuration file is overriden on the command-line (through
@@ -84,7 +85,22 @@ CFG = cfg/lru.hjson
 #####################
 
 VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
+# We need to change the Bender.yml of the snax_gemm repo
+# The original target: snax-gemm will trigger the questasim error
+# So i change it to snax_gemm
+# VSIM_BENDER += -t snax_gemm
+# This target is to match the header of the snax_gemm_wrapper.sv
+# VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
+# This target is to snax-streamer-gemm-dev
+
+VSIM_BENDER += -t snax_streamer_gemm_dev
+VSIM_BENDER += -t QUESTA_SIM_XYI
+VSIM_BENDER += -t snax_data_reshuffler_dev
+
 VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
+VLT_BENDER  += -t snax_gemm
+VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
+VLT_BENDER  += -t snax_streamer_gemm_dev
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
@@ -178,7 +194,7 @@ FORCE:
 # Boot ROM #
 ############
 
-BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin
+BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin test/bootdata.cc
 
 .PHONY: bootrom clean-bootrom
 
@@ -186,13 +202,17 @@ bootrom: $(BOOTROM_TARGETS)
 
 clean-bootrom:
 	rm -rf $(BOOTROM_TARGETS)
-
+	
+test/bootdata.cc:
+	@$(OCCAMYGEN) --cfg $(CFG) --bootdata test/bootdata.cc.tpl -o test/
 test/bootrom.elf: test/bootrom.S test/bootrom.ld
 	riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -Ttest/bootrom.ld $< -o test/bootrom.elf
 test/bootrom.dump: test/bootrom.elf
 	riscv64-unknown-elf-objdump -D $< > $@
 test/bootrom.bin: test/bootrom.elf
 	riscv64-unknown-elf-objcopy -O binary $< $@
+
+	
 
 ###############
 # RTL sources #
@@ -214,11 +234,15 @@ MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
 
 MISC_OCCAMYGEN_SV_TARGETS  = $(addprefix $(TARGET_SRC_DIR)/,$(notdir $(basename $(MISC_OCCAMYGEN_SV_TEMPLATES))))
 MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_cluster_wrapper.sv
+# MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_gemm_cluster_wrapper.sv
+# MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_streamer_gemm_cluster_wrapper.sv
+MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_cluster_wrapper.sv
 
 MISC_OCCAMYGEN_TARGETS  = $(MISC_OCCAMYGEN_SV_TARGETS)
 MISC_OCCAMYGEN_TARGETS += $(TARGET_SRC_DIR)/occamy_memories.json
 
-soc: $(MISC_OCCAMYGEN_TARGETS)
+
+soc: $(MISC_OCCAMYGEN_TARGETS) chisel_targets
 clean-soc:
 	rm -rf $(MISC_OCCAMYGEN_TARGETS) .misc_occamygen_targets_group
 
@@ -234,9 +258,22 @@ $(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
 		--quadrant-s1      $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1.sv.tpl \
 		--quadrant-s1-ctrl $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1_ctrl.sv.tpl \
 		--xilinx-sv        $(SOURCE_OCCAMY_DIR)/occamy_xilinx.sv.tpl \
-		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
+		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl \
+		--dts 			   $(TARGET_DTS_DIR)/occamy.dts
 	@$(VERIBLE_FMT) --inplace $(MISC_OCCAMYGEN_SV_TARGETS)
+# File included by occamy_xilinx needs to be put in the same folder
+	cp -f $(SOURCE_OCCAMY_DIR)/axi_flat.sv $(TARGET_SRC_DIR)
+	cp -f $(SOURCE_OCCAMY_DIR)/apb_flat.sv $(TARGET_SRC_DIR)	
 	@touch $@
+
+.PHONY: chisel_targets
+chisel_targets:
+# Temporary solution; this should be considered to be finished when bender is triggered. This can be done by the plugin in the bender.yml inside each accelerator
+# Place all Chisel files that need to be generated header
+# Todo in the future for module desginer: please consider using relative path in the Makefile
+	# $(MAKE) -C `bender path snax-streamer-simd-dev` rtl/streamer-simd/streamer_simd_wrapper.sv
+	$(MAKE) -C `bender path snax-data-reshuffler-dev` `bender path snax-data-reshuffler-dev`/tests/tb/tb_stream_dev_reshuffler.sv
+	$(MAKE) -C `bender path snax-streamer-gemm-dev` `bender path snax-streamer-gemm-dev`/rtl/streamer-gemm/streamer_gemm_wrapper.sv
 
 tb: test/testharness.sv
 clean-tb:
@@ -246,12 +283,11 @@ test/testharness.sv: test/testharness.sv.tpl $(CFG)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir test --testharness-sv $<
 	@$(VERIBLE_FMT) --inplace $@
-
-# TODO
-# 	@$(OCCAMYGEN) --cfg $(CFG) \
-# 		--bootdata       ../../ip/snitch_cluster/test/bootdata.cc.tpl
-# 	@echo "[SOLDER] Device Tree"
-# 	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
+	
+	# @$(OCCAMYGEN) --cfg $(CFG) \
+ 	# 	--bootdata       ../../ip/snitch_cluster/test/bootdata.cc.tpl
+	@echo "[SOLDER] Device Tree"
+	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
 
 $(TARGET_PLIC_DIR) $(TARGET_CLINT_DIR) $(TARGET_SOCCTRL_DIR) $(TARGET_HBMCTRL_DIR) $(TARGET_QUADCTRL_DIR):
 	@mkdir -p $@
@@ -531,12 +567,22 @@ clean-vlt: clean-work
 	rm -rf work-vlt
 	rm -f $(BIN_DIR)/$(TARGET).vlt
 
-############
+#############
 # Questasim #
-############
+#############
 
-include $(SNITCH_ROOT)/target/common/vsim.mk
+# include $(SNITCH_ROOT)/target/common/vsim.mk
 
+$(VSIM_BUILDDIR):
+	mkdir -p $@
+
+$(VSIM_BUILDDIR)/compile.vsim.tcl: $(BENDER_LOCK) | $(VSIM_BUILDDIR)
+	$(BENDER) script vsim $(VSIM_BENDER) --vlog-arg="$(VLOG_FLAGS) -work $(dir $@) " > $@
+	echo '$(VLOG) -work $(dir $@) $(TB_CC_SOURCES) -vv -ccflags "$(TB_CC_FLAGS)"' >> $@
+	echo 'return 0' >> $@
+
+clean-vsim: clean-work
+	rm -rf $(BIN_DIR)/$(TARGET).vsim $(BIN_DIR)/$(TARGET).vsim.gui $(VSIM_BUILDDIR) vsim.wlf
 # Add dependency on bootrom
 $(BIN_DIR)/$(TARGET).vsim: test/bootrom.bin
 
@@ -563,8 +609,8 @@ clean-vcs: clean-work
 
 # Build a small Occamy version (CVA6 + 1 cluster) for the VCU128 FPGA board
 .PHONY: fpga
-fpga:
-	${MAKE} -C fpga occamy_vcu128
+fpga: rtl
+	${MAKE} -C ../fpga occamy_vcu128
 
 ########
 # Util #
@@ -576,7 +622,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf $(BENDER_LOCK) $(ROOT)/.bender/ $(ROOT)/deps
+	rm -rf $(ROOT)/Bender.lock $(ROOT)/.bender/ $(ROOT)/deps
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/

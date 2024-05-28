@@ -1,0 +1,224 @@
+packages:
+  apb:
+    revision: 77ddf073f194d44b9119949d2421be59789e69ae
+    version: 0.2.4
+    source:
+      Git: https://github.com/pulp-platform/apb.git
+    dependencies:
+    - common_cells
+  apb_timer:
+    revision: 0cbc6cbc26c94b8e3bf27cc058c48ef89ea3d4c3
+    version: 0.1.0
+    source:
+      Git: https://github.com/pulp-platform/apb_timer.git
+    dependencies: []
+  apb_uart:
+    revision: b6145341df79137ac584c83e9c081f80a7a40440
+    version: null
+    source:
+      Git: https://github.com/pulp-platform/apb_uart.git
+    dependencies: []
+  axi:
+    revision: 9402c8a9ce0a7b5253c3c29e788612d771e8b5d6
+    version: 0.39.3
+    source:
+      Git: https://github.com/pulp-platform/axi.git
+    dependencies:
+    - common_cells
+    - common_verification
+    - tech_cells_generic
+  axi_riscv_atomics:
+    revision: 430838a10a9bdf1e381d4fcb33907428f3273420
+    version: 0.6.0
+    source:
+      Git: https://github.com/pulp-platform/axi_riscv_atomics
+    dependencies:
+    - axi
+    - common_cells
+    - common_verification
+  axi_tlb:
+    revision: null
+    version: null
+    source:
+      Path: hw/vendor/pulp_platform_axi_tlb
+    dependencies:
+    - axi
+    - common_cells
+    - common_verification
+    - register_interface
+  clint:
+    revision: e1357c1d0edddde458aec58363473605f51e539e
+    version: 0.1.0
+    source:
+      Git: https://github.com/pulp-platform/clint.git
+    dependencies:
+    - common_cells
+    - register_interface
+  cluster_icache:
+    revision: 95035dcb3a420d85cf5d8de9a8cde760363d8967
+    version: 0.1.0
+    source:
+      Git: https://github.com/pulp-platform/cluster_icache.git
+    dependencies:
+    - axi
+    - common_cells
+    - scm
+    - tech_cells_generic
+  common_cells:
+    revision: 0d67563b6b592549542544f1abc0f43e5d4ee8b4
+    version: 1.35.0
+    source:
+      Git: https://github.com/pulp-platform/common_cells.git
+    dependencies:
+    - common_verification
+    - tech_cells_generic
+  common_verification:
+    revision: 9c07fa860593b2caabd9b5681740c25fac04b878
+    version: 0.2.3
+    source:
+      Git: https://github.com/pulp-platform/common_verification.git
+    dependencies: []
+  cva6:
+    revision: null
+    version: null
+    source:
+      Path: hw/vendor/openhwgroup_cva6
+    dependencies:
+    - axi
+    - common_cells
+    - fpnew
+    - tech_cells_generic
+  fpnew:
+    revision: a8e0cba6dd50f357ece73c2c955d96efc3c6c315
+    version: null
+    source:
+      Git: https://github.com/pulp-platform/cvfpu.git
+    dependencies:
+    - common_cells
+    - fpu_div_sqrt_mvp
+  fpu_div_sqrt_mvp:
+    revision: 86e1f558b3c95e91577c41b2fc452c86b04e85ac
+    version: 1.0.4
+    source:
+      Git: https://github.com/pulp-platform/fpu_div_sqrt_mvp.git
+    dependencies:
+    - common_cells
+  hwpe-ctrl:
+    revision: 1916c72f024175f1fe351acc3db3c6e9925a117d
+    version: 1.7.3
+    source:
+      Git: https://github.com/pulp-platform/hwpe-ctrl.git
+    dependencies:
+    - tech_cells_generic
+  hwpe-mac-engine:
+    revision: 5d3b4525b665169fc8321c8a811f3c83ad3c72e8
+    version: null
+    source:
+      Git: https://github.com/KULeuven-MICAS/hwpe-mac-engine.git
+    dependencies:
+    - hwpe-ctrl
+    - hwpe-stream
+  hwpe-stream:
+    revision: 65c99a4a2f37a79acee800ab0151f67dfb1edef1
+    version: 1.8.0
+    source:
+      Git: https://github.com/pulp-platform/hwpe-stream.git
+    dependencies:
+    - tech_cells_generic
+  opentitan_peripherals:
+    revision: null
+    version: null
+    source:
+      Path: hw/vendor/pulp_platform_opentitan_peripherals
+    dependencies:
+    - common_cells
+    - register_interface
+  register_interface:
+    revision: ae616e5a1ec2b41e72d200e5ab09c65e94aebd3d
+    version: 0.4.4
+    source:
+      Git: https://github.com/pulp-platform/register_interface.git
+    dependencies:
+    - apb
+    - axi
+    - common_cells
+    - common_verification
+  riscv-dbg:
+    revision: 358f90110220adf7a083f8b65d157e836d706236
+    version: 0.8.1
+    source:
+      Git: https://github.com/pulp-platform/riscv-dbg
+    dependencies:
+    - common_cells
+    - tech_cells_generic
+  scm:
+    revision: 998466d2a3c2d7d572e43d2666d93c4f767d8d60
+    version: 1.1.1
+    source:
+      Git: https://github.com/pulp-platform/scm.git
+    dependencies: []
+  snax-data-reshuffler-dev:
+    revision: 39b2bc18be846e7fc29c4a67d44ea3ca0c4547fe
+    version: null
+    source:
+      Git: https://github.com/KULeuven-MICAS/snax-dev.git
+    dependencies:
+    - snax-streamer
+  snax-gemm:
+    revision: 263d250b81e7f8bd003fb69c4a3e04c9fce35d5b
+    version: null
+    source:
+      Git: https://github.com/KULeuven-MICAS/snax-gemm
+    dependencies: []
+  snax-postprocessing-simd:
+    revision: 00bfbf80f1fc2a9fbb7cbf563e62b433a75500d2
+    version: null
+    source:
+      Git: https://github.com/KULeuven-MICAS/snax-postprocessing-simd
+    dependencies: []
+  snax-streamer:
+    revision: 8b4e9ff97857909c4bfd587c3b5e25b6dc5006e2
+    version: null
+    source:
+      Git: https://github.com/KULeuven-MICAS/snax-streamer
+    dependencies: []
+  snax-streamer-gemm-dev:
+    revision: b38a5c3ddb551eb5225deb807a6a4c8ede1daada
+    version: null
+    source:
+      Git: https://github.com/KULeuven-MICAS/snax-dev.git
+    dependencies:
+    - snax-gemm
+    - snax-streamer
+  snax-streamer-simd-dev:
+    revision: a59fa866f35d3c4a3fb467777ec2129b72e300b5
+    version: null
+    source:
+      Git: https://github.com/KULeuven-MICAS/snax-dev.git
+    dependencies:
+    - snax-postprocessing-simd
+    - snax-streamer
+  snitch_cluster:
+    revision: bb9396cfd93d1d4d3a9e15595da10c01a43f3ab2
+    version: null
+    source:
+      Git: https://github.com/KULeuven-MICAS/snitch_cluster.git
+    dependencies:
+    - axi
+    - axi_riscv_atomics
+    - common_cells
+    - fpnew
+    - hwpe-mac-engine
+    - register_interface
+    - riscv-dbg
+    - snax-data-reshuffler-dev
+    - snax-streamer-gemm-dev
+    - snax-streamer-simd-dev
+    - tech_cells_generic
+  tech_cells_generic:
+    revision: a9cae21902e75b1434328ecf36f85327ba5717de
+    version: 0.2.11
+    source:
+      Git: https://github.com/pulp-platform/tech_cells_generic.git
+    dependencies:
+    - common_verification

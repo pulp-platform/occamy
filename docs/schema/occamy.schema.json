@@ -5,12 +5,9 @@
     "description": "Description of an Occamy-based system.",
     "type": "object",
     "required": [
-        "cluster"
+        "clusters"
     ],
     "properties": {
-        "cluster": {
-            "$ref": "http://pulp-platform.org/snitch_cluster/snitch_cluster.schema.json"
-        },
         "quadrant_pre_xbar": {
             "$ref": "http://pulp-platform.org/occamy/axi_xbar.schema.json"
         },
