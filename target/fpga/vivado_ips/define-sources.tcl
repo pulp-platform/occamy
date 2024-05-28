@@ -1,5 +1,5 @@
 # This script was generated automatically by bender.
-set ROOT "/users/micas/ydeng/Desktop/SNAX/occamy"
+set ROOT "../../.."
 add_files -norecurse -fileset [current_fileset] [list \
     $ROOT/.bender/git/checkouts/tech_cells_generic-a16e668fd6cf9920/src/fpga/pad_functional_xilinx.sv \
     $ROOT/.bender/git/checkouts/tech_cells_generic-a16e668fd6cf9920/src/fpga/tc_clk_xilinx.sv \
