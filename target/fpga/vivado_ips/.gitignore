@@ -1,5 +1,10 @@
 build/
 .Xil/
+occamy_xilinx/
+component.xml
+./component.xml
+*.backup.log
+*.log
 *.jou
 *.zip
 *.str

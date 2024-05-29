@@ -69,44 +69,60 @@ sources:
   # soc_ctrl
   - target: occamy
     files:
-      - target/sim/src/soc_ctrl/occamy_soc_reg_pkg.sv
-      - target/sim/src/soc_ctrl/occamy_soc_reg_top.sv
+      - target/rtl/src/soc_ctrl/occamy_soc_reg_pkg.sv
+      - target/rtl/src/soc_ctrl/occamy_soc_reg_top.sv
   - hw/occamy/soc_ctrl/occamy_soc_ctrl.sv
 
   # auto-generated soc
   - target: occamy
     files:
       # quadrant_s1_ctrl
-      - target/sim/src/quadrant_s1_ctrl/occamy_quadrant_s1_reg_pkg.sv
-      - target/sim/src/quadrant_s1_ctrl/occamy_quadrant_s1_reg_top.sv
+      - target/rtl/src/quadrant_s1_ctrl/occamy_quadrant_s1_reg_pkg.sv
+      - target/rtl/src/quadrant_s1_ctrl/occamy_quadrant_s1_reg_top.sv
 
       # hbm_xbar_ctrl
-      - target/sim/src/hbm_xbar_ctrl/occamy_hbm_xbar_reg_pkg.sv
-      - target/sim/src/hbm_xbar_ctrl/occamy_hbm_xbar_reg_top.sv
+      - target/rtl/src/hbm_xbar_ctrl/occamy_hbm_xbar_reg_pkg.sv
+      - target/rtl/src/hbm_xbar_ctrl/occamy_hbm_xbar_reg_top.sv
 
       # rv_plic
-      - target/sim/src/rv_plic/rv_plic_reg_pkg.sv
-      - target/sim/src/rv_plic/rv_plic_reg_top.sv
-      - target/sim/src/rv_plic/rv_plic.sv
+      - target/rtl/src/rv_plic/rv_plic_reg_pkg.sv
+      - target/rtl/src/rv_plic/rv_plic_reg_top.sv
+      - target/rtl/src/rv_plic/rv_plic.sv
 
       # clint
-      - target/sim/src/clint/clint_reg_pkg.sv
-      - target/sim/src/clint/clint_reg_top.sv
-      - target/sim/src/clint/clint.sv
+      - target/rtl/src/clint/clint_reg_pkg.sv
+      - target/rtl/src/clint/clint_reg_top.sv
+      - target/rtl/src/clint/clint.sv
 
       # occamy
-      - target/sim/src/occamy_cluster_wrapper.sv
-      - target/sim/src/occamy_pkg.sv
-      - target/sim/src/occamy_quadrant_s1_ctrl.sv
-      - target/sim/src/occamy_quadrant_s1.sv
-      - target/sim/src/occamy_soc.sv
-      - target/sim/src/occamy_top.sv
-      - target/sim/src/occamy_cva6.sv
+      - target/rtl/src/occamy_cluster_wrapper.sv
+      - target/rtl/src/occamy_pkg.sv
+      - target/rtl/src/occamy_quadrant_s1_ctrl.sv
+      - target/rtl/src/occamy_quadrant_s1.sv
+      - target/rtl/src/occamy_soc.sv
+      - target/rtl/src/occamy_top.sv
+      - target/rtl/src/occamy_cva6.sv
 
+  - target: snax_gemm
+    files:
+      - target/rtl/src/snax_gemm_cluster_wrapper.sv
+
+  - target: snax_streamer_gemm
+    files:
+      - target/rtl/src/snax_streamer_gemm_cluster_wrapper.sv
+
+  - target: any(snax_streamer_gemm_dev, snax_data_reshuffler_dev)
+    files:
+      - target/rtl/src/snax_streamer_gemm_cluster_wrapper.sv
+
+  - target: snax_cluster
+    files:
+      - target/rtl/src/snax_cluster_wrapper.sv
+  
   # target/fpga
   - target: xilinx
     files:
-      - target/sim/src/occamy_xilinx.sv
+      - target/rtl/src/occamy_xilinx.sv
 
   # target/sim
   - target: any(simulation, verilator)

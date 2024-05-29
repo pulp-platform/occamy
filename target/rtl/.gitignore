@@ -1,0 +1,13 @@
+/bin/
+/logs/
+/addrmap/
+/work/
+/work-vsim/
+/*.log
+/*.jou
+/.*_targets_group
+/sw/**/build/
+/runs/
+
+# Auto-generated sources
+/src/

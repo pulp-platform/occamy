@@ -39,6 +39,8 @@ ANNOTATED_TRACES    += $(CVA6_ANNOTATED_TRACE)
 
 include $(SNITCH_ROOT)/target/common/common.mk
 
+include $(ROOT)/target/rtl/
+
 ############
 # Programs #
 ############
@@ -58,12 +60,11 @@ PLATFORM_HEADERS_DIR ?= sw/shared/platform/generated
 TARGET_ADDRMAP_DIR   ?= $(abspath addrmap)
 SOURCE_ADDRMAP_DIR   ?= $(ROOT)/util/addrmap
 DOCS_DIR             ?= $(ROOT)/docs
-TARGET_SRC_DIR       ?= src
-TARGET_PLIC_DIR      ?= src/rv_plic
-TARGET_CLINT_DIR     ?= src/clint
-TARGET_SOCCTRL_DIR   ?= src/soc_ctrl
-TARGET_HBMCTRL_DIR   ?= src/hbm_xbar_ctrl
-TARGET_QUADCTRL_DIR  ?= src/quadrant_s1_ctrl
+TARGET_PLIC_DIR      ?= $(TARGET_SRC_DIR)/rv_plic
+TARGET_CLINT_DIR     ?= $(TARGET_SRC_DIR)/clint
+TARGET_SOCCTRL_DIR   ?= $(TARGET_SRC_DIR)/soc_ctrl
+TARGET_HBMCTRL_DIR   ?= $(TARGET_SRC_DIR)/hbm_xbar_ctrl
+TARGET_QUADCTRL_DIR  ?= $(TARGET_SRC_DIR)/quadrant_s1_ctrl
 SOURCE_OCCAMY_DIR    ?= $(ROOT)/hw/occamy
 SOURCE_SOCCTRL_DIR   ?= $(ROOT)/hw/occamy/soc_ctrl
 SOURCE_HBMCTRL_DIR   ?= $(ROOT)/hw/occamy/hbm_xbar_ctrl
@@ -194,185 +195,6 @@ test/bootrom.dump: test/bootrom.elf
 test/bootrom.bin: test/bootrom.elf
 	riscv64-unknown-elf-objcopy -O binary $< $@
 
-###############
-# RTL sources #
-###############
-
-.PHONY: rtl clint plic socctrl hbmctrl quadctrl soc tb
-.PHONY: clean-rtl clean-clint clean-plic clean-socctrl clean-hbmctrl clean-quadctrl clean-soc clean-tb
-
-rtl: clint plic socctrl hbmctrl quadctrl soc tb
-clean-rtl: clean-clint clean-plic clean-socctrl clean-hbmctrl clean-quadctrl clean-soc clean-tb
-
-MISC_OCCAMYGEN_SV_TEMPLATES  = $(SOURCE_OCCAMY_DIR)/occamy_top.sv.tpl
-MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_soc.sv.tpl
-MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_pkg.sv.tpl
-MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1.sv.tpl
-MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1_ctrl.sv.tpl
-MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_xilinx.sv.tpl
-MISC_OCCAMYGEN_SV_TEMPLATES += $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
-
-MISC_OCCAMYGEN_SV_TARGETS  = $(addprefix $(TARGET_SRC_DIR)/,$(notdir $(basename $(MISC_OCCAMYGEN_SV_TEMPLATES))))
-MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_cluster_wrapper.sv
-
-MISC_OCCAMYGEN_TARGETS  = $(MISC_OCCAMYGEN_SV_TARGETS)
-MISC_OCCAMYGEN_TARGETS += $(TARGET_SRC_DIR)/occamy_memories.json
-
-soc: $(MISC_OCCAMYGEN_TARGETS)
-clean-soc:
-	rm -rf $(MISC_OCCAMYGEN_TARGETS) .misc_occamygen_targets_group
-
-$(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
-.misc_occamygen_targets_group: $(CFG) $(MISC_OCCAMYGEN_SV_TEMPLATES)
-	@echo "[OCCAMYGEN] Generate $(MISC_OCCAMYGEN_TARGETS)"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_SRC_DIR)\
-		--wrapper \
-		--memories \
-		--top-sv           $(SOURCE_OCCAMY_DIR)/occamy_top.sv.tpl \
-		--soc-sv           $(SOURCE_OCCAMY_DIR)/occamy_soc.sv.tpl \
-		--pkg-sv           $(SOURCE_OCCAMY_DIR)/occamy_pkg.sv.tpl \
-		--quadrant-s1      $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1.sv.tpl \
-		--quadrant-s1-ctrl $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1_ctrl.sv.tpl \
-		--xilinx-sv        $(SOURCE_OCCAMY_DIR)/occamy_xilinx.sv.tpl \
-		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
-	@$(VERIBLE_FMT) --inplace $(MISC_OCCAMYGEN_SV_TARGETS)
-	@touch $@
-
-tb: test/testharness.sv
-clean-tb:
-	rm -rf test/testharness.sv
-
-test/testharness.sv: test/testharness.sv.tpl $(CFG)
-	@echo "[OCCAMYGEN] Generate $@"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir test --testharness-sv $<
-	@$(VERIBLE_FMT) --inplace $@
-
-# TODO
-# 	@$(OCCAMYGEN) --cfg $(CFG) \
-# 		--bootdata       ../../ip/snitch_cluster/test/bootdata.cc.tpl
-# 	@echo "[SOLDER] Device Tree"
-# 	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
-
-$(TARGET_PLIC_DIR) $(TARGET_CLINT_DIR) $(TARGET_SOCCTRL_DIR) $(TARGET_HBMCTRL_DIR) $(TARGET_QUADCTRL_DIR):
-	@mkdir -p $@
-
-CLINTROOT = $(shell $(BENDER) path clint)
-CLINT_OCCAMYGEN_TARGETS = $(addprefix $(TARGET_CLINT_DIR)/,clint.sv clint.hjson)
-CLINT_REGGEN_TARGETS = $(addprefix $(TARGET_CLINT_DIR)/,clint_reg_pkg.sv clint_reg_top.sv)
-
-clint: $(CLINT_OCCAMYGEN_TARGETS) $(CLINT_REGGEN_TARGETS)
-clean-clint:
-	rm -rf $(CLINT_OCCAMYGEN_TARGETS) $(CLINT_REGGEN_TARGETS) .clint_reggen_targets_group
-
-$(TARGET_CLINT_DIR)/clint.%: $(CLINTROOT)/data/clint.%.tpl $(CFG) | $(TARGET_CLINT_DIR)
-	@echo "[OCCAMYGEN] Generate $@"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_CLINT_DIR) --chip $<
-
-# We simulate grouped targets (supported only in make>=4.3) in the following way
-# $(CLINT_REGGEN_TARGETS) &: $(TARGET_CLINT_DIR)/clint.hjson | $(TARGET_CLINT_DIR)
-# 	@echo "[REGGEN] Generate $(CLINT_REGGEN_TARGETS)"
-# 	@$(REGGEN) -r -t $(TARGET_CLINT_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(CLINT_REGGEN_TARGETS)
-$(CLINT_REGGEN_TARGETS): .clint_reggen_targets_group
-.clint_reggen_targets_group: $(TARGET_CLINT_DIR)/clint.hjson | $(TARGET_CLINT_DIR)
-	@echo "[REGGEN] Generate $(CLINT_REGGEN_TARGETS)"
-	@$(REGGEN) -r -t $(TARGET_CLINT_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(CLINT_REGGEN_TARGETS)
-	@touch $@
-
-PLICROOT = $(ROOT)/hw/vendor/pulp_platform_opentitan_peripherals/src/rv_plic
-PLICGEN = $(PLICROOT)/util/reg_rv_plic.py
-PLIC_PLICGEN_TARGETS = $(addprefix $(TARGET_PLIC_DIR)/,rv_plic.sv rv_plic.hjson)
-PLIC_REGGEN_TARGETS = $(addprefix $(TARGET_PLIC_DIR)/,rv_plic_reg_pkg.sv rv_plic_reg_top.sv)
-
-plic: $(PLIC_PLICGEN_TARGETS) $(PLIC_REGGEN_TARGETS)
-clean-plic:
-	rm -rf $(PLIC_PLICGEN_TARGETS) $(PLIC_REGGEN_TARGETS) .plic_reggen_targets_group
-
-$(TARGET_PLIC_DIR)/rv_plic.%: $(PLICROOT)/data/rv_plic.%.tpl | $(TARGET_PLIC_DIR)
-	@echo "[PLICGEN] Generate $@"
-	@$(PLICGEN) -s 73 -t 2 -p 6 $< > $@
-
-# We simulate grouped targets (supported only in make>=4.3) in the following way
-# $(PLIC_REGGEN_TARGETS) &: $(TARGET_PLIC_DIR)/rv_plic.hjson | $(TARGET_PLIC_DIR)
-# 	@echo "[REGGEN] Generate $(PLIC_REGGEN_TARGETS)"
-# 	@$(REGGEN) -r -t $(TARGET_PLIC_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(PLIC_REGGEN_TARGETS)
-$(PLIC_REGGEN_TARGETS): .plic_reggen_targets_group
-.plic_reggen_targets_group: $(TARGET_PLIC_DIR)/rv_plic.hjson | $(TARGET_PLIC_DIR)
-	@echo "[REGGEN] Generate $(PLIC_REGGEN_TARGETS)"
-	@$(REGGEN) -r -t $(TARGET_PLIC_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(PLIC_REGGEN_TARGETS)
-	@touch $@
-
-SOCCTRL_OCCAMYGEN_TARGETS = $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson
-SOCCTRL_REGGEN_TARGETS = $(addprefix $(TARGET_SOCCTRL_DIR)/,occamy_soc_reg_pkg.sv occamy_soc_reg_top.sv)
-
-socctrl: $(SOCCTRL_OCCAMYGEN_TARGETS) $(SOCCTRL_REGGEN_TARGETS)
-clean-socctrl:
-	rm -rf $(SOCCTRL_OCCAMYGEN_TARGETS) $(SOCCTRL_REGGEN_TARGETS) .socctrl_reggen_targets_group
-
-$(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson: $(SOURCE_SOCCTRL_DIR)/occamy_soc_reg.hjson.tpl | $(TARGET_SOCCTRL_DIR)
-	@echo "[OCCAMYGEN] Generate $@"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_SOCCTRL_DIR) --chip $<
-
-# We simulate grouped targets (supported only in make>=4.3) in the following way
-# $(SOCCTRL_REGGEN_TARGETS) &: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson | $(TARGET_SOCCTRL_DIR)
-# 	@echo "[REGGEN] Generate $(SOCCTRL_REGGEN_TARGETS)"
-# 	@$(REGGEN) -r -t $(TARGET_SOCCTRL_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(SOCCTRL_REGGEN_TARGETS)
-$(SOCCTRL_REGGEN_TARGETS): .socctrl_reggen_targets_group
-.socctrl_reggen_targets_group: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson | $(TARGET_SOCCTRL_DIR)
-	@echo "[REGGEN] Generate $(SOCCTRL_REGGEN_TARGETS)"
-	@$(REGGEN) -r -t $(TARGET_SOCCTRL_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(SOCCTRL_REGGEN_TARGETS)
-	@touch $@
-
-HBMCTRL_OCCAMYGEN_TARGETS = $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
-HBMCTRL_REGGEN_TARGETS = $(addprefix $(TARGET_HBMCTRL_DIR)/,occamy_hbm_xbar_reg_pkg.sv occamy_hbm_xbar_reg_top.sv)
-
-hbmctrl: $(HBMCTRL_OCCAMYGEN_TARGETS) $(HBMCTRL_REGGEN_TARGETS)
-clean-hbmctrl:
-	rm -rf $(HBMCTRL_OCCAMYGEN_TARGETS) $(HBMCTRL_REGGEN_TARGETS) .hbmctrl_reggen_targets_group
-
-$(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson: $(SOURCE_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson.tpl | $(TARGET_HBMCTRL_DIR)
-	@echo "[OCCAMYGEN] Generate $@"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_HBMCTRL_DIR) --chip $<
-
-# We simulate grouped targets (supported only in make>=4.3) in the following way
-# $(HBMCTRL_REGGEN_TARGETS) &: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson | $(TARGET_HBMCTRL_DIR)
-# 	@echo "[REGGEN] Generate $(HBMCTRL_REGGEN_TARGETS)"
-# 	@$(REGGEN) -r -t $(TARGET_HBMCTRL_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(HBMCTRL_REGGEN_TARGETS)
-$(HBMCTRL_REGGEN_TARGETS): .hbmctrl_reggen_targets_group
-.hbmctrl_reggen_targets_group: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson | $(TARGET_HBMCTRL_DIR)
-	@echo "[REGGEN] Generate $(HBMCTRL_REGGEN_TARGETS)"
-	@$(REGGEN) -r -t $(TARGET_HBMCTRL_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(HBMCTRL_REGGEN_TARGETS)
-	@touch $@
-
-QUADCTRL_OCCAMYGEN_TARGETS = $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson
-QUADCTRL_REGGEN_TARGETS = $(addprefix $(TARGET_QUADCTRL_DIR)/,occamy_quadrant_s1_reg_pkg.sv occamy_quadrant_s1_reg_top.sv)
-
-quadctrl: $(QUADCTRL_OCCAMYGEN_TARGETS) $(QUADCTRL_REGGEN_TARGETS)
-clean-quadctrl:
-	rm -rf $(QUADCTRL_OCCAMYGEN_TARGETS) $(QUADCTRL_REGGEN_TARGETS) .quadctrl_reggen_targets_group
-
-$(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson: $(SOURCE_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson.tpl | $(TARGET_QUADCTRL_DIR)
-	@echo "[OCCAMYGEN] Generate $@"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_QUADCTRL_DIR) --chip $<
-
-# We simulate grouped targets (supported only in make>=4.3) in the following way
-# $(QUADCTRL_REGGEN_TARGETS) &: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson | $(TARGET_QUADCTRL_DIR)
-# 	@echo "[REGGEN] Generate $(QUADCTRL_REGGEN_TARGETS)"
-# 	@$(REGGEN) -r -t $(TARGET_QUADCTRL_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(QUADCTRL_REGGEN_TARGETS)
-$(QUADCTRL_REGGEN_TARGETS): .quadctrl_reggen_targets_group
-.quadctrl_reggen_targets_group: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson | $(TARGET_QUADCTRL_DIR)
-	@echo "[REGGEN] Generate $(QUADCTRL_REGGEN_TARGETS)"
-	@$(REGGEN) -r -t $(TARGET_QUADCTRL_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(QUADCTRL_REGGEN_TARGETS)
-	@touch $@
 
 ###############
 # Address Map #
@@ -449,15 +271,15 @@ clean-sw: clean-headers
 	$(MAKE) -C sw/ clean
 
 # REGGEN headers
-$(PLATFORM_HEADERS_DIR)/clint.h: src/clint/clint.hjson
+$(PLATFORM_HEADERS_DIR)/clint.h: $(TARGET_SRC_DIR)/clint/clint.hjson
 	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h: src/soc_ctrl/occamy_soc_reg.hjson
+$(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson
 	$(call reggen_generate_header,$@,$<)
 $(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h: $(SNITCH_ROOT)/hw/snitch_cluster/src/snitch_cluster_peripheral/snitch_cluster_peripheral_reg.hjson
 	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h: src/quadrant_s1_ctrl/occamy_quadrant_s1_reg.hjson
+$(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson
 	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h: src/hbm_xbar_ctrl/occamy_hbm_xbar_reg.hjson
+$(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
 	$(call reggen_generate_header,$@,$<)
 
 # OCCAMYGEN headers
