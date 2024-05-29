@@ -2,6 +2,7 @@ build/
 .Xil/
 occamy_xilinx/
 component.xml
+define-sources.tcl
 ./component.xml
 *.backup.log
 *.log

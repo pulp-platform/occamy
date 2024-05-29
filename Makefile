@@ -2,26 +2,15 @@
 .PHONY: rtl clean
 
 rtl:
-	cd ./target/rtl/
-	make rtl CFG_OVERRIDE=cfg/single-cluster-single-core-syns.hjson
-	make rtl CFG_OVERRIDE=cfg/four_cluster_two_gemm_reshuffler_dma.hjson
-	cd ../..
-	cd ./target/fpga/
-	make define_defines_includes_no_simset.tcl
-	cd ./vivado_ips/
-	make define-sources.tcl
-	#                                                      debug  jtag  (put 1 or 0)
-	vivado -mode batch -source occamy_xilinx.tcl -tclargs      0     0
-	cd ..
-	cd ../..
+	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/single-cluster-single-core-syns.hjson
+	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/four_cluster_two_gemm_reshuffler_dma.hjson
+	make -C ./target/fpga/ define_defines_includes_no_simset.tcl
+	make -C ./target/fpga/vivado_ips/ define-sources.tcl
+	#                                                                                          debug  jtag  (put 1 or 0)
+	sh -c "cd ./target/fpga/vivado_ips/;vivado -mode batch -source occamy_xilinx.tcl -tclargs      0     0"
 
 clean:
-	cd ./target/rtl/
-	make clean
-	cd ../..
-	cd ./target/fpga/
-	make clean
-	cd ./vivado_ips/
-	make clean
-	cd ..
-	cd ../..
+	make -C ./target/fpga/ clean
+	make -C ./target/fpga/vivado_ips/ clean
+	make -C ./target/sim/ clean
+	make -C ./target/rtl/ clean

@@ -14,3 +14,15 @@ modelsim.ini
 transcript
 
 gmon.out
+
+build/
+.Xil/
+occamy_xilinx/
+component.xml
+./component.xml
+*.backup.log
+*.log
+*.jou
+*.log
+*.zip
+*.str

@@ -39,7 +39,7 @@ ANNOTATED_TRACES    += $(CVA6_ANNOTATED_TRACE)
 
 include $(SNITCH_ROOT)/target/common/common.mk
 
-include $(ROOT)/target/rtl/
+include $(ROOT)/target/rtl/Makefile
 
 ############
 # Programs #
