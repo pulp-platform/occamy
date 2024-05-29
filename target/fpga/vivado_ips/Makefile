@@ -6,13 +6,13 @@
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-ROOT        := ${MKFILE_DIR}../../../../..
+ROOT        := ${MKFILE_DIR}../../..
 DEBUG       ?= 0
 
 VIVADO ?= vivado
 BENDER ?= bender
 
-BENDER_TARGETS += -t cv64a6_imafdc_sv39
+BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster -t snax-streamer-gemm-dev -t snax-data-reshuffler-dev
 ifeq ($(EXT_JTAG), 0)
 	BENDER_TARGETS += -t bscane
 endif
@@ -20,7 +20,9 @@ endif
 include $(ROOT)/util/Makefrag
 
 occamy_xilinx: define-sources.tcl
-	$(MAKE) -C ../../ update-source
+	# $(MAKE) -C ../../ update-source
+	# $(MAKE) -C ../../sim rtl
+
 	${VIVADO} -mode batch -source occamy_xilinx.tcl -tclargs $(DEBUG) $(EXT_JTAG)
 
 define-sources.tcl:

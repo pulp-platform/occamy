@@ -1,9 +1,11 @@
 occamy_vcu128/
+occamy_vcu128_2023/
 vivado_ips/xgui
 .Xil/
 xgui/
 define_defines_includes_no_simset.tcl
 *.jou
+*.log
 *.zip
 *.str
 *.mif

@@ -148,13 +148,25 @@ def main():
     outdir = args.outdir
     outdir.mkdir(parents=True, exist_ok=True)
 
+    # if args.wrapper:
+    #     with open(outdir / f"{args.name}_cluster_wrapper.sv", "w") as f:
+    #         f.write(occamy.render_wrapper())
     if args.wrapper:
-        with open(outdir / f"{args.name}_cluster_wrapper.sv", "w") as f:
-            f.write(occamy.render_wrapper())
+        for i in range(nr_s1_clusters):
+            cluster_name = occamy.cfg["clusters"][i]["name"]
+            print(cluster_name)
+            with open(outdir / f"{cluster_name}_wrapper.sv", "w") as f: 
+                f.write(occamy.render_wrappers(i))
+
+    # if args.memories:
+    #     with open(outdir / f"{args.name}_memories.json", "w") as f:
+    #         f.write(occamy.cluster.memory_cfg())
 
     if args.memories:
-        with open(outdir / f"{args.name}_memories.json", "w") as f:
-            f.write(occamy.cluster.memory_cfg())
+        for i in range(nr_s1_clusters):
+            cluster_name = occamy.cfg["clusters"][i]["name"]
+            with open(outdir / f"{cluster_name}_memories.json", "w") as f:
+                f.write(occamy.clusters[i].memory_cfg())
 
     ####################
     # Address Map (AM) #
@@ -354,19 +366,25 @@ def main():
     ##############################
     # AM: Quadrants and Clusters #
     ##############################
-    cluster_base_offset = occamy.cfg["cluster"]["cluster_base_offset"]
-    cluster_tcdm_size = occamy.cfg["cluster"]["tcdm"]["size"] * 1024  # config is in KiB
-    cluster_periph_size = occamy.cfg["cluster"]["cluster_periph_size"] * 1024
-    cluster_zero_mem_size = occamy.cfg["cluster"]["zero_mem_size"] * 1024
-
-    # assert memory region allocation
-    error_str = "ERROR: cluster peripherals, zero memory and tcdm \
-                do not fit into the allocated memory region!!!"
-    assert (cluster_tcdm_size + cluster_periph_size + cluster_zero_mem_size) <= \
-           cluster_base_offset, error_str
+    clusters_base_offset = [0]
+    clusters_tcdm_size = [0]
+    clusters_periph_size = [0]
+    clusters_zero_mem_size = [0]
 
     cluster_base_addr = occamy.cfg["cluster"]["cluster_base_addr"]
-    quadrant_size = cluster_base_offset * nr_s1_clusters
+    for i in range(nr_s1_clusters):
+        clusters_base_offset.append(occamy.cfg["clusters"][i]["cluster_base_offset"])
+        clusters_tcdm_size.append(occamy.cfg["clusters"][i]["tcdm"]["size"] * 1024)  # config is in KiB
+        clusters_periph_size.append(occamy.cfg["clusters"][i]["cluster_periph_size"] * 1024)
+        clusters_zero_mem_size.append(occamy.cfg["clusters"][i]["zero_mem_size"] * 1024)
+
+        # assert memory region allocation
+        error_str = "ERROR: cluster peripherals, zero memory and tcdm \
+                    do not fit into the allocated memory region!!!"
+        assert (clusters_tcdm_size[i+1] + clusters_periph_size[i+1] + clusters_zero_mem_size[i+1]) <= \
+            clusters_base_offset[i+1], error_str
+        
+    quadrant_size = sum(clusters_base_offset)
 
     for i in range(nr_s1_quadrants):
         cluster_i_start_addr = cluster_base_addr + i * quadrant_size
@@ -374,11 +392,11 @@ def main():
         am_clusters = list()
         for j in range(nr_s1_clusters):
             bases_cluster = list()
-            bases_cluster.append(cluster_i_start_addr + j * cluster_base_offset + 0)
+            bases_cluster.append(cluster_i_start_addr + sum(clusters_base_offset[0:j+1]) + 0)
             am_clusters.append(
                 am.new_leaf(
                     "quadrant_{}_cluster_{}_tcdm".format(i, j),
-                    cluster_tcdm_size,
+                    clusters_tcdm_size[j+1],
                     *bases_cluster
                 ).attach_to(
                     am_wide_xbar_quadrant_s1[i]
@@ -388,12 +406,12 @@ def main():
             )
 
             bases_cluster = list()
-            bases_cluster.append(cluster_i_start_addr + j * cluster_base_offset
-                                 + cluster_tcdm_size)
+            bases_cluster.append(cluster_i_start_addr + sum(clusters_base_offset[0:j+1])
+                                 + clusters_tcdm_size[j+1])
             am_clusters.append(
                 am.new_leaf(
                     "quadrant_{}_cluster_{}_periph".format(i, j),
-                    cluster_periph_size,
+                    clusters_periph_size[j+1],
                     *bases_cluster
                 ).attach_to(
                     am_wide_xbar_quadrant_s1[i]
@@ -403,12 +421,12 @@ def main():
             )
 
             bases_cluster = list()
-            bases_cluster.append(cluster_i_start_addr + j * cluster_base_offset +
-                                 cluster_tcdm_size + cluster_periph_size)
+            bases_cluster.append(cluster_i_start_addr + sum(clusters_base_offset[0:j+1]) +
+                                 clusters_tcdm_size[j+1] + clusters_periph_size[j+1])
             am_clusters.append(
                 am.new_leaf(
                     "quadrant_{}_cluster_{}_zero_mem".format(i, j),
-                    cluster_zero_mem_size,
+                    clusters_zero_mem_size[j+1],
                     *bases_cluster
                 ).attach_to(
                     am_wide_xbar_quadrant_s1[i]
@@ -1019,7 +1037,8 @@ def main():
                 input=dts_str,
                 stdout=file,
                 shell=True,
-                text=True)
+                # text=True)
+                universal_newlines=True)  # In Python3.7 and newer, universal_newlines has the alias of text
 
     # Emit the address map as a dot file if requested.
     if args.graph:

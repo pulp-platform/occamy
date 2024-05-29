@@ -6,12 +6,17 @@
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-ROOT        := ${MKFILE_DIR}../../../../..
+ROOT        := ${MKFILE_DIR}../../..
 
 include $(ROOT)/util/Makefrag
 
-CVA6_SDK  ?= $(ROOT)/../cva6-sdk
-UBOOT_SPL_BIN ?= $(CVA6_SDK)/u-boot/spl/u-boot-spl.bin
+# The necessary file in hero repo (which should be at the same folder with occamy, and pre-compiled)
+# CVA6_SDK  ?= $(ROOT)/../cva6-sdk
+HERO ?= $(ROOT)/../hero
+HERO_INSTALL ?= $(HERO)/install
+PATH += :$(HERO_INSTALL)/share:$(HERO_INSTALL)/bin
+UBOOT_SPL_BIN ?= $(HERO)/output/br-hrv-occamy/images/u-boot-spl.bin
+
 
 # Define UBOOT_SPL_BIN in command line with the path to u-boot-spl.bin
 

@@ -6,5 +6,6 @@ component.xml
 *.backup.log
 *.log
 *.jou
+*.log
 *.zip
 *.str

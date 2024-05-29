@@ -29,9 +29,12 @@ dependencies:
   cva6:                   { path: hw/vendor/openhwgroup_cva6                                                }
   opentitan_peripherals:  { path: hw/vendor/pulp_platform_opentitan_peripherals                             }
   register_interface:     { git:  https://github.com/pulp-platform/register_interface.git, version: 0.3.8   }
-  snitch_cluster:         { git:  https://github.com/pulp-platform/snitch_cluster.git,     rev:     269830af872fa943d8b079470120d42d62e1cb69 }
+  # snitch_cluster:         { git:  https://github.com/pulp-platform/snitch_cluster.git,     rev:     269830af872fa943d8b079470120d42d62e1cb69 }
+  snitch_cluster:         { git:  https://github.com/KULeuven-MICAS/snitch_cluster.git,     rev:     bb9396cfd93d1d4d3a9e15595da10c01a43f3ab2 }
   tech_cells_generic:     { git:  https://github.com/pulp-platform/tech_cells_generic.git, rev:     v0.2.11 }
   cluster_icache:         { git:  https://github.com/pulp-platform/cluster_icache.git,     version: 0.1.0   }
+  snax-streamer-gemm-dev:    { git: https://github.com/KULeuven-MICAS/snax-dev.git,    rev: xyi/rename-modules-streamer-gemm }
+  snax-data-reshuffler-dev:  { git: https://github.com/KULeuven-MICAS/snax-dev.git,    rev: xyi/integrate-data-reshuffler }
 
 workspace:
   package_links:
@@ -43,10 +46,11 @@ export_include_dirs:
 sources:
   # future
   - hw/future/reg_to_apb.sv
-
+  
   # snitch_read_only_cache
   - hw/snitch_read_only_cache/src/snitch_axi_to_cache.sv
   - hw/snitch_read_only_cache/src/snitch_read_only_cache.sv
+
   - target: test
     files:
       - hw/snitch_read_only_cache/test/snitch_read_only_cache_tb.sv

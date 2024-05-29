@@ -71,6 +71,7 @@ SOURCE_HBMCTRL_DIR   ?= $(ROOT)/hw/occamy/hbm_xbar_ctrl
 SOURCE_QUADCTRL_DIR  ?= $(ROOT)/hw/occamy/quadrant_s1_ctrl
 SNITCH_TEST_DIR      ?= $(SNITCH_ROOT)/target/common/test
 TARGET_TEST_DIR      ?= $(ROOT)/target/sim/test
+TARGET_DTS_DIR		 ?= $(ROOT)/target/fpga/bootrom
 CVA6_TRACE            = trace_hart_0.log
 
 # If the configuration file is overriden on the command-line (through
@@ -85,7 +86,22 @@ CFG = cfg/lru.hjson
 #####################
 
 VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
+# We need to change the Bender.yml of the snax_gemm repo
+# The original target: snax-gemm will trigger the questasim error
+# So i change it to snax_gemm
+# VSIM_BENDER += -t snax_gemm
+# This target is to match the header of the snax_gemm_wrapper.sv
+# VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
+# This target is to snax-streamer-gemm-dev
+
+VSIM_BENDER += -t snax_streamer_gemm_dev
+VSIM_BENDER += -t QUESTA_SIM_XYI
+VSIM_BENDER += -t snax_data_reshuffler_dev
+
 VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
+VLT_BENDER  += -t snax_gemm
+VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
+VLT_BENDER  += -t snax_streamer_gemm_dev
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
@@ -179,7 +195,7 @@ FORCE:
 # Boot ROM #
 ############
 
-BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin
+BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin test/bootdata.cc
 
 .PHONY: bootrom clean-bootrom
 
@@ -187,14 +203,15 @@ bootrom: $(BOOTROM_TARGETS)
 
 clean-bootrom:
 	rm -rf $(BOOTROM_TARGETS)
-
+	
+test/bootdata.cc:
+	@$(OCCAMYGEN) --cfg $(CFG) --bootdata test/bootdata.cc.tpl -o test/
 test/bootrom.elf: test/bootrom.S test/bootrom.ld
 	riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -Ttest/bootrom.ld $< -o test/bootrom.elf
 test/bootrom.dump: test/bootrom.elf
 	riscv64-unknown-elf-objdump -D $< > $@
 test/bootrom.bin: test/bootrom.elf
 	riscv64-unknown-elf-objcopy -O binary $< $@
-
 
 ###############
 # Address Map #
@@ -353,12 +370,22 @@ clean-vlt: clean-work
 	rm -rf work-vlt
 	rm -f $(BIN_DIR)/$(TARGET).vlt
 
-############
+#############
 # Questasim #
-############
+#############
 
-include $(SNITCH_ROOT)/target/common/vsim.mk
+# include $(SNITCH_ROOT)/target/common/vsim.mk
 
+$(VSIM_BUILDDIR):
+	mkdir -p $@
+
+$(VSIM_BUILDDIR)/compile.vsim.tcl: $(BENDER_LOCK) | $(VSIM_BUILDDIR)
+	$(BENDER) script vsim $(VSIM_BENDER) --vlog-arg="$(VLOG_FLAGS) -work $(dir $@) " > $@
+	echo '$(VLOG) -work $(dir $@) $(TB_CC_SOURCES) -vv -ccflags "$(TB_CC_FLAGS)"' >> $@
+	echo 'return 0' >> $@
+
+clean-vsim: clean-work
+	rm -rf $(BIN_DIR)/$(TARGET).vsim $(BIN_DIR)/$(TARGET).vsim.gui $(VSIM_BUILDDIR) vsim.wlf
 # Add dependency on bootrom
 $(BIN_DIR)/$(TARGET).vsim: test/bootrom.bin
 
@@ -385,8 +412,8 @@ clean-vcs: clean-work
 
 # Build a small Occamy version (CVA6 + 1 cluster) for the VCU128 FPGA board
 .PHONY: fpga
-fpga:
-	${MAKE} -C fpga occamy_vcu128
+fpga: rtl
+	${MAKE} -C ../fpga occamy_vcu128
 
 ########
 # Util #
@@ -398,7 +425,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf $(BENDER_LOCK) $(ROOT)/.bender/ $(ROOT)/deps
+	rm -rf $(ROOT)/Bender.lock $(ROOT)/.bender/ $(ROOT)/deps
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/
