@@ -1,5 +1,5 @@
 
-.PHONY: rtl clean
+.PHONY: rtl clean vivado
 
 rtl:
 	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/single-cluster-single-core-syns.hjson
@@ -14,3 +14,6 @@ clean:
 	make -C ./target/fpga/vivado_ips/ clean
 	make -C ./target/sim/ clean
 	make -C ./target/rtl/ clean
+
+vivado:
+	sh -c "cd ./target/fpga/vivado_ips/occamy_xilinx/;vivado ooc_synth_constraints.xdc"
