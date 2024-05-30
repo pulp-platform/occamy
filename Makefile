@@ -3,7 +3,7 @@
 
 rtl:
 	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/single-cluster-single-core-syns.hjson
-	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/four_cluster_two_gemm_reshuffler_dma.hjson
+	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/snax_two_clusters.hjson
 	make -C ./target/fpga/ define_defines_includes_no_simset.tcl
 	make -C ./target/fpga/vivado_ips/ define-sources.tcl
 	#                                                                                          debug  jtag  (put 1 or 0)
