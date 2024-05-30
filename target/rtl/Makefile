@@ -58,19 +58,15 @@ CFG = cfg/lru.hjson
 $(CFG): FORCE
 	@# If the LRU config file doesn't exist, we use the default config.
 	@if [ ! -e $@ ] ; then \
-		DEFAULT_CFG="cfg/full.hjson"; \
+		DEFAULT_CFG="cfg/snax_two_clusters.hjson"; \
 		echo "Using default config file: $$DEFAULT_CFG"; \
 		cp $$DEFAULT_CFG $@; \
 	fi
-	@# If a config file is provided on the command-line and it differs
-	@# from the LRU config file then we override the LRU file with it
+	@# If a config file is provided on the command-line 
+	@# then we override the LRU file with it
 	@if [ $(CFG_OVERRIDE) ] ; then \
 		echo "Overriding config file with: $(CFG_OVERRIDE)"; \
-		if cmp -s $(CFG_OVERRIDE) $@ ; then \
-			echo "Override and LRU config files are equivalent. Nothing to be done."; \
-		else \
-			cp $(CFG_OVERRIDE) $@; \
-		fi \
+		cp $(CFG_OVERRIDE) $@; \
 	fi
 FORCE:
 
@@ -91,10 +87,10 @@ clean-bender:
 # RTL sources #
 ###############
 
-.PHONY: rtl clint plic socctrl hbmctrl quadctrl soc tb
+.PHONY: rtl clint plic socctrl hbmctrl quadctrl soc snax tb
 .PHONY: clean-rtl clean-clint clean-plic clean-socctrl clean-hbmctrl clean-quadctrl clean-soc clean-tb
 
-rtl: clint plic socctrl hbmctrl quadctrl soc tb
+rtl: clint plic socctrl hbmctrl quadctrl soc snax tb
 clean-rtl: clean-clint clean-plic clean-socctrl clean-hbmctrl clean-quadctrl clean-soc clean-tb
 
 $(TARGET_PLIC_DIR) $(TARGET_CLINT_DIR) $(TARGET_SOCCTRL_DIR) $(TARGET_HBMCTRL_DIR) $(TARGET_QUADCTRL_DIR):
@@ -266,3 +262,94 @@ $(CLINT_REGGEN_TARGETS): .clint_reggen_targets_group
 $(TARGET_CLINT_DIR)/clint.%: $(SOURCE_CLINT_DIR)/data/clint.%.tpl $(CFG) | $(TARGET_CLINT_DIR)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_CLINT_DIR) --chip $<
+
+
+###################################
+# SNAX Acc  + Wrapper Generations #
+###################################
+SNITCH_ROOT := $(shell $(BENDER) path snitch_cluster)
+WRAPPERGEN  = $(SNITCH_ROOT)/util/wrappergen/wrappergen.py
+
+SNAX_CFG_PATH := $(ROOT)/target/rtl/cfg/
+SNAX_TPL_PATH := $(SNITCH_ROOT)/hw/templates/
+CHISEL_PATH := $(SNITCH_ROOT)/hw/chisel/
+
+SNAX_GENERATED_DIR		?= 	$(SNITCH_ROOT)/target/snitch_cluster/generated
+
+###############
+# Wrapper Gen #
+###############
+
+define generate_snax_wrapper_filelist
+SNAX_WRAPPER_FILES += \
+	$(SNAX_GENERATED_DIR)/$(1)/$(1)_csrman_CsrManager.sv \
+	$(SNAX_GENERATED_DIR)/$(1)/$(1)_streamer_StreamerTop.sv \
+	$(SNAX_GENERATED_DIR)/$(1)/$(1)_csrman_wrapper.sv \
+	$(SNAX_GENERATED_DIR)/$(1)/$(1)_streamer_wrapper.sv \
+	$(SNAX_GENERATED_DIR)/$(1)/$(1)_wrapper.sv
+endef
+
+# The filelist for GeMM's wrapper
+$(eval $(call generate_snax_wrapper_filelist,snax_streamer_gemm))
+
+# The filelist for SIMD's wrapper
+$(eval $(call generate_snax_wrapper_filelist,snax_streamer_simd))
+
+# The filelist for Reshuffler's wrapper
+$(eval $(call generate_snax_wrapper_filelist,snax_data_reshuffler))
+
+
+SNAX_TEMPLATE_SOURCES = $(wildcard $(SNAX_TPL_PATH)*.tpl)
+
+CFG_FILE = $(ROOT)/target/rtl/$(CFG)
+SNAX_SCALA_SOURCES = \
+	$(wildcard ${CHISEL_PATH}/src/main/scala/snax/streamer/*.scala) \
+	$(wildcard ${CHISEL_PATH}/src/main/scala/snax/csr_manager/*.scala)
+
+# Pick the first file
+FIRST_SNAX_WRAPPER_FILE := $(firstword $(SNAX_WRAPPER_FILES))
+# Pick all the files but the first file, if there are more than one
+OTHER_SNAX_WRAPPER_FILES := $(filter-out $(FIRST_SNAX_WRAPPER_FILE),$(SNAX_WRAPPER_FILES))
+
+# Force a serialized build in parallel make through a circular dependency
+# Implemented as documented in:
+# https://www.gnu.org/software/automake/manual/html_node/Multiple-Outputs.html
+# Please note the limitations of this method over there
+$(FIRST_SNAX_WRAPPER_FILE) : $(SNAX_TEMPLATE_SOURCES) $(CFG_FILE) $(SNAX_SCALA_SOURCES)
+	${WRAPPERGEN} --cfg_path="$(CFG_FILE)" \
+	--tpl_path="${SNAX_TPL_PATH}" \
+	--chisel_path="${CHISEL_PATH}" \
+	--gen_path="${SNAX_GENERATED_DIR}/"
+
+# This is a fake job that forces parallel make to wait for the first thing to be generated
+$(OTHER_SNAX_WRAPPER_FILES): $(FIRST_SNAX_WRAPPER_FILE)
+
+###################
+# Accelerator Gen #
+###################
+
+# # Import the external Makefile for GeMM and SIMD
+# SNAX_GEMM_ROOT ?= $(shell $(BENDER) path snax-gemm)
+# include $(SNAX_GEMM_ROOT)/Makefile
+# SNAX_SIMD_ROOT ?= $(shell $(BENDER) path snax-postprocessing-simd)
+# include $(SNAX_SIMD_ROOT)/Makefile
+
+# The filelist for GeMM
+SNAX_GEMM_ROOT ?= $(shell $(BENDER) path snax-gemm)
+SNAX_ACC_GEMM_FILES += \
+	$(SNAX_GEMM_ROOT)/generated/gemm/BareBlockGemm.sv \
+	$(SNAX_GEMM_ROOT)/src/snax_streamer_gemm_shell_wrapper.sv
+
+# The filelist for SIMD
+SNAX_SIMD_ROOT ?= $(shell $(BENDER) path snax-postprocessing-simd)
+SNAX_ACC_SIMD_FILES += \
+	$(SNAX_SIMD_ROOT)/generated/simd/SIMD.sv \
+	$(SNAX_SIMD_ROOT)/src/snax_streamer_simd_shell_wrapper.sv
+
+snax: $(SNAX_WRAPPER_FILES) $(SNAX_ACC_GEMM_FILES) $(SNAX_ACC_SIMD_FILES)
+
+$(SNAX_ACC_GEMM_FILES):
+	make -C $(SNAX_GEMM_ROOT) $(SNAX_ACC_GEMM_FILES)
+
+$(SNAX_ACC_SIMD_FILES):
+	make -C $(SNAX_SIMD_ROOT) $(SNAX_ACC_SIMD_FILES)
