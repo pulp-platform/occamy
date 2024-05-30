@@ -16,21 +16,21 @@ package ${name}_pkg;
   localparam int unsigned MaxTransaction = 16;
 
   // Re-exports
-  localparam int unsigned AddrWidth = ${name}_cluster_pkg::AddrWidth;
-  localparam int unsigned NarrowUserWidth = ${name}_cluster_pkg::NarrowUserWidth;
-  localparam int unsigned WideUserWidth = ${name}_cluster_pkg::WideUserWidth;
+  localparam int unsigned AddrWidth = ${cfg["cluster"]["name"]}_pkg::AddrWidth;
+  localparam int unsigned NarrowUserWidth = ${cfg["cluster"]["name"]}_pkg::NarrowUserWidth;
+  localparam int unsigned WideUserWidth = ${cfg["cluster"]["name"]}_pkg::WideUserWidth;
 
   localparam int unsigned NrClustersS1Quadrant = ${nr_s1_clusters};
-  localparam int unsigned NrCoresCluster = ${name}_cluster_pkg::NrCores;
+  localparam int unsigned NrCoresCluster = ${cfg["cluster"]["name"]}_pkg::NrCores;
   localparam int unsigned NrCoresS1Quadrant = NrClustersS1Quadrant * NrCoresCluster;
 
   // Memory cut configurations: one per memory parameterization
-  typedef ${name}_cluster_pkg::sram_cfg_t sram_cfg_t;
+  typedef ${cfg["cluster"]["name"]}_pkg::sram_cfg_t sram_cfg_t;
 
   typedef struct packed {
     sram_cfg_t rocache_tag;
     sram_cfg_t rocache_data;
-    ${name}_cluster_pkg::sram_cfgs_t cluster;
+    ${cfg["cluster"]["name"]}_pkg::sram_cfgs_t cluster;
   } sram_cfg_quadrant_t;
 
   typedef struct packed {

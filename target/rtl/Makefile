@@ -121,6 +121,7 @@ test/testharness.sv: test/testharness.sv.tpl $(CFG)
 
 MISC_OCCAMYGEN_SV_TEMPLATES  = $(SOURCE_OCCAMY_DIR)/occamy_*.sv.tpl
 MISC_OCCAMYGEN_SV_TARGETS  = $(TARGET_SRC_DIR)/occamy_*.sv
+MISC_OCCAMYGEN_SV_TARGETS  = $(TARGET_SRC_DIR)/snax_*.sv
 #$(warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!MISC_OCCAMYGEN_SV_TEMPLATES=$(MISC_OCCAMYGEN_SV_TEMPLATES) !!!!!!11! $(MISC_OCCAMYGEN_SV_TARGETS))
 MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/occamy_cluster_wrapper.sv
 MISC_OCCAMYGEN_SV_TARGETS += $(TARGET_SRC_DIR)/snax_cluster_wrapper.sv
