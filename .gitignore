@@ -17,6 +17,7 @@ gmon.out
 
 build/
 .Xil/
+.venv/
 occamy_xilinx/
 component.xml
 ./component.xml
