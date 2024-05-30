@@ -97,13 +97,16 @@ sources:
       - target/rtl/src/clint/clint.sv
 
       # occamy
-      - target/rtl/src/occamy_cluster_wrapper.sv
       - target/rtl/src/occamy_pkg.sv
       - target/rtl/src/occamy_quadrant_s1_ctrl.sv
       - target/rtl/src/occamy_quadrant_s1.sv
       - target/rtl/src/occamy_soc.sv
       - target/rtl/src/occamy_top.sv
       - target/rtl/src/occamy_cva6.sv
+
+  - target: all(ocammy, not(snax_cluster))
+    files:
+      - target/rtl/src/occamy_cluster_wrapper.sv
 
   - target: snax_cluster
     files:

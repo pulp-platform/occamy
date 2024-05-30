@@ -8,6 +8,9 @@ clean:
 	make -C ./target/fpga/vivado_ips/ clean
 	make -C ./target/sim/ clean
 	make -C ./target/rtl/ clean
+	rm -f ./target/fpga/vivado_ips/vivado.jou
+	rm -f ./target/fpga/vivado_ips/vivado.log
+	rm -f ./target/fpga/vivado_ips/*.backup.log
 
 # Software Generation
 
