@@ -43,6 +43,7 @@ occamy_ip_vcu128_gui: # In ESAT Server
 
 occamy_system_vcu128: # In ESAT Server
 	#                                                                                          debug  jtag  (put 1 or 0)   threads  
+	# sh -c "cd ./target/fpga;vivado -mode batch -source occamy_vcu128_2023.tcl -tclargs             1     1                      16 ${MKFILE_DIR}target/fpga/bootrom/bootrom-spl.coe"
 	sh -c "cd ./target/fpga;vivado -mode batch -source occamy_vcu128_2023.tcl -tclargs             1     1                      16 ${MKFILE_DIR}target/fpga/bootrom/bootrom-spl.coe"
 
 occamy_system_vcu128_gui: # In ESAT Server
