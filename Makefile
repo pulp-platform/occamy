@@ -7,7 +7,7 @@ MKFILE_DIR := $(dir $(MKFILE_PATH))
 rtl:
 	# make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/single-cluster-single-core-syns.hjson
 	make -C ./target/rtl/ soc CFG_OVERRIDE=cfg/single-cluster-single-core-syns.hjson
-	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/snax_two_clusters.hjson
+	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/snax_three_clusters.hjson
 	make -C ./target/fpga/ define_defines_includes_no_simset.tcl
 	make -C ./target/fpga/vivado_ips/ define-sources.tcl
 
@@ -26,6 +26,7 @@ occamy_ip_vcu128_gui:
 
 occamy_system_vcu128:
 	#                                                                                          debug  jtag  (put 1 or 0)   threads  
+	# sh -c "cd ./target/fpga;vivado -mode batch -source occamy_vcu128_2023.tcl -tclargs             1     1                      16 ${MKFILE_DIR}target/fpga/bootrom/bootrom-spl.coe"
 	sh -c "cd ./target/fpga;vivado -mode batch -source occamy_vcu128_2023.tcl -tclargs             1     1                      16 ${MKFILE_DIR}target/fpga/bootrom/bootrom-spl.coe"
 
 occamy_system_vcu128_gui:

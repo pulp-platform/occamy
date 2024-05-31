@@ -300,6 +300,7 @@
             snax_streamer_cfg: {$ref: "#/snax_streamer_gemm_streamer_template" }
         },
         snax_use_custom_ports: false,
+        snax_acc_wide: true,
         num_int_outstanding_loads: 1,
         num_int_outstanding_mem: 4,
         num_fp_outstanding_loads: 4,
@@ -332,6 +333,7 @@
             snax_streamer_cfg: {$ref: "#/snax_data_reshuffler_streamer_template" }
         },
         snax_use_custom_ports: false,
+        snax_acc_wide: false,
         num_int_outstanding_loads: 1,
         num_int_outstanding_mem: 4,
         num_fp_outstanding_loads: 4,
@@ -363,6 +365,7 @@
             snax_streamer_cfg: {$ref: "#/snax_streamer_simd_streamer_template" }
         },
         snax_use_custom_ports: false,
+        snax_acc_wide: true,
         num_int_outstanding_loads: 1,
         num_int_outstanding_mem: 4,
         num_fp_outstanding_loads: 4,
@@ -404,7 +407,7 @@
         ],
     },
 
-    // Original DMA core template from ETHZ
+    // Original DMA core template from ETHZ (Not used in at present, should be swapped back later)
     dma_core_template: {
         isa: "rv32imafd",
         // Xdiv_sqrt: true,
