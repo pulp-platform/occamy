@@ -13,7 +13,6 @@ clean:
 	rm -f ./target/fpga/vivado_ips/*.backup.log
 
 # Software Generation
-
 bootrom: # In Occamy Docker
 	make -C ./target/sim bootrom
 
@@ -21,15 +20,10 @@ sw: # In Occamy Docker
 	make -C ./target/sim sw
 
 # Hardware Generation
-
 rtl: # In SNAX Docker
-	# make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/single-cluster-single-core-syns.hjson
-	make -C ./target/rtl/ soc CFG_OVERRIDE=cfg/single-cluster-single-core-syns.hjson
 	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/snax_two_clusters.hjson
 
-
 # FPGA Workflow
-
 occamy_system_vivado_preparation: # In SNAX Docker
 	make -C ./target/fpga/ define_defines_includes_no_simset.tcl
 	make -C ./target/fpga/vivado_ips/ define-sources.tcl
@@ -49,7 +43,6 @@ occamy_system_vcu128_gui: # In ESAT Server
 	sh -c "cd ./target/fpga/occamy_vcu128_2023/;vivado occamy_vcu128_2023.xpr"
 
 # Questasim Workflow
-
 occamy_system_vsim_preparation: # In SNAX Docker
 	make -C ./target/sim work/lib/libfesvr.a
 	make -C ./target/sim tb
