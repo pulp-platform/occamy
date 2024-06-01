@@ -70,7 +70,7 @@ SOURCE_SOCCTRL_DIR   ?= $(ROOT)/hw/occamy/soc_ctrl
 SOURCE_HBMCTRL_DIR   ?= $(ROOT)/hw/occamy/hbm_xbar_ctrl
 SOURCE_QUADCTRL_DIR  ?= $(ROOT)/hw/occamy/quadrant_s1_ctrl
 SNITCH_TEST_DIR      ?= $(SNITCH_ROOT)/target/common/test
-TARGET_TEST_DIR      ?= $(ROOT)/target/sim/test
+TARGET_TEST_DIR      ?= $(ROOT)/target/rtl/test
 TARGET_DTS_DIR		 ?= $(ROOT)/target/fpga/bootrom
 CVA6_TRACE            = trace_hart_0.log
 
@@ -79,13 +79,13 @@ CVA6_TRACE            = trace_hart_0.log
 # (LRU) config, all targets depending on the configuration file have
 # to be rebuilt. This file is used to express this condition as a
 # prerequisite for other rules.
-CFG = cfg/lru.hjson
+# CFG = ../rtl/cfg/lru.hjson
 
 #####################
 # Simulator options #
 #####################
 
-VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
+
 # We need to change the Bender.yml of the snax_gemm repo
 # The original target: snax-gemm will trigger the questasim error
 # So i change it to snax_gemm
@@ -94,14 +94,13 @@ VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
 # VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
 # This target is to snax-streamer-gemm
 
-VSIM_BENDER += -t snax-streamer-gemm
+VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
+VSIM_BENDER += -t snax-streamer-gemm -t snax-streamer-simd -t snax-data-reshuffler
 VSIM_BENDER += -t QUESTA_SIM_XYI
-VSIM_BENDER += -t snax-data-reshuffler
 
 VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
-VLT_BENDER  += -t snax-gemm
+VLT_BENDER  += -t snax-streamer-gemm -t snax-streamer-simd -t snax-data-reshuffler
 VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
-VLT_BENDER  += -t snax-streamer-gemm
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
@@ -167,29 +166,6 @@ VLT_COBJ += $(VLT_BUILDDIR)/test/bootdata.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_dpi.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
-
-#################
-# Prerequisites #
-#################
-
-$(CFG): FORCE
-	@# If the LRU config file doesn't exist, we use the default config.
-	@if [ ! -e $@ ] ; then \
-		DEFAULT_CFG="cfg/full.hjson"; \
-		echo "Using default config file: $$DEFAULT_CFG"; \
-		cp $$DEFAULT_CFG $@; \
-	fi
-	@# If a config file is provided on the command-line and it differs
-	@# from the LRU config file then we override the LRU file with it
-	@if [ $(CFG_OVERRIDE) ] ; then \
-		echo "Overriding config file with: $(CFG_OVERRIDE)"; \
-		if cmp -s $(CFG_OVERRIDE) $@ ; then \
-			echo "Override and LRU config files are equivalent. Nothing to be done."; \
-		else \
-			cp $(CFG_OVERRIDE) $@; \
-		fi \
-	fi
-FORCE:
 
 ############
 # Boot ROM #
@@ -383,6 +359,28 @@ $(VSIM_BUILDDIR)/compile.vsim.tcl: $(BENDER_LOCK) | $(VSIM_BUILDDIR)
 	$(BENDER) script vsim $(VSIM_BENDER) --vlog-arg="$(VLOG_FLAGS) -work $(dir $@) " > $@
 	echo '$(VLOG) -work $(dir $@) $(TB_CC_SOURCES) -vv -ccflags "$(TB_CC_FLAGS)"' >> $@
 	echo 'return 0' >> $@
+
+
+$(BIN_DIR)/occamy_top.vsim: $(VSIM_BUILDDIR)/compile.vsim.tcl
+	mkdir -p $@
+	vsim -c -do "source $<; quit" | tee $(dir $<)vlog.log
+	@! grep -P "Errors: [1-9]*," $(dir $<)vlog.log
+	vopt $(VOPT_FLAGS) -work $(VSIM_BUILDDIR) tb_bin -o tb_bin_opt | tee $(dir $<)vopt.log
+	@! grep -P "Errors: [1-9]*," $(dir $<)vopt.log
+	@echo "#!/bin/bash" > $@
+	@echo 'binary=$$(realpath $$1)' >> $@
+	@echo 'echo $$binary > .rtlbinary' >> $@
+	@echo 'vsim +permissive $(VSIM_FLAGS) $$3 -work $(MKFILE_DIR)/$(VSIM_BUILDDIR) -c \
+				-ldflags "-Wl,-rpath,$(FESVR)/lib -L$(FESVR)/lib -lfesvr -lutil" \
+				tb_bin_opt +permissive-off ++$$binary ++$$2' >> $@
+	@chmod +x $@
+	@echo "#!/bin/bash" > $@.gui
+	@echo 'binary=$$(realpath $$1)' >> $@.gui
+	@echo 'echo $$binary > .rtlbinary' >> $@.gui
+	@echo 'vsim +permissive $(VSIM_FLAGS) -work $(MKFILE_DIR)/$(VSIM_BUILDDIR) \
+				-ldflags "-Wl,-rpath,$(FESVR)/lib -L$(FESVR)/lib -lfesvr -lutil" \
+				tb_bin_opt +permissive-off ++$$binary ++$$2' >> $@.gui
+	@chmod +x $@.gui
 
 clean-vsim: clean-work
 	rm -rf $(BIN_DIR)/$(TARGET).vsim $(BIN_DIR)/$(TARGET).vsim.gui $(VSIM_BUILDDIR) vsim.wlf

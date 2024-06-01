@@ -31,7 +31,7 @@ LINUX_UIMAGE ?= ${CVA6_SDK}/uImage
 
 DTB = bootrom/occamy.dtb
 
-BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster -t snax-streamer-gemm-dev -t snax-data-reshuffler-dev
+BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster -t snax-streamer-gemm -t snax-streamer-simd -t snax-data-reshuffler
 
 default: all
 all: occamy_vcu128

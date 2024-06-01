@@ -33,6 +33,8 @@ TARGET_CLINT_DIR     ?= $(TARGET_SRC_DIR)/clint
 
 TARGET_DTS_DIR       ?= $(ROOT)/target/fpga/bootrom
 
+TARGET_RTL			 ?= $(ROOT)/target/rtl
+
 ############
 # Programs #
 ############
@@ -53,12 +55,12 @@ PLICGEN     = $(SOURCE_PLIC_DIR)/util/reg_rv_plic.py
 # (LRU) config, all targets depending on the configuration file have
 # to be rebuilt. This file is used to express this condition as a
 # prerequisite for other rules.
-CFG = cfg/lru.hjson
+CFG = $(TARGET_RTL)/cfg/lru.hjson
 
 $(CFG): FORCE
 	@# If the LRU config file doesn't exist, we use the default config.
 	@if [ ! -e $@ ] ; then \
-		DEFAULT_CFG="cfg/snax_two_clusters.hjson"; \
+		DEFAULT_CFG="$(TARGET_RTL)/cfg/snax_two_clusters.hjson"; \
 		echo "Using default config file: $$DEFAULT_CFG"; \
 		cp $$DEFAULT_CFG $@; \
 	fi
@@ -302,7 +304,6 @@ $(eval $(call generate_snax_wrapper_filelist,snax_data_reshuffler))
 
 SNAX_TEMPLATE_SOURCES = $(wildcard $(SNAX_TPL_PATH)*.tpl)
 
-CFG_FILE = $(ROOT)/target/rtl/$(CFG)
 SNAX_SCALA_SOURCES = \
 	$(wildcard ${CHISEL_PATH}/src/main/scala/snax/streamer/*.scala) \
 	$(wildcard ${CHISEL_PATH}/src/main/scala/snax/csr_manager/*.scala)
@@ -316,8 +317,8 @@ OTHER_SNAX_WRAPPER_FILES := $(filter-out $(FIRST_SNAX_WRAPPER_FILE),$(SNAX_WRAPP
 # Implemented as documented in:
 # https://www.gnu.org/software/automake/manual/html_node/Multiple-Outputs.html
 # Please note the limitations of this method over there
-$(FIRST_SNAX_WRAPPER_FILE) : $(SNAX_TEMPLATE_SOURCES) $(CFG_FILE) $(SNAX_SCALA_SOURCES)
-	${WRAPPERGEN} --cfg_path="$(CFG_FILE)" \
+$(FIRST_SNAX_WRAPPER_FILE) : $(SNAX_TEMPLATE_SOURCES) $(CFG) $(SNAX_SCALA_SOURCES)
+	${WRAPPERGEN} --cfg_path="$(CFG)" \
 	--tpl_path="${SNAX_TPL_PATH}" \
 	--chisel_path="${CHISEL_PATH}" \
 	--gen_path="${SNAX_GENERATED_DIR}/"
