@@ -117,5 +117,5 @@ sources:
   # target/sim
   - target: any(simulation, verilator)
     files:
-      - target/sim/test/uartdpi/uartdpi.sv
-      - target/sim/test/testharness.sv
+      - target/rtl/test/uartdpi/uartdpi.sv
+      - target/rtl/test/testharness.sv
