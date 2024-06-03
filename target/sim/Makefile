@@ -171,7 +171,7 @@ VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
 # Boot ROM #
 ############
 
-BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin test/bootdata.cc
+BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin test/bootdata.cc test/bootrom.coe
 
 .PHONY: bootrom clean-bootrom
 
@@ -188,6 +188,9 @@ test/bootrom.dump: test/bootrom.elf
 	riscv64-unknown-elf-objdump -D $< > $@
 test/bootrom.bin: test/bootrom.elf
 	riscv64-unknown-elf-objcopy -O binary $< $@
+test/bootrom.coe: test/bootrom.bin
+	bin2coe -i $< -w 32 -o $@
+
 
 ###############
 # Address Map #

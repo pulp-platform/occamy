@@ -59,5 +59,5 @@ exception:
 # as expected by test/common_lib.cc
 .pushsection end, "ax"
 entry_addr:
-.word 0
+.word 0x80000000
 device_tree:

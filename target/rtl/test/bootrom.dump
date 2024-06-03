@@ -69,4 +69,4 @@ Disassembly of section .end:
 
 00000000010000b0 <entry_addr>:
  10000b0:	0000                	unimp
-	...
+ 10000b2:	8000                	0x8000
