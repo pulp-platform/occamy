@@ -12,7 +12,7 @@ DEBUG       ?= 0
 VIVADO ?= vivado
 BENDER ?= bender
 
-BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster -t snax-streamer-gemm -t snax-streamer-simd -t snax-data-reshuffler
+BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
 ifeq ($(EXT_JTAG), 0)
 	BENDER_TARGETS += -t bscane
 endif
