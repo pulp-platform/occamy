@@ -190,7 +190,7 @@
                     cacheline: 256 // word size in bits
                 },
                 cores: [
-                    { $ref: "#/dma_compute_core_template" }
+                    { $ref: "#/dma_core_template" }
                 ]
             }
         ],
@@ -264,7 +264,7 @@
                     cacheline: 256 // word size in bits
                 },
                 cores: [
-                    { $ref: "#/dma_compute_core_template" }
+                    { $ref: "#/dma_core_template" }
                 ]
             }
         ],
@@ -273,33 +273,26 @@
     // Streamer gemm core template
 
     // Templates.
-    dma_compute_core_template: {
-        isa: "rv32imafd",
+    dma_core_template: {
+        isa: "rv32ima",
         // Xdiv_sqrt: true,
         # isa: "rv32ema",
         xdma: true, 
-        xssr: true, 
+        xssr: false, 
         xfrep: false
-        xf16: true,
-        xf16alt: true,
-        xf8: true,
-        xf8alt: true,
-        xfdotp: true,
-        xfvec: true,
+        xf16: false,
+        xf16alt: false,
+        xf8: false,
+        xf8alt: false,
+        xfdotp: false,
+        xfvec: false,
         num_int_outstanding_loads: 1,
         num_int_outstanding_mem: 4,
         num_fp_outstanding_loads: 4,
         num_fp_outstanding_mem: 4,
         num_sequencer_instructions: 16,
         num_dtlb_entries: 1,
-        num_itlb_entries: 1,
-        ssr_intersection: true,
-        ssr_intersection_triple: [0, 1, 2],
-        ssrs: [
-            {indirection: true},    // Master 0
-            {indirection: true},    // Master 1
-            {},                     // Slave
-        ],
+        num_itlb_entries: 1
     },
 
     snax_streamer_gemm_streamer_template :{
