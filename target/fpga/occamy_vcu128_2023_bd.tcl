@@ -277,6 +277,7 @@ proc create_root_design { parentCell } {
   set blk_mem_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 blk_mem_gen_0 ]
   set_property -dict [list \
     CONFIG.Assume_Synchronous_Clk {false} \
+    CONFIG.Coe_File {/users/micas/ydeng/Desktop/SNAX/occamy_kul/target/rtl/test/bootrom.coe} \
     CONFIG.EN_SAFETY_CKT {true} \
     CONFIG.Enable_32bit_Address {true} \
     CONFIG.Enable_B {Use_ENB_Pin} \
@@ -479,6 +480,12 @@ proc create_root_design { parentCell } {
 
   # Create instance: jtag_axi_0, and set properties
   set jtag_axi_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:jtag_axi:1.2 jtag_axi_0 ]
+  set_property -dict [list \
+    CONFIG.M_HAS_BURST {0} \
+    CONFIG.RD_TXN_QUEUE_LENGTH {16} \
+    CONFIG.WR_TXN_QUEUE_LENGTH {16} \
+  ] $jtag_axi_0
+
 
   # Create instance: occamy, and set properties
   set occamy [ create_bd_cell -type ip -vlnv ethz.ch:user:occamy_xilinx:1.0 occamy ]
@@ -686,8 +693,8 @@ proc create_root_design { parentCell } {
   # Create instance: jtag_axi_1, and set properties
   set jtag_axi_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:jtag_axi:1.2 jtag_axi_1 ]
   set_property -dict [list \
-    CONFIG.M_AXI_ADDR_WIDTH {64} \
-    CONFIG.M_AXI_DATA_WIDTH {64} \
+    CONFIG.M_AXI_ADDR_WIDTH {32} \
+    CONFIG.M_AXI_DATA_WIDTH {32} \
     CONFIG.M_HAS_BURST {0} \
     CONFIG.RD_TXN_QUEUE_LENGTH {16} \
     CONFIG.WR_TXN_QUEUE_LENGTH {16} \
