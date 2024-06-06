@@ -3,6 +3,8 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
 
+CFG ?= snax_two_clusters.hjson
+
 clean:
 	make -C ./target/fpga/ clean
 	make -C ./target/fpga/vivado_ips/ clean
@@ -14,14 +16,14 @@ clean:
 
 # Software Generation
 bootrom: # In Occamy Docker
-	make -C ./target/sim bootrom CFG_OVERRIDE=../rtl/cfg/snax_two_clusters.hjson
+	make -C ./target/sim bootrom CFG_OVERRIDE=../rtl/cfg/$(CFG)
 
 sw: # In Occamy Docker
-	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/snax_two_clusters.hjson
+	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/$(CFG)
 
 # Hardware Generation
 rtl: # In SNAX Docker
-	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/snax_two_clusters.hjson
+	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/$(CFG)
 
 # FPGA Workflow
 occamy_system_vivado_preparation: # In SNAX Docker

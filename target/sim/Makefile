@@ -95,11 +95,14 @@ CVA6_TRACE            = trace_hart_0.log
 # This target is to snax-streamer-gemm
 
 VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster
-VSIM_BENDER += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
 
 VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster
-VLT_BENDER  += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
 VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
+
+ifndef SNAX_MINIMAL
+	VSIM_BENDER += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
+	VLT_BENDER  += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
+endif
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
