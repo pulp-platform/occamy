@@ -1,4 +1,0 @@
-*.bin
-*.dump
-*.elf
-src/*.o
