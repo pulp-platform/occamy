@@ -4,15 +4,14 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
 
 CFG ?= snax_two_clusters.hjson
+APP ?= target/sim/sw/host/apps/hello_world/build/hello_world.elf
 
 clean:
 	make -C ./target/fpga/ clean
 	make -C ./target/fpga/vivado_ips/ clean
 	make -C ./target/sim/ clean
 	make -C ./target/rtl/ clean
-	rm -f ./target/fpga/vivado_ips/vivado.jou
-	rm -f ./target/fpga/vivado_ips/vivado.log
-	rm -f ./target/fpga/vivado_ips/*.backup.log
+	make -C ./target/fpga/sw clean
 
 # Software Generation
 bootrom: # In Occamy Docker
@@ -20,6 +19,9 @@ bootrom: # In Occamy Docker
 
 sw: # In Occamy Docker
 	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/$(CFG)
+
+fpga/sw: # In Occamy Docker
+	make -C ./target/fpga/sw sw APP=$(APP)
 
 # Hardware Generation
 rtl: # In SNAX Docker
@@ -44,6 +46,12 @@ occamy_system_vcu128: # In ESAT Server
 
 occamy_system_vcu128_gui: # In ESAT Server
 	sh -c "cd ./target/fpga/occamy_vcu128_2023/;vivado occamy_vcu128_2023.xpr"
+
+occamy_system_download_sw: # In ESAT Server
+	make -C ./target/fpga/sw download_sw
+
+open_terminal:	# It opens ttyUSB1 (Turn off HW flowcontrol in the software, as IP on Occamy is not supported)
+	sh minicom -D /dev/ttyUSB1 
 
 # Questasim Workflow
 occamy_system_vsim_preparation: # In SNAX Docker

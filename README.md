@@ -31,3 +31,51 @@ The following files are released under Apache License 2.0 (`Apache-2.0`) see `LI
 The following files are released under Solderpad v0.51 (`SHL-0.51`) see `hw/LICENSE`:
 
 - `hw/`
+
+# Getting start for SNAX platform simulation & prototyping
+
+### **⚠️Tips**: All commands is made at the root dir of the Occamy repo. 
+
+## Prototype the minimal system on VCU128: 
+```makefile
+make bootrom
+make sw
+make fpga/sw APP=??? (Which binary file you want to use)
+make rtl CFG=snax_minimal.hjson
+make occamy_system_vivado_preparation SNAX_MINIMAL=1
+make occamy_ip_vcu128
+make occamy_system_vcu128
+make occamy_system_vcu128_gui
+```
+
+## Prototype the maximal system on VCU128: 
+```makefile
+make bootrom
+make sw
+make fpga/sw APP=??? (Which binary file you want to use)
+make rtl CFG=snax_two_clusters.hjson
+make occamy_system_vivado_preparation
+make occamy_ip_vcu128
+make occamy_system_vcu128
+make occamy_system_vcu128_gui
+```
+
+
+## Simulate the minimal system: 
+```makefile
+make bootrom
+make sw
+make rtl CFG=snax_minimal.hjson
+make occamy_system_vsim_preparation SNAX_MINIMAL=1
+make occamy_system_vsim
+```
+
+## Simulate the normal system: 
+
+```makefile
+make bootrom
+make sw
+make rtl CFG=snax_two_clusters.hjson
+make occamy_system_vsim_preparation
+make occamy_system_vsim
+```

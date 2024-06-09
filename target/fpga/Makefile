@@ -54,8 +54,7 @@ occamy_vcu128: vivado_ips/occamy_xilinx define_defines_includes_no_simset.tcl # 
 # We may generate bootrom from other method, as we donot use Linux at present
 	${VIVADO} -mode batch -source occamy_vcu128.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/bootrom/bootrom-spl.coe
 
-occamy_vcu128_2023: vivado_ips/occamy_xilinx define_defines_includes_no_simset.tcl # bootrom/bootrom-spl.coe 
-# We may generate bootrom from other method, as we donot use Linux at present
+occamy_vcu128_2023: vivado_ips/occamy_xilinx define_defines_includes_no_simset.tcl
 	${VIVADO} -mode batch -source occamy_vcu128_2023.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/bootrom/bootrom-spl.coe
 
 define_defines_includes_no_simset.tcl: $(BENDER_FILES)

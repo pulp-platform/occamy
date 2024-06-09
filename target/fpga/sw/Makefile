@@ -6,7 +6,7 @@ ROOT        := ${MKFILE_DIR}../../..
 VIVADO	  := vivado
 
 BOOTROM		?= $(TARGET)/rtl/test/bootrom.bin
-APP			?= $(TARGET)/sim/sw/host/apps/hello_world/build/hello_world.elf
+APP		?= target/sim/sw/host/apps/hello_world/build/hello_world.elf
 BIN2JTAG	?= $(ROOT)/util/bin2jtag.py
 
 .PHONY: sw download_sw clean
@@ -17,7 +17,7 @@ bootrom.tcl:
 	$(BIN2JTAG) -c32 -b 0 -d hw_axi_1 $(BOOTROM) > $@
 
 app.bin: 
-	riscv64-unknown-elf-objcopy -O binary $(APP) $@
+	riscv64-unknown-elf-objcopy -O binary $(ROOT)/$(APP) $@
 
 app.tcl: app.bin
 	$(BIN2JTAG) -c32 -b 80000000 -d hw_axi_2 $< > $@

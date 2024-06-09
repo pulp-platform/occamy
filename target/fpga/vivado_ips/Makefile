@@ -34,4 +34,4 @@ define-sources.tcl:
 	${BENDER} script vivado $(BENDER_TARGETS) > $@
 
 clean:
-	rm -rf .Xil occamy_xilinx vivado* define-sources.tcl component.xml xgui
+	rm -rf .Xil occamy_xilinx vivado* define-sources.tcl component.xml xgui *.jou *.log

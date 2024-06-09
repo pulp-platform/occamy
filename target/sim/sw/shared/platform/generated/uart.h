@@ -29,6 +29,14 @@ inline static uint8_t read_reg_u8(uintptr_t addr) {
     return *(volatile uint8_t *)addr;
 }
 
+inline static int is_data_ready() {
+    return read_reg_u8(UART_LINE_STATUS) & 0x01;
+}
+
+inline static int is_data_overrun() {
+    return read_reg_u8(UART_LINE_STATUS) & 0x02;
+}
+
 inline static int is_transmit_empty() {
     return read_reg_u8(UART_LINE_STATUS) & 0x20;
 }
@@ -44,6 +52,12 @@ inline static void write_serial(char a) {
     write_reg_u8(UART_THR, a);
 }
 
+inline static uint8_t read_serial() {
+    while (is_data_ready() == 0) {
+    };
+
+    return read_reg_u8(UART_RBR);
+}
 inline static void init_uart(uint32_t freq, uint32_t baud) {
     uint32_t divisor = freq / (baud << 4);
 
@@ -64,8 +78,22 @@ inline static void print_uart(const char *str) {
         write_serial((uint8_t)*cur);
         ++cur;
     }
-    while (!is_transmit_done())
-        ;
+    while (!is_transmit_done());
+}
+
+inline static void scan_uart(char *str) {
+    char *cur = &str[0];
+    while (1) {
+        *cur = read_serial();
+        if (*cur == '\r') {
+            *(++cur) = '\n';
+        }
+        if (*cur == '\n') {
+            *(++cur) = '\0';
+            return;
+        } else
+            cur++;
+    }
 }
 
 static uint8_t bin_to_hex_table[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
