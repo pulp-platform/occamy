@@ -38,26 +38,25 @@ The following files are released under Solderpad v0.51 (`SHL-0.51`) see `hw/LICE
 
 ## Prototype the minimal system on VCU128: 
 ```makefile
-make bootrom
-make sw
-make fpga/sw APP=??? (Which binary file you want to use)
-make rtl CFG=snax_minimal.hjson
-make occamy_system_vivado_preparation SNAX_MINIMAL=1
-make occamy_ip_vcu128
-make occamy_system_vcu128
-make occamy_system_vcu128_gui
+@ Occamy Docker: make bootrom
+@ Occamy Docker: make sw
+@ Occamy Docker: make -C target/fpga/sw [APP=???] (Which binary file you want to use)
+@ SNAX Docker: make rtl CFG=snax_minimal.hjson
+@ SNAX Docker: make occamy_system_vivado_preparation SNAX_MINIMAL=1
+@ Barnard3: make occamy_system_vcu128
+@ Barnard3: make occamy_system_vcu128_gui
 ```
 
-## Prototype the maximal system on VCU128: 
+## Prototype the typical system on VCU128: 
 ```makefile
-make bootrom
-make sw
-make fpga/sw APP=??? (Which binary file you want to use)
-make rtl CFG=snax_two_clusters.hjson
-make occamy_system_vivado_preparation
-make occamy_ip_vcu128
-make occamy_system_vcu128
-make occamy_system_vcu128_gui
+@ Occamy Docker: make bootrom
+@ Occamy Docker: make sw
+@ Occamy Docker: make -C target/fpga/sw [APP=???] (Which binary file you want to use)
+@ SNAX Docker: make rtl CFG=snax_two_clusters.hjson
+@ SNAX Docker: make occamy_system_vivado_preparation
+@ Barnard3: make occamy_system_vcu128
+@ Barnard3: make occamy_system_vcu128_gui
+@ Barnard3: make -C target/fpga/sw download_sw
 ```
 
 
@@ -70,7 +69,7 @@ make occamy_system_vsim_preparation SNAX_MINIMAL=1
 make occamy_system_vsim
 ```
 
-## Simulate the normal system: 
+## Simulate the typical system: 
 
 ```makefile
 make bootrom

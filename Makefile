@@ -4,7 +4,6 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
 
 CFG ?= snax_two_clusters.hjson
-APP ?= target/sim/sw/host/apps/hello_world/build/hello_world.elf
 
 clean:
 	make -C ./target/fpga/ clean
@@ -20,8 +19,7 @@ bootrom: # In Occamy Docker
 sw: # In Occamy Docker
 	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/$(CFG)
 
-fpga/sw: # In Occamy Docker
-	make -C ./target/fpga/sw sw APP=$(APP)
+# The software from simulation and FPGA prototyping comes from one source. If we intend to download the sodtware to FPGA, elf2bin should be done by objcopy in Occamy docker. 
 
 # Hardware Generation
 rtl: # In SNAX Docker
@@ -39,10 +37,10 @@ occamy_ip_vcu128:	# In ESAT Server
 occamy_ip_vcu128_gui: # In ESAT Server
 	sh -c "cd ./target/fpga/vivado_ips/occamy_xilinx/;vivado occamy_xilinx.xpr"
 
-occamy_system_vcu128: # In ESAT Server
+occamy_system_vcu128: occamy_ip_vcu128 # In ESAT Server
 	#                                                                                          debug  jtag  (put 1 or 0)   threads  
 	sh -c "cd ./target/fpga;vivado -mode batch -source occamy_vcu128_2023.tcl -tclargs             1     1                      16 ${MKFILE_DIR}target/rtl/test/bootrom.coe"
-	# ${MKFILE_DIR}target/fpga/bootrom/bootrom-spl.coe"
+	# ${MKFILE_DIR}target/fpga/sw/bootrom.coe"
 
 occamy_system_vcu128_gui: # In ESAT Server
 	sh -c "cd ./target/fpga/occamy_vcu128_2023/;vivado occamy_vcu128_2023.xpr"

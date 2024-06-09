@@ -31,9 +31,9 @@ TARGET_PLIC_DIR      ?= $(TARGET_SRC_DIR)/rv_plic
 SOURCE_CLINT_DIR      = $(shell $(BENDER) path clint)
 TARGET_CLINT_DIR     ?= $(TARGET_SRC_DIR)/clint
 
-TARGET_DTS_DIR       ?= $(ROOT)/target/fpga/bootrom
-
 TARGET_RTL			 ?= $(ROOT)/target/rtl
+
+TARGET_DTS_DIR       ?= $(TARGET_RTL)/test
 
 ############
 # Programs #
@@ -114,7 +114,7 @@ test/testharness.sv: test/testharness.sv.tpl $(CFG)
 	# @$(OCCAMYGEN) --cfg $(CFG) \
  	# 	--bootdata       ../../ip/snitch_cluster/test/bootdata.cc.tpl
 	@echo "[SOLDER] Device Tree"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts test/occamy.dts
+	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts $(TARGET_DTS_DIR)/occamy.dts
 
 
 #######
