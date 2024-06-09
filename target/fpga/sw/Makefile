@@ -21,7 +21,7 @@ bootrom.tcl: $(BOOTROM)
 	$(BIN2JTAG) -c32 -b 0 -d hw_axi_1 $< > $@
 
 app.bin: 
-	riscv64-unknown-elf-objcopy -O binary $(APP) $@
+	riscv64-unknown-elf-objcopy -O binary $(ROOT)/$(APP) $@
 
 app.tcl: app.bin
 	$(BIN2JTAG) -c32 -b 80000000 -d hw_axi_2 $< > $@

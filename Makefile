@@ -4,6 +4,7 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
 
 CFG ?= snax_two_clusters.hjson
+APP ?= target/sim/sw/host/apps/hello_world/build/hello_world.elf
 
 clean:
 	make -C ./target/fpga/ clean
