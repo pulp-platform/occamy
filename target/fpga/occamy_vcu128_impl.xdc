@@ -67,3 +67,14 @@ set _xlnx_shared_i5 [get_pins -filter {NAME =~ "*/D"} -of [get_cells -hier -filt
 group_path -default -through $_xlnx_shared_i5
 group_path -name {fma_fu0} -through $_xlnx_shared_i5
 
+################################################################################
+# BIT_STREAM
+################################################################################
+set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR Yes [current_design]
+set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+set_property BITSTREAM.CONFIG.SPI_FALL_EDGE Yes [current_design]
+set_property BITSTREAM.CONFIG.CONFIGRATE 66 [current_design]
+
+
+
+
