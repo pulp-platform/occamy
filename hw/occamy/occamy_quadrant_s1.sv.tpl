@@ -44,8 +44,8 @@ module ${name}_quadrant_s1
   input  ${soc_narrow_xbar.in_s1_quadrant_0.rsp_type()} quadrant_narrow_out_rsp_i,
   input  ${soc_narrow_xbar.out_s1_quadrant_0.req_type()} quadrant_narrow_in_req_i,
   output ${soc_narrow_xbar.out_s1_quadrant_0.rsp_type()} quadrant_narrow_in_rsp_o,
-  output ${quadrant_pre_xbars[0].in_quadrant.req_type()} quadrant_wide_out_req_o,
-  input  ${quadrant_pre_xbars[0].in_quadrant.rsp_type()} quadrant_wide_out_rsp_i,
+  output ${quadrant_inter_xbar.in_quadrant_0.req_type()} quadrant_wide_out_req_o,
+  input  ${quadrant_inter_xbar.in_quadrant_0.rsp_type()} quadrant_wide_out_rsp_i,
   input  ${quadrant_inter_xbar.out_quadrant_0.req_type()} quadrant_wide_in_req_i,
   output ${quadrant_inter_xbar.out_quadrant_0.rsp_type()} quadrant_wide_in_rsp_o,
   // SRAM configuration
@@ -65,7 +65,7 @@ module ${name}_quadrant_s1
   logic clk_quadrant, rst_quadrant_n;
   logic [3:0] isolate, isolated;
   logic ro_enable, ro_flush_valid, ro_flush_ready;
-  logic [${ro_cache_regions-1}:0][${quadrant_pre_xbars[0].in_quadrant.aw-1}:0] ro_start_addr, ro_end_addr;
+  logic [${ro_cache_regions-1}:0][${quadrant_inter_xbar.in_quadrant_0.aw-1}:0] ro_start_addr, ro_end_addr;
   %if narrow_tlb_cfg:
   logic narrow_tlb_enable;
   tlb_entry_t [${narrow_tlb_entries-1}:0] narrow_tlb_entries;
@@ -154,7 +154,7 @@ module ${name}_quadrant_s1
       .isolate(context, "isolate[3]", "wide_cluster_out_isolate", isolated="isolated[3]", atop_support=False, to_clk="clk_i", to_rst="rst_ni", use_to_clk_rst=True, num_pending=wide_trans) \
       .cut(context, cuts_wideiwc_with_wideout)
     #// Assert correct outgoing ID widths
-    assert quadrant_pre_xbars[0].in_quadrant.iw == wide_cluster_out_cut.iw, "S1 Quadrant and SoC IW mismatches."
+    assert quadrant_inter_xbar.in_quadrant_0.iw == wide_cluster_out_cut.iw, "S1 Quadrant and SoC IW mismatches."
   %>
 
   assign quadrant_wide_out_req_o = ${wide_cluster_out_cut.req_name()};

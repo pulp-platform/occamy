@@ -43,7 +43,7 @@ _start:
     la      gp, __global_pointer$
     .option pop
     call initialize_bss
-    call initialize_wide_spm
+#    call initialize_wide_spm
     call enable_fpu
     call main
 

@@ -85,9 +85,9 @@ def main():
     parser.add_argument("--chip",
                         metavar="CHIP_TOP",
                         help="(Optional) Chip Top-level")
-    parser.add_argument("--hbm-ctrl",
-                        metavar="HBM_CTRL",
-                        help="(Optional) HBM controller")
+    # parser.add_argument("--hbm-ctrl",
+    #                     metavar="HBM_CTRL",
+    #                     help="(Optional) HBM controller")
     parser.add_argument("--bootdata",
                         metavar="BOOTDATA",
                         help="Name of the bootdata file (output)")
@@ -180,16 +180,16 @@ def main():
     am_soc_narrow_xbar = am.new_node("soc_narrow_xbar")
     am_soc_wide_xbar = am.new_node("soc_wide_xbar")
 
-    # Quadrant pre-crossbar address map
-    am_quadrant_pre_xbar = list()
-    for i in range(nr_s1_quadrants):
-        am_quadrant_pre_xbar.append(am.new_node("am_quadrant_pre_xbar_{}".format(i)))
+    # # Quadrant pre-crossbar address map
+    # am_quadrant_pre_xbar = list()
+    # for i in range(nr_s1_quadrants):
+    #     am_quadrant_pre_xbar.append(am.new_node("am_quadrant_pre_xbar_{}".format(i)))
 
     # Quadrant inter crossbar address map:
     am_quadrant_inter_xbar = am.new_node("am_quadrant_inter_xbar")
 
-    # HBM crossbar address map
-    am_hbm_xbar = am.new_node("am_hbm_xbar")
+    # # HBM crossbar address map
+    # am_hbm_xbar = am.new_node("am_hbm_xbar")
 
     # Quadrant crossbar address map
     am_wide_xbar_quadrant_s1 = list()
@@ -201,7 +201,7 @@ def main():
     # Peripheral crossbar address map
     am_soc_axi_lite_periph_xbar = am.new_node("soc_axi_lite_periph_xbar")
     am_soc_axi_lite_narrow_periph_xbar = am.new_node("soc_axi_lite_narrow_periph_xbar")
-    am_hbm_cfg_xbar = am.new_node("hbm_cfg_xbar")
+    # am_hbm_cfg_xbar = am.new_node("hbm_cfg_xbar")
 
     ############################
     # AM: Periph AXI Lite XBar #
@@ -266,11 +266,11 @@ def main():
     # AM: SPM / PCIE #
     ##################
     # Connect PCIE to Narrow AXI
-    am_pcie = am.new_leaf(
-        "pcie",
-        occamy.cfg["pcie"]["length"],
-        occamy.cfg["pcie"]["address_io"],
-        occamy.cfg["pcie"]["address_mm"]).attach_to(am_soc_narrow_xbar)
+    # am_pcie = am.new_leaf(
+    #     "pcie",
+    #     occamy.cfg["pcie"]["length"],
+    #     occamy.cfg["pcie"]["address_io"],
+    #     occamy.cfg["pcie"]["address_mm"]).attach_to(am_soc_narrow_xbar)
 
     # Connect narrow SPM to Narrow AXI
     am_spm_narrow = am.new_leaf(
@@ -301,12 +301,12 @@ def main():
     ###########
     # AM: HBI #
     ###########
-    am_hbi = am.new_leaf(
-        "hbi",
-        occamy.cfg["hbi"]["length"],
-        occamy.cfg["hbi"]["address"])
-    am_soc_wide_xbar.attach(am_hbi)
-    am_soc_narrow_xbar.attach(am_hbi)
+    # am_hbi = am.new_leaf(
+    #     "hbi",
+    #     occamy.cfg["hbi"]["length"],
+    #     occamy.cfg["hbi"]["address"])
+    # am_soc_wide_xbar.attach(am_hbi)
+    # am_soc_narrow_xbar.attach(am_hbi)
 
     ###########
     # AM: RMQ #
@@ -337,31 +337,31 @@ def main():
     ###########
     # AM: HBM #
     ###########
-    am_hbm = list()
+    # am_hbm = list()
 
-    hbm_base_address_0 = occamy.cfg["hbm"]["address_0"]
-    hbm_base_address_1 = occamy.cfg["hbm"]["address_1"]
+    # hbm_base_address_0 = occamy.cfg["hbm"]["address_0"]
+    # hbm_base_address_1 = occamy.cfg["hbm"]["address_1"]
 
-    nr_hbm_channels = occamy.cfg["hbm"]["nr_channels_total"]
-    nr_channels_base_0 = occamy.cfg["hbm"]["nr_channels_address_0"]
+    # nr_hbm_channels = occamy.cfg["hbm"]["nr_channels_total"]
+    # nr_channels_base_0 = occamy.cfg["hbm"]["nr_channels_address_0"]
 
-    hbm_channel_size = occamy.cfg["hbm"]["channel_size"]
+    # hbm_channel_size = occamy.cfg["hbm"]["channel_size"]
 
-    for i in range(nr_hbm_channels):
-        bases = list()
-        # Map first channels on both base addresses
-        if i < nr_channels_base_0:
-            bases.append(hbm_base_address_0 + i * hbm_channel_size)
-        # Map all channels on second base address
-        bases.append(hbm_base_address_1 + i * hbm_channel_size)
-        # create address map
-        am_hbm.append(
-            am.new_leaf(
-                "hbm_{}".format(i),
-                hbm_channel_size,
-                *bases).attach_to(am_hbm_xbar))
+    # for i in range(nr_hbm_channels):
+    #     bases = list()
+    #     # Map first channels on both base addresses
+    #     if i < nr_channels_base_0:
+    #         bases.append(hbm_base_address_0 + i * hbm_channel_size)
+    #     # Map all channels on second base address
+    #     bases.append(hbm_base_address_1 + i * hbm_channel_size)
+    #     # create address map
+    #     am_hbm.append(
+    #         am.new_leaf(
+    #             "hbm_{}".format(i),
+    #             hbm_channel_size,
+    #             *bases).attach_to(am_hbm_xbar))
 
-    dts.add_memory(am_hbm[0])
+    # dts.add_memory(am_hbm[0])
 
     ##############################
     # AM: Quadrants and Clusters #
@@ -452,20 +452,20 @@ def main():
     # Connect quadrants AXI xbar
     for i in range(nr_s1_quadrants):
         am_narrow_xbar_quadrant_s1[i].attach(am_wide_xbar_quadrant_s1[i])
-        am_wide_xbar_quadrant_s1[i].attach(am_quadrant_pre_xbar[i])
+        # am_wide_xbar_quadrant_s1[i].attach(am_quadrant_pre_xbar[i])
         am_soc_narrow_xbar.attach(am_narrow_xbar_quadrant_s1[i])
         am_quadrant_inter_xbar.attach(am_wide_xbar_quadrant_s1[i])
 
     # Connect quadrant inter xbar
     am_soc_wide_xbar.attach(am_quadrant_inter_xbar)
     am_quadrant_inter_xbar.attach(am_soc_wide_xbar)
-    for i in range(nr_s1_quadrants):
-        am_quadrant_pre_xbar[i].attach(am_quadrant_inter_xbar)
+    # for i in range(nr_s1_quadrants):
+    #     am_quadrant_pre_xbar[i].attach(am_quadrant_inter_xbar)
 
-    # Connect HBM xbar masters (memory slaves already attached)
-    am_soc_wide_xbar.attach(am_hbm_xbar)
-    for i in range(nr_s1_quadrants):
-        am_quadrant_pre_xbar[i].attach(am_hbm_xbar)
+    # # Connect HBM xbar masters (memory slaves already attached)
+    # am_soc_wide_xbar.attach(am_hbm_xbar)
+    # for i in range(nr_s1_quadrants):
+    #     am_quadrant_pre_xbar[i].attach(am_hbm_xbar)
 
     # Connect narrow xbar
     am_soc_narrow_xbar.attach(am_soc_axi_lite_periph_xbar)
@@ -477,8 +477,8 @@ def main():
     # Connect wide xbar
     am_soc_wide_xbar.attach(am_soc_narrow_xbar)
 
-    # Connect HBM config xbar to regbus xbar
-    am_soc_axi_lite_narrow_periph_xbar.attach(am_hbm_cfg_xbar)
+    # # Connect HBM config xbar to regbus xbar
+    # am_soc_axi_lite_narrow_periph_xbar.attach(am_hbm_cfg_xbar)
 
     #######################
     # SoC Peripheral Xbar #
@@ -509,23 +509,23 @@ def main():
     ###############
     # HBM control #
     ###############
-    hbm_cfg_xbar = solder.RegBusXbar(48,
-                                     32,
-                                     context="hbm_ctrl",
-                                     name="hbm_cfg_xbar",
-                                     # Use internal clock and reset
-                                     clk="cfg_clk",
-                                     rst="cfg_rst_n",
-                                     node=am_hbm_cfg_xbar)
+    # hbm_cfg_xbar = solder.RegBusXbar(48,
+    #                                  32,
+    #                                  context="hbm_ctrl",
+    #                                  name="hbm_cfg_xbar",
+    #                                  # Use internal clock and reset
+    #                                  clk="cfg_clk",
+    #                                  rst="cfg_rst_n",
+    #                                  node=am_hbm_cfg_xbar)
 
-    for name, region in occamy.cfg["hbm"]["cfg_regions"].items():
-        leaf = am.new_leaf(f"hbm_cfg_{name}",
-                           region["length"],
-                           region["address"]
-                           ).attach_to(am_hbm_cfg_xbar)
-        hbm_cfg_xbar.add_output_entry(name, leaf)
+    # for name, region in occamy.cfg["hbm"]["cfg_regions"].items():
+    #     leaf = am.new_leaf(f"hbm_cfg_{name}",
+    #                        region["length"],
+    #                        region["address"]
+    #                        ).attach_to(am_hbm_cfg_xbar)
+    #     hbm_cfg_xbar.add_output_entry(name, leaf)
 
-    hbm_cfg_xbar.add_input("cfg")
+    # hbm_cfg_xbar.add_input("cfg")
 
     ##################
     # AxiLite Narrow #
@@ -554,7 +554,7 @@ def main():
     soc_axi_lite_narrow_periph_xbar.add_output_entry("clint", am_clint)
 
     # add hbm cfg xbar separately
-    soc_axi_lite_narrow_periph_xbar.add_output_entry("hbm_cfg", am_hbm_cfg_xbar)
+    # soc_axi_lite_narrow_periph_xbar.add_output_entry("hbm_cfg", am_hbm_cfg_xbar)
 
     ##################
     # SoC Wide Xbars #
@@ -562,37 +562,38 @@ def main():
 
     # Quadrant pre xbars
     # Each connects one quadrant master to the HBM and quadrant xbars
-    quadrant_pre_xbars = list()
-    for i in range(nr_s1_quadrants):
-        quadrant_pre_xbar = solder.AxiXbar(
-            48,
-            512,
-            occamy.cfg["pre_xbar_slv_id_width_no_rocache"] + (
-                1 if occamy.cfg["s1_quadrant"].get("ro_cache_cfg") else 0),
-            name="quadrant_pre_xbar_{}".format(i),
-            clk="clk_i",
-            rst="rst_ni",
-            max_slv_trans=occamy.cfg["quadrant_pre_xbar"]["max_slv_trans"],
-            max_mst_trans=occamy.cfg["quadrant_pre_xbar"]["max_mst_trans"],
-            fall_through=occamy.cfg["quadrant_pre_xbar"]["fall_through"],
-            no_loopback=True,
-            atop_support=False,
-            context="soc",
-            node=am_quadrant_pre_xbar[i])
+    # quadrant_pre_xbars = list()
+    # for i in range(nr_s1_quadrants):
+    #     quadrant_pre_xbar = solder.AxiXbar(
+    #         48,
+    #         512,
+    #         occamy.cfg["pre_xbar_slv_id_width_no_rocache"] + (
+    #             1 if occamy.cfg["s1_quadrant"].get("ro_cache_cfg") else 0),
+    #         name="quadrant_pre_xbar_{}".format(i),
+    #         clk="clk_i",
+    #         rst="rst_ni",
+    #         max_slv_trans=occamy.cfg["quadrant_pre_xbar"]["max_slv_trans"],
+    #         max_mst_trans=occamy.cfg["quadrant_pre_xbar"]["max_mst_trans"],
+    #         fall_through=occamy.cfg["quadrant_pre_xbar"]["fall_through"],
+    #         no_loopback=True,
+    #         atop_support=False,
+    #         context="soc",
+    #         node=am_quadrant_pre_xbar[i])
 
-        # Default port:
-        quadrant_pre_xbar.add_output_entry("quadrant_inter_xbar", am_quadrant_inter_xbar)
-        quadrant_pre_xbar.add_output_entry("hbm_xbar", am_hbm_xbar)
-        quadrant_pre_xbar.add_input("quadrant")
+    #     # Default port:
+    #     quadrant_pre_xbar.add_output_entry("quadrant_inter_xbar", am_quadrant_inter_xbar)
+    #     quadrant_pre_xbar.add_output_entry("hbm_xbar", am_hbm_xbar)
+    #     quadrant_pre_xbar.add_input("quadrant")
 
-        quadrant_pre_xbars.append(quadrant_pre_xbar)
+    #     quadrant_pre_xbars.append(quadrant_pre_xbar)
 
     # Quadrant inter xbar
     # Connects all quadrant pre xbars to all quadrants, with additional wide xbar M/S pair
     quadrant_inter_xbar = solder.AxiXbar(
         48,
         512,
-        quadrant_pre_xbars[0].iw_out(),
+        occamy.cfg["pre_xbar_slv_id_width_no_rocache"] + (
+                    1 if occamy.cfg["s1_quadrant"].get("ro_cache_cfg") else 0),
         name="quadrant_inter_xbar",
         clk="clk_i",
         rst="rst_ni",
@@ -621,34 +622,34 @@ def main():
         quadrant_inter_xbar.add_output("remote", [])
         quadrant_inter_xbar.add_input("remote")
 
-    hbm_xbar = solder.AxiXbar(
-        48,
-        512,
-        quadrant_pre_xbars[0].iw_out(),
-        name="hbm_xbar",
-        clk="clk_i",
-        rst="rst_ni",
-        max_slv_trans=occamy.cfg["hbm_xbar"]["max_slv_trans"],
-        max_mst_trans=occamy.cfg["hbm_xbar"]["max_mst_trans"],
-        fall_through=occamy.cfg["hbm_xbar"]["fall_through"],
-        no_loopback=True,
-        atop_support=False,
-        interleaved_ena=True,
-        context="soc",
-        node=am_hbm_xbar)
+    # hbm_xbar = solder.AxiXbar(
+    #     48,
+    #     512,
+    #     quadrant_pre_xbars[0].iw_out(),
+    #     name="hbm_xbar",
+    #     clk="clk_i",
+    #     rst="rst_ni",
+    #     max_slv_trans=occamy.cfg["hbm_xbar"]["max_slv_trans"],
+    #     max_mst_trans=occamy.cfg["hbm_xbar"]["max_mst_trans"],
+    #     fall_through=occamy.cfg["hbm_xbar"]["fall_through"],
+    #     no_loopback=True,
+    #     atop_support=False,
+    #     interleaved_ena=True,
+    #     context="soc",
+    #     node=am_hbm_xbar)
 
-    # Default port: HBM 0
-    for i in range(nr_hbm_channels):
-        hbm_xbar.add_output_entry("hbm_{}".format(i), am_hbm[i])
-    for i in range(nr_s1_quadrants):
-        hbm_xbar.add_input("quadrant_{}".format(i))
-    hbm_xbar.add_input("wide_xbar")
+    # # Default port: HBM 0
+    # for i in range(nr_hbm_channels):
+    #     hbm_xbar.add_output_entry("hbm_{}".format(i), am_hbm[i])
+    # for i in range(nr_s1_quadrants):
+    #     hbm_xbar.add_input("quadrant_{}".format(i))
+    # hbm_xbar.add_input("wide_xbar")
 
     soc_wide_xbar = solder.AxiXbar(
         48,
         512,
         # This is the cleanest solution minimizing ID width conversions
-        quadrant_pre_xbars[0].iw,
+        quadrant_inter_xbar.iw,
         name="soc_wide_xbar",
         clk="clk_i",
         rst="rst_ni",
@@ -660,13 +661,13 @@ def main():
         context="soc",
         node=am_soc_wide_xbar)
 
-    # Default port: HBI (always escalate "upwards" in hierarchy -> off-chip)
-    if not is_remote_quadrant:
-        soc_wide_xbar.add_output_entry("hbi", am_hbi)
-    soc_wide_xbar.add_output_entry("hbm_xbar", am_hbm_xbar)
+    # # Default port: HBI (always escalate "upwards" in hierarchy -> off-chip)
+    # if not is_remote_quadrant:
+    #     soc_wide_xbar.add_output_entry("hbi", am_hbi)
+    # soc_wide_xbar.add_output_entry("hbm_xbar", am_hbm_xbar)
     soc_wide_xbar.add_output_entry("quadrant_inter_xbar", am_quadrant_inter_xbar)
     soc_wide_xbar.add_output_entry("soc_narrow", am_soc_narrow_xbar)
-    soc_wide_xbar.add_input("hbi")
+    # soc_wide_xbar.add_input("hbi")
     soc_wide_xbar.add_input("quadrant_inter_xbar")
     soc_wide_xbar.add_input("soc_narrow")
     soc_wide_xbar.add_input("sys_idma_mst")
@@ -702,20 +703,20 @@ def main():
     soc_narrow_xbar.add_input("cva6")
     soc_narrow_xbar.add_input("soc_wide")
     soc_narrow_xbar.add_input("periph")
-    soc_narrow_xbar.add_input("pcie")
-    soc_narrow_xbar.add_input("hbi")
+    # soc_narrow_xbar.add_input("pcie")
+    # soc_narrow_xbar.add_input("hbi")
     dts.add_cpu("eth,ariane")
 
     # Default port: wide xbar
     soc_narrow_xbar.add_output_entry("soc_wide", am_soc_wide_xbar)
-    if not is_remote_quadrant:
-        soc_narrow_xbar.add_output_entry("hbi", am_hbi)
+    # if not is_remote_quadrant:
+    #     soc_narrow_xbar.add_output_entry("hbi", am_hbi)
     soc_narrow_xbar.add_output_entry("periph", am_soc_axi_lite_periph_xbar)
     soc_narrow_xbar.add_output_entry("spm_narrow", am_spm_narrow)
     soc_narrow_xbar.add_output_entry("sys_idma_cfg", am_sys_idma_cfg)
     soc_narrow_xbar.add_output_entry("axi_lite_narrow_periph",
                                      am_soc_axi_lite_narrow_periph_xbar)
-    soc_narrow_xbar.add_output_entry("pcie", am_pcie)
+    # soc_narrow_xbar.add_output_entry("pcie", am_pcie)
     for i, rq in enumerate(occamy.cfg["remote_quadrants"]):
         soc_narrow_xbar.add_input("rmq_{}".format(i))
         soc_narrow_xbar.add_output_entry("rmq_{}".format(i), am_remote_quadrants[i])
@@ -857,17 +858,17 @@ def main():
     # Generate the Verilog code.
     solder.render()
 
-    ###############
-    # HBM APB CTL #
-    ###############
-    if is_remote_quadrant:
-        apb_hbm_cfg = None
-    else:
-        apb_hbm_cfg = solder.ApbBus(clk=soc_axi_lite_narrow_periph_xbar.clk,
-                                    rst=soc_axi_lite_narrow_periph_xbar.rst,
-                                    aw=soc_axi_lite_narrow_periph_xbar.aw,
-                                    dw=soc_axi_lite_narrow_periph_xbar.dw,
-                                    name="apb_hbm_cfg")
+    # ###############
+    # # HBM APB CTL #
+    # ###############
+    # if is_remote_quadrant:
+    #     apb_hbm_cfg = None
+    # else:
+    #     apb_hbm_cfg = solder.ApbBus(clk=soc_axi_lite_narrow_periph_xbar.clk,
+    #                                 rst=soc_axi_lite_narrow_periph_xbar.rst,
+    #                                 aw=soc_axi_lite_narrow_periph_xbar.aw,
+    #                                 dw=soc_axi_lite_narrow_periph_xbar.dw,
+    #                                 name="apb_hbm_cfg")
 
     kwargs = {
         "solder": solder,
@@ -876,16 +877,12 @@ def main():
         "name": args.name,
         "soc_narrow_xbar": soc_narrow_xbar,
         "soc_wide_xbar": soc_wide_xbar,
-        "quadrant_pre_xbars": quadrant_pre_xbars,
-        "hbm_xbar": hbm_xbar,
         "quadrant_inter_xbar": quadrant_inter_xbar,
         "quadrant_s1_ctrl_xbars": quadrant_s1_ctrl_xbars,
         "quadrant_s1_ctrl_mux": quadrant_s1_ctrl_mux,
         "wide_xbar_quadrant_s1": wide_xbar_quadrant_s1,
         "narrow_xbar_quadrant_s1": narrow_xbar_quadrant_s1,
         "soc_axi_lite_narrow_periph_xbar": soc_axi_lite_narrow_periph_xbar,
-        "hbm_cfg_xbar": hbm_cfg_xbar,
-        "apb_hbm_cfg": apb_hbm_cfg,
         "cfg": occamy.cfg,
         "cores": nr_s1_quadrants * nr_s1_clusters * nr_cluster_cores + nr_remote_cores + 1,
         "lcl_cores": nr_s1_quadrants * nr_s1_clusters * nr_cluster_cores +
@@ -896,8 +893,6 @@ def main():
         "nr_remote_quadrants": nr_remote_quadrants,
         "nr_s1_clusters": nr_s1_clusters,
         "nr_cluster_cores": nr_cluster_cores,
-        "hbm_channel_size": hbm_channel_size,
-        "nr_hbm_channels": nr_hbm_channels,
         "rmq_mux": rmq_mux,
         "rmq_demux": rmq_demux
     }
@@ -995,10 +990,10 @@ def main():
     ###############
     # HBM control #
     ###############
-    write_template(args.hbm_ctrl,
-                   outdir,
-                   module=solder.code_module['hbm_ctrl'],
-                   **kwargs)
+    # write_template(args.hbm_ctrl,
+    #                outdir,
+    #                module=solder.code_module['hbm_ctrl'],
+    #                **kwargs)
 
     ############
     # CHIP TOP #

@@ -7,6 +7,7 @@
 # Add user applications to APPS variable
 APPS  = blas/axpy
 APPS += blas/gemm
+APPS += blas/test
 APPS += snax/snax-wide-gemm-data-reshuffler
 TARGET ?= all
 
