@@ -25,6 +25,8 @@ module ${name}_top
   // `uart` Interface
   output logic        uart_tx_o,
   input  logic        uart_rx_i,
+  output logic        uart_rts_no, 
+  input  logic        uart_cts_ni, 
   // `gpio` Interface
   input  logic [31:0] gpio_d_i,
   output logic [31:0] gpio_d_o,
@@ -530,11 +532,11 @@ module ${name}_top
     .intr_o (irq.uart),
     .out1_no (  ),  // keep open
     .out2_no (  ),  // keep open
-    .rts_no (  ),   // no flow control
-    .dtr_no (  ),   // no flow control
-    .cts_ni (1'b0), // no flow control
-    .dsr_ni (1'b0), // no flow control
-    .dcd_ni (1'b0), // no flow control
+    .rts_no (uart_rts_no), 
+    .dtr_no (  ),   // two-wire flow control
+    .cts_ni (uart_cts_ni), 
+    .dsr_ni (1'b0), // two-wire flow control
+    .dcd_ni (1'b0), // two-wire flow control
     .rin_ni (1'b0),
     .sin_i (uart_rx_i),
     .sout_o (uart_tx_o)

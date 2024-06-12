@@ -28,6 +28,8 @@ import ${name}_pkg::*;
   // `uart` Interface
   output logic        uart_tx_o,
   input  logic        uart_rx_i,
+  output logic        uart_rts_no, 
+  input  logic        uart_cts_ni, 
   // `gpio` Interface
   input  logic [31:0] gpio_d_i,
   output logic [31:0] gpio_d_o,
