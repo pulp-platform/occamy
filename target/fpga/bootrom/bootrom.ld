@@ -1,6 +1,6 @@
 /* Copyright 2024 KU Leuven. */
-/* Solderpad Hardware License, Version 0.51, see LICENSE for details. */
-/* SPDX-License-Identifier: SHL-0.51 */
+
+
 ENTRY(_start)
 
 MEMORY
@@ -11,13 +11,15 @@ MEMORY
 
 SECTIONS
 {
-  .text : { *(.text._start) *(.text) *(.text.*) } > bootrom
-  .misc : { *(.data) *(.sdata) *(.*) } > bootrom
-  .end : { *(end) } > bootrom
+  .text : { *(.text._start) *(.text) } > bootrom
+	.rodata : { *(.rodata) } > bootrom
+	.data : { *(.data) *(.sdata)  } > spm
+	.bss : { *(.bss) } > spm
+	/* .misc : { *(*) } > bootrom */
 
-  /DISCARD/ : { *(.riscv.attributes) *(.comment) }
+  /* /DISCARD/ : { *(.riscv.attributes) *(.comment) *(.debug*) } */
   /* Global and stack pointer */
-  __global_pointer$ = ADDR(.misc) + SIZEOF(.misc) / 2;
+  __global_pointer$ = ADDR(.rodata) + SIZEOF(.rodata) / 2;
   __stack_pointer$  = ORIGIN(spm) + LENGTH(spm) - 8;
   /* Quadrant Parameters */
   __quad_stride     = 0x10000;

@@ -39,19 +39,9 @@ proc snax_write_vio {regexp_vio regexp_probe val} {
 
 proc snax_download_sw {} {
     global snax_hw_device
-    # Reset peripherals and CPU
-    snax_write_vio "hw_vio_1" ".*rst.*" 1
-    after 100
-    # Wake up peripherals to write bootrom
-    snax_write_vio "hw_vio_1" ".*glbl_rst.*" 0
-    after 100
-    # Overwrite bootrom
+    # Verify app
     refresh_hw_device [lindex [get_hw_devices ${snax_hw_device}] 0]
-    source bootrom.tcl
-    # source app.tcl
-    after 100
-    # Wake up CPU
-    snax_write_vio "hw_vio_1" ".*rst.*" 0
+    source app_verify.tcl
 }
 
 

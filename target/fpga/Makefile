@@ -28,13 +28,13 @@ include $(ROOT)/util/Makefrag
 vivado_ips/occamy_xilinx:
 	${MAKE} -C vivado_ips occamy_xilinx
 
-sw/bootrom.coe:
-	${MAKE} -C sw bootrom.coe
+.PHONY:occamy_vcu128 sw
 
-.PHONY:occamy_vcu128
+sw:
+	${MAKE} -C sw sw
 
-occamy_vcu128: vivado_ips/occamy_xilinx define_defines_includes_no_simset.tcl sw/bootrom.coe
-	${VIVADO} -mode batch -source occamy_vcu128_2023.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC) ${MKFILE_DIR}/sw/bootrom.coe
+occamy_vcu128: vivado_ips/occamy_xilinx define_defines_includes_no_simset.tcl
+	${VIVADO} -mode batch -source occamy_vcu128_2023.tcl -tclargs $(DEBUG) $(EXT_JTAG) $(NPROC)
 
 define_defines_includes_no_simset.tcl: $(BENDER_FILES)
 	${BENDER} script vivado $(BENDER_TARGETS) --only-defines --only-includes --no-simset > $@

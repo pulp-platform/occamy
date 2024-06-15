@@ -13,7 +13,6 @@ set EXT_JTAG false
 if {$argc > 0 && [lindex $argv 0]} { set DEBUG true }
 if {$argc > 1 && [lindex $argv 1]} { set EXT_JTAG true }
 set nproc [lindex $argv 2]
-set coe_path [lindex $argv 3]
 
 # Create project
 set project occamy_vcu128_2023
@@ -26,7 +25,6 @@ set_property ip_repo_paths ./vivado_ips [current_project]
 update_ip_catalog
 
 # Create block design
-exec sed -i "s|CONFIG.Coe_File {.*}|CONFIG.Coe_File {$coe_path}|g" occamy_vcu128_2023_bd.tcl
 source occamy_vcu128_2023_bd.tcl
 
 # Add constraint files

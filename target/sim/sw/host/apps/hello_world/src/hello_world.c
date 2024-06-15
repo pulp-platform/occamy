@@ -17,12 +17,14 @@ int main() {
 
     while (1) {
         scan_uart(uart_rx_buffer);
-        sprintf(uart_tx_buffer, "[Occamy] What you said is: %s", uart_rx_buffer);
+        sprintf(uart_tx_buffer, "[Occamy] What you said is: %s",
+                uart_rx_buffer);
         print_uart(uart_tx_buffer);
         // Artificial delay to ensure last symbol has been transmitted
-        // (just waiting for the UART TSR register to be empty is not sufficient)
-        for (int i = 0; i < 50000; i++) asm volatile("nop" : : : "memory"); 
+        // (just waiting for the UART TSR register to be empty is not
+        // sufficient)
+        for (int i = 0; i < 50000; i++) asm volatile("nop" : : : "memory");
     }
-    
+
     return 0;
 }

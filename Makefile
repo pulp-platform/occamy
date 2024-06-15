@@ -11,10 +11,12 @@ clean:
 	make -C ./target/sim/ clean
 	make -C ./target/rtl/ clean
 	make -C ./target/fpga/sw clean
+	make -C ./target/fpga/bootrom clean
 
 # Software Generation
 bootrom: # In Occamy Docker
 	make -C ./target/sim bootrom CFG_OVERRIDE=../rtl/cfg/$(CFG)
+	make -C ./target/fpga/bootrom bootrom
 
 sw: # In Occamy Docker
 	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/$(CFG)

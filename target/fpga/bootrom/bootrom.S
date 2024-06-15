@@ -46,9 +46,11 @@ _cva6_init:
     .option pop
     # Set stack pointer
     la      sp, __stack_pointer$
-    la      t2, exception
-    csrw    mtvec, t2
+    la      t1, exception
+    csrw    mtvec, t1
     call    main
+	li      t0, 0x80000000
+    jalr    t0
 exception:
     wfi
     j     exception
