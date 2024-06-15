@@ -278,7 +278,6 @@ proc create_root_design { parentCell } {
   set blk_mem_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 blk_mem_gen_0 ]
   set_property -dict [list \
     CONFIG.Assume_Synchronous_Clk {false} \
-    CONFIG.Coe_File {/users/micas/ydeng/Desktop/SNAX/occamy_kul/target/fpga/sw/bootrom.coe} \
     CONFIG.EN_SAFETY_CKT {true} \
     CONFIG.Enable_32bit_Address {true} \
     CONFIG.Enable_B {Use_ENB_Pin} \
