@@ -69,9 +69,8 @@ void uart_xmodem(uint64_t start_address) {
     uint8_t expected_packet_number = 1;
     bool transmission_end = false;
 
-    print_uart("\r\n\t Start to receive data in 10 second... ");
-    delay_cycles(50000000 * 10);
-    
+    delay_cycles(50000000); // Delay for 1s
+
     write_serial(NAK);  // Request for data
 
     while (!transmission_end) {
@@ -102,9 +101,9 @@ void uart_xmodem(uint64_t start_address) {
 
                 if (received_parity == calculated_parity) {
                     // Copy data to memory
-                    memcpy((void *)(start_address + (block_number - 1) * 128), data, index);
-                    block_number++;
                     write_serial(ACK);
+                    memcpy((void *)(start_address + (block_number - 1) * index), data, index);
+                    block_number++;
                 } else {
                     write_serial(NAK); // CRC error, request retransmission
                 }
@@ -120,13 +119,13 @@ void uart_xmodem(uint64_t start_address) {
 // Boot modes.
 enum boot_mode_t {JTAG, UART, PRINTMEM, NORMAL };
 
-void main() {
+void bootrom() {
     enum boot_mode_t boot_mode = JTAG;
     uint64_t start_address;
     uint64_t end_address;
 
     char in_buf[8]; 
-    init_uart(50000000, 115200);
+    init_uart(50000000, 1000000);
 
     while (1) {
         start_address = 0x80000000;
