@@ -12,12 +12,14 @@ MEMORY
 SECTIONS
 {
   .text : { *(.text._start) *(.text) } > bootrom
-	.rodata : { *(.rodata) } > bootrom
+	.rodata : { *(.rodata) *(.rodata*) } > bootrom
+	.srodata : { *(.srodata) *(.srodata*) } > bootrom
 	.data : { *(.data) *(.sdata)  } > spm
 	.bss : { *(.bss) } > spm
-	/* .misc : { *(*) } > bootrom */
 
+	/* .misc : { *(*) } > bootrom */
   /* /DISCARD/ : { *(.riscv.attributes) *(.comment) *(.debug*) } */
+
   /* Global and stack pointer */
   __global_pointer$ = ADDR(.rodata) + SIZEOF(.rodata) / 2;
   __stack_pointer$  = ORIGIN(spm) + LENGTH(spm) - 8;

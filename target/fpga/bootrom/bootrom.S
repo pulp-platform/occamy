@@ -48,7 +48,7 @@ _cva6_init:
     la      sp, __stack_pointer$
     la      t1, exception
     csrw    mtvec, t1
-    call    main
+    call    bootrom
 	li      t0, 0x80000000
     jalr    t0
 exception:

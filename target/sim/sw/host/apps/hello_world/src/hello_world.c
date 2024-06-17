@@ -9,7 +9,7 @@
 #define PERIPH_FREQ 50000000
 
 int main() {
-    init_uart(PERIPH_FREQ, 115200);
+    init_uart(PERIPH_FREQ, 1000000);
     asm volatile("fence" : : : "memory");
     print_uart("Hello world from Occamy in VCU128! \r\n");
     char uart_rx_buffer[512];

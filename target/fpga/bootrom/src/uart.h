@@ -1,4 +1,4 @@
-// Copyright 2021 ETH Zurich, University of Bologna, and KU Leuven.
+// Copyright 2021 ETH Zurich, University of Bologna; Copyright 2024 KU Leuven.
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -6,7 +6,9 @@
 
 #include <stdint.h>
 
-#define UART_BASE_ADDR 0x02002000
+extern uint32_t __base_uart_sym;
+
+#define UART_BASE_ADDR (uintptr_t)&__base_uart_sym
 
 #define UART_RBR UART_BASE_ADDR + 0
 #define UART_THR UART_BASE_ADDR + 0
@@ -19,6 +21,26 @@
 #define UART_MODEM_STATUS UART_BASE_ADDR + 24
 #define UART_DLAB_LSB UART_BASE_ADDR + 0
 #define UART_DLAB_MSB UART_BASE_ADDR + 4
+
+
+/*
+    UART_LINE_CONTROL[1:0]: iLCR_WLS Word Length Select, 2'b11 for two bits mode
+    UART_LINE_CONTROL[2]: iLCE_STB, 1'b0 for one bit stop bit
+    UART_LINE_CONTROL[3]: iLCR_PEN, Parity Enable, disable as there is higher level parity check algorithm
+    UART_LINE_CONTROL[4]: iLCR_PES, also related to parity check
+    UART_LINE_CONTROL[5]: iLCR_SP, also related to parity check
+    UART_LINE_CONTROL[6]: iLCR_BC, signaling a break control
+    UART_LINE_CONTROL[7]: iLCR_DLAB, don't know what it is
+
+*/
+/*
+    UART_MODEM_CONTROL[0]: iMCR_DTR (DTR output, not used)
+    UART_MODEM_CONTROL[1]: iMCR_RTS (RTS output, set 1 to inform the device is ready to receive the data)
+    UART_MODEM_CONTROL[2]: iMCR_OUT1 (General Purpose Output 1, not used)
+    UART_MODEM_CONTROL[3]: iMCR_OUT2 (General Purpose Output 2, not used)
+    UART_MODEM_CONTROL[4]: iMCR_LOOP (Internal Loopback, should set to 0)
+    UART_MODEM_CONTROL[5]: iMCR_AFE (Automatic Flow Control, set to 1 to automatically manage DTR and RTS)
+*/
 
 inline static void write_reg_u8(uintptr_t addr, uint8_t value) {
     volatile uint8_t *loc_addr = (volatile uint8_t *)addr;
@@ -69,7 +91,7 @@ inline static void init_uart(uint32_t freq, uint32_t baud) {
     write_reg_u8(UART_LINE_CONTROL, 0x03);  // 8 bits, no parity, one stop bit
     write_reg_u8(UART_FIFO_CONTROL,
                  0xC7);  // Enable FIFO, clear them, with 14-byte threshold
-    write_reg_u8(UART_MODEM_CONTROL, 0x20);  // Autoflow mode
+    write_reg_u8(UART_MODEM_CONTROL, 0x22);  // Flow control enabled, auto flow control mode
 }
 
 inline static void print_uart(const char *str) {

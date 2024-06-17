@@ -69,7 +69,7 @@ inline static void init_uart(uint32_t freq, uint32_t baud) {
     write_reg_u8(UART_LINE_CONTROL, 0x03);  // 8 bits, no parity, one stop bit
     write_reg_u8(UART_FIFO_CONTROL,
                  0xC7);  // Enable FIFO, clear them, with 14-byte threshold
-    write_reg_u8(UART_MODEM_CONTROL, 0x20);  // Autoflow mode
+    write_reg_u8(UART_MODEM_CONTROL, 0x22);  // Autoflow mode
 }
 
 inline static void print_uart(const char *str) {
@@ -86,10 +86,7 @@ inline static void scan_uart(char *str) {
     while (1) {
         *cur = read_serial();
         if (*cur == '\r') {
-            *(++cur) = '\n';
-        }
-        if (*cur == '\n') {
-            *(++cur) = '\0';
+            *cur = '\0';
             return;
         } else
             cur++;
