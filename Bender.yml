@@ -133,3 +133,8 @@ sources:
     files:
       - target/rtl/test/uartdpi/uartdpi.sv
       - target/rtl/test/testharness.sv
+
+  - target: tapeout
+    files:
+      - target/rtl/bootrom/bootrom.sv
+      - target/rtl/src/occamy_chip.sv

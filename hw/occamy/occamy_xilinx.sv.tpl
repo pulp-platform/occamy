@@ -21,10 +21,6 @@ import ${name}_pkg::*;
   input  logic        test_mode_i,
   input  logic [1:0]  chip_id_i,
   input  logic [1:0]  boot_mode_i,
-  // pad cfg
-  output logic [31:0]      pad_slw_o,
-  output logic [31:0]      pad_smt_o,
-  output logic [31:0][1:0] pad_drv_o,
   // `uart` Interface
   output logic        uart_tx_o,
   input  logic        uart_rx_i,
@@ -34,8 +30,6 @@ import ${name}_pkg::*;
   input  logic [31:0] gpio_d_i,
   output logic [31:0] gpio_d_o,
   output logic [31:0] gpio_oe_o,
-  output logic [31:0] gpio_puen_o,
-  output logic [31:0] gpio_pden_o,
   // `jtag` Interface
   input  logic        jtag_trst_ni,
   input  logic        jtag_tck_i,
@@ -43,12 +37,8 @@ import ${name}_pkg::*;
   input  logic        jtag_tdi_i,
   output logic        jtag_tdo_o,
   // `i2c` Interface
-  output logic        i2c_sda_o,
-  input  logic        i2c_sda_i,
-  output logic        i2c_sda_en_o,
-  output logic        i2c_scl_o,
-  input  logic        i2c_scl_i,
-  output logic        i2c_scl_en_o,
+  inout  logic        i2c_sda_io,
+  inout  logic        i2c_scl_io,
   // `SPI Host` Interface
   output logic        spim_sck_o,
   output logic        spim_sck_en_o,
@@ -58,50 +48,30 @@ import ${name}_pkg::*;
   output logic [3:0]  spim_sd_en_o,
   input        [3:0]  spim_sd_i,
 
-  input  logic [11:0]  ext_irq_i,
+  input  logic [11:0] ext_irq_i,
 
   // Boot ROM
-  output logic                                             bootrom_en_o,
+  output logic        bootrom_en_o,
   // This is actually too wide. But the address width depends on the ROM size, so let Vivado handle
   // this for now
   output logic [47:0] bootrom_addr_o,
   input  logic [31:0] bootrom_data_i,
 
-  /// HBM2e Ports
-% for i in range(8):
-  ${hbm_xbar.__dict__["out_hbm_{}".format(i)].emit_flat_master_port("hbm_{}".format(i))},
-% endfor
-
-  /// PCIe Ports
-  ${soc_narrow_xbar.out_pcie.emit_flat_master_port("pcie")},
-  ${soc_narrow_xbar.in_pcie.emit_flat_slave_port("pcie")}
-  /// HBI Ports
+  // SPM / SRAM as the main memory
+  ${soc_wide_xbar.out_spm_wide.emit_flat_master_port("ram")}
 );
 
   // AXI ports of Occamy top-level
-  //////////
-  // PCIe //
-  //////////
-  ${soc_narrow_xbar.out_pcie.req_type()} pcie_axi_req_o;
-  ${soc_narrow_xbar.out_pcie.rsp_type()} pcie_axi_rsp_i;
 
-  ${soc_narrow_xbar.in_pcie.req_type()} pcie_axi_req_i;
-  ${soc_narrow_xbar.in_pcie.rsp_type()} pcie_axi_rsp_o;
+  /////////////////////////
+  // SRAM as main memory //
+  /////////////////////////
 
-  // Assign structs to flattened ports
-  `AXI_FLATTEN_MASTER(pcie, pcie_axi_req_o, pcie_axi_rsp_i)
-  `AXI_FLATTEN_SLAVE(pcie, pcie_axi_req_i, pcie_axi_rsp_o)
-
-  /////////
-  // HBM //
-  /////////
-% for i in range(8):
-  ${hbm_xbar.__dict__["out_hbm_{}".format(i)].req_type()} hbm_${i}_req_o;
-  ${hbm_xbar.__dict__["out_hbm_{}".format(i)].rsp_type()} hbm_${i}_rsp_i;
+  ${soc_wide_xbar.out_spm_wide.req_type()} spm_axi_wide_req_o;
+  ${soc_wide_xbar.out_spm_wide.rsp_type()} spm_axi_wide_rsp_i;
 
   // Assign structs to flattened ports
-  `AXI_FLATTEN_MASTER(hbm_${i}, hbm_${i}_req_o, hbm_${i}_rsp_i)
-% endfor
+  `AXI_FLATTEN_MASTER(ram, spm_axi_wide_req_o, spm_axi_wide_rsp_i)
 
   ///////////////////
   // Boot ROM      //
@@ -131,51 +101,15 @@ import ${name}_pkg::*;
     end
   end
 
-  /// FLLs
-  ${soc_axi_lite_narrow_periph_xbar.out_fll_system.req_type()} fll_system_axi_lite_req;
-  ${soc_axi_lite_narrow_periph_xbar.out_fll_system.rsp_type()} fll_system_axi_lite_rsp;
-
-  ${soc_axi_lite_narrow_periph_xbar.out_fll_periph.req_type()} fll_periph_axi_lite_req;
-  ${soc_axi_lite_narrow_periph_xbar.out_fll_periph.rsp_type()} fll_periph_axi_lite_rsp;
-
-  ${soc_axi_lite_narrow_periph_xbar.out_fll_hbm2e.req_type()} fll_hbm2e_axi_lite_req;
-  ${soc_axi_lite_narrow_periph_xbar.out_fll_hbm2e.rsp_type()} fll_hbm2e_axi_lite_rsp;
-
-  <% regbus_fll_system = soc_axi_lite_narrow_periph_xbar.out_fll_system.to_reg(context, "fll_system", fr="fll_system_axi_lite") %>
-  <% regbus_fll_periph = soc_axi_lite_narrow_periph_xbar.out_fll_periph.to_reg(context, "fll_periph", fr="fll_periph_axi_lite") %>
-  <% regbus_fll_hbm2e = soc_axi_lite_narrow_periph_xbar.out_fll_hbm2e.to_reg(context,   "fll_hbm2e", fr="fll_hbm2e_axi_lite") %>
 
   // Occamy top-level
   ${name}_top i_${name} (
     .bootrom_req_o   (bootrom_axi_lite_req),
     .bootrom_rsp_i   (bootrom_axi_lite_rsp),
-    .fll_system_req_o(fll_system_axi_lite_req),
-    .fll_system_rsp_i(fll_system_axi_lite_rsp),
-    .fll_periph_req_o(fll_periph_axi_lite_req),
-    .fll_periph_rsp_i(fll_periph_axi_lite_rsp),
-    .fll_hbm2e_req_o (fll_hbm2e_axi_lite_req),
-    .fll_hbm2e_rsp_i (fll_hbm2e_axi_lite_rsp),
     .ext_irq_i(ext_irq_i),
     // Tie-off unused ports
-    .pcie_cfg_rsp_i  ('0),
-    .hbi_wide_cfg_rsp_i ('0),
-    .hbi_narrow_cfg_rsp_i ('0),
-    .hbm_cfg_rsp_i ('0),
     .chip_ctrl_rsp_i ('0),
-    .hbi_wide_req_i ('0),
-    .hbi_wide_rsp_i ('0),
-    .hbi_narrow_req_i ('0),
-    .hbi_narrow_rsp_i ('0),
     .sram_cfgs_i ('0),
-    .hbi_wide_cfg_req_o(),
-    .hbi_narrow_cfg_req_o(),
-    .hbm_cfg_req_o(),
-    .pcie_cfg_req_o(),
-    .chip_ctrl_req_o(),
-    .hbi_wide_req_o(),
-    .hbi_wide_rsp_o(),
-    .hbi_narrow_req_o(),
-    .hbi_narrow_rsp_o(),
     .*
   );
 

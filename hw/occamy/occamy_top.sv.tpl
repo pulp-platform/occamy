@@ -38,20 +38,12 @@ module ${name}_top
   input  logic        jtag_tdi_i,
   output logic        jtag_tdo_o,
   // `i2c` Interface
-  output logic        i2c_sda_o,
-  input  logic        i2c_sda_i,
-  output logic        i2c_sda_en_o,
-  output logic        i2c_scl_o,
-  input  logic        i2c_scl_i,
-  output logic        i2c_scl_en_o,
+  inout  logic        i2c_sda_io,
+  inout  logic        i2c_scl_io,
   // `SPI Host` Interface
   output logic        spim_sck_o,
-  output logic        spim_sck_en_o,
   output logic [1:0]  spim_csb_o,
-  output logic [1:0]  spim_csb_en_o,
-  output logic [3:0]  spim_sd_o,
-  output logic [3:0]  spim_sd_en_o,
-  input        [3:0]  spim_sd_i,
+  inout  logic [3:0]  spim_sd_io,
 
   /// Boot ROM
   output ${soc_axi_lite_narrow_periph_xbar.out_bootrom.req_type()} bootrom_req_o,
@@ -430,6 +422,8 @@ module ${name}_top
   <% regbus_spim = soc_axi_lite_narrow_periph_xbar.out_spim \
     .cut(context, cuts_spim_cfg, name="soc_axi_lite_narrow_periph_xbar_out_spim_cut") \
     .to_reg(context, "axi_lite_to_reg_spim") %>
+
+  logic [3:0] spim_sd_i, spim_sd_o, spim_sd_en_o;
   spi_host #(
     .reg_req_t (${regbus_spim.req_type()}),
     .reg_rsp_t (${regbus_spim.rsp_type()})
@@ -442,15 +436,26 @@ module ${name}_top
     .reg_req_i (${regbus_spim.req_name()}),
     .reg_rsp_o (${regbus_spim.rsp_name()}),
     .cio_sck_o (spim_sck_o),
-    .cio_sck_en_o (spim_sck_en_o),
+    .cio_sck_en_o (),
     .cio_csb_o (spim_csb_o),
-    .cio_csb_en_o (spim_csb_en_o),
+    .cio_csb_en_o (),
     .cio_sd_o (spim_sd_o),
     .cio_sd_en_o (spim_sd_en_o),
     .cio_sd_i (spim_sd_i),
     .intr_error_o (irq.spim_error),
     .intr_spi_event_o (irq.spim_spi_event)
   );
+
+
+  // Unidirectional - Bidirectional transform
+  always_comb begin
+    if (spim_sd_en_o > 0) begin             // Output Mode
+      spim_sd_i = 4'b1;                     // Tie-off input
+      spim_sd_io = spim_sd_o;
+    end else begin                          // Input Mode
+      spim_sd_i = spim_sd_io;
+    end
+  end
 
   //////////////
   //   GPIO   //
@@ -478,6 +483,9 @@ module ${name}_top
   <% regbus_i2c = soc_axi_lite_narrow_periph_xbar.out_i2c \
     .cut(context, cuts_i2c_cfg, name="soc_axi_lite_narrow_periph_xbar_out_i2c_cut") \
     .to_reg(context, "axi_lite_to_reg_i2c") %>
+
+  logic i2c_scl_i i2c_scl_o i2c_scl_en_o i2c_sda_i i2c_sda_o i2c_sda_en_o;
+  
   i2c #(
     .reg_req_t (${regbus_i2c.req_type()}),
     .reg_rsp_t (${regbus_i2c.rsp_type()})
@@ -509,6 +517,25 @@ module ${name}_top
     .intr_ack_stop_o (irq.i2c_ack_stop),
     .intr_host_timeout_o (irq.i2c_host_timeout)
   );
+
+  // Unidirectional - Bidirectional transform
+  always_comb begin
+    if (i2c_sda_en_o) begin                 // Output Mode
+      i2c_sda_i = 1'b1;                     // Tie-off input
+      i2c_sda_io = i2c_sda_o ? 1'bZ : 1'b0; // Open-drain connection;
+    end else begin                          // Input Mode
+      i2c_sda_i = i2c_sda_io;
+    end
+  end
+
+  always_comb begin
+    if (i2c_scl_en_o) begin                 // Output Mode
+      i2c_scl_i = 1'b1;                     // Tie-off input
+      i2c_scl_io = i2c_scl_o ? 1'bZ : 1'b0; // Open-drain connection
+    end else begin                          // Input Mode
+      i2c_scl_i = i2c_scl_io;
+    end
+  end
 
   /////////////
   //  Timer  //

@@ -14,8 +14,14 @@ clean:
 
 # Software Generation
 bootrom: # In Occamy Docker
+# The bootrom used for simulation (light-weight bootrom)
 	make -C ./target/sim bootrom CFG_OVERRIDE=../rtl/cfg/occamy_cfg/$(CFG)
+
+# The bootrom used for FPGA protoyping (emulated eeprom, full-functional bootrom)
 	make -C ./target/fpga/bootrom bootrom
+
+# The bootrom used for tapeout (embedded real rom, full-functional bootrom with different frequency settings)
+	make -C ./target/rtl/bootrom bootrom
 
 sw: # In Occamy Docker
 	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/occamy_cfg/$(CFG)

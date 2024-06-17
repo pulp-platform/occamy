@@ -33,7 +33,7 @@ TARGET_CLINT_DIR     ?= $(TARGET_SRC_DIR)/clint
 
 TARGET_RTL			 ?= $(ROOT)/target/rtl
 
-TARGET_DTS_DIR       ?= $(TARGET_RTL)/test
+# TARGET_DTS_DIR       ?= $(TARGET_RTL)/test
 
 ############
 # Programs #
@@ -113,9 +113,6 @@ test/testharness.sv: test/testharness.sv.tpl $(CFG)
 
 	# @$(OCCAMYGEN) --cfg $(CFG) \
  	# 	--bootdata       ../../ip/snitch_cluster/test/bootdata.cc.tpl
-	@echo "[SOLDER] Device Tree"
-	@$(OCCAMYGEN) --cfg $(CFG) --outdir . --dts $(TARGET_DTS_DIR)/occamy.dts
-
 
 #######
 # SOC #
@@ -144,11 +141,13 @@ $(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
 		--memories \
 		--top-sv           $(SOURCE_OCCAMY_DIR)/occamy_top.sv.tpl \
 		--soc-sv           $(SOURCE_OCCAMY_DIR)/occamy_soc.sv.tpl \
+		--chip             $(SOURCE_OCCAMY_DIR)/occamy_chip.sv.tpl \
 		--pkg-sv           $(SOURCE_OCCAMY_DIR)/occamy_pkg.sv.tpl \
 		--quadrant-s1      $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1.sv.tpl \
 		--quadrant-s1-ctrl $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1_ctrl.sv.tpl \
-		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl \
-		--dts 			   $(TARGET_DTS_DIR)/occamy.dts
+		--xilinx-sv        $(SOURCE_OCCAMY_DIR)/occamy_xilinx.sv.tpl \
+		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
+# --dts 			   $(TARGET_DTS_DIR)/occamy.dts
 #why?	@$(VERIBLE_FMT) --inplace $(MISC_OCCAMYGEN_SV_TARGETS)
 # File included by occamy_xilinx needs to be put in the same folder
 	cp -f $(SOURCE_OCCAMY_DIR)/axi_flat.sv $(TARGET_SRC_DIR)
