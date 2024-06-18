@@ -54,7 +54,7 @@ import ${name}_pkg::*;
   input  logic [31:0] bootrom_data_i,
 
   // SPM / SRAM as the main memory
-  ${soc_wide_xbar.out_spm_wide.emit_flat_master_port("ram")}
+  ${soc_wide_xbar.out_spm_wide.emit_flat_master_port("m_axi_ram")}
 );
 
   // AXI ports of Occamy top-level
@@ -67,7 +67,7 @@ import ${name}_pkg::*;
   ${soc_wide_xbar.out_spm_wide.rsp_type()} spm_axi_wide_rsp_i;
 
   // Assign structs to flattened ports
-  `AXI_FLATTEN_MASTER(ram, spm_axi_wide_req_o, spm_axi_wide_rsp_i)
+  `AXI_FLATTEN_MASTER(m_axi_ram, spm_axi_wide_req_o, spm_axi_wide_rsp_i)
 
   ///////////////////
   // Boot ROM      //

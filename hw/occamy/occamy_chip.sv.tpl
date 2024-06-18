@@ -8,7 +8,7 @@
 
 `include "axi_flat.sv"
 
-module ${name}_xilinx
+module ${name}_chip
 import ${name}_pkg::*;
  (
   input  logic        clk_i,
@@ -48,10 +48,7 @@ import ${name}_pkg::*;
   output logic [3:0]  spim_sd_en_o,
   input        [3:0]  spim_sd_i,
 
-  input  logic [11:0] ext_irq_i,
-
-  // SPM / SRAM as the main memory
-  ${soc_wide_xbar.out_spm_wide.emit_flat_master_port("ram")}
+  input  logic [11:0] ext_irq_i
 );
 
   /////////////////////////
