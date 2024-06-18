@@ -37,7 +37,7 @@ TXT_TRACES          += $(CVA6_TXT_TRACE)
 PERF_DUMPS          += $(CVA6_PERF_DUMP)
 ANNOTATED_TRACES    += $(CVA6_ANNOTATED_TRACE)
 
-include $(SNITCH_ROOT)/target/common/common.mk
+include ../../deps/snitch_cluster/target/common/common.mk
 
 include $(ROOT)/target/rtl/Makefile
 
@@ -96,17 +96,20 @@ CVA6_TRACE            = trace_hart_0.log
 
 VSIM_BENDER += -t cv64a6_imafdc_sv39 
 VSIM_BENDER += -t occamy
-VSIM_BENDER += -t snax_xiaoling
 
 VLT_BENDER  += -t cv64a6_imafdc_sv39 
 VLT_BENDER  += -t occamy 
-VLT_BENDER += -t snax_xiaoling
 
 VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
 
-ifndef SNAX_MINIMAL
-	VSIM_BENDER += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
-	VLT_BENDER  += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
+ifdef SNAX_XIAOLING
+	VSIM_BENDER += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler -t snax_xiaoling
+	VLT_BENDER  += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler -t snax_xiaoling
+endif
+
+ifdef SNAX_MINIMAL
+	VSIM_BENDER += -t snax_minimal
+	VLT_BENDER += -t snax_minimal
 endif
 
 VSIM_FLAGS += -t 1ps

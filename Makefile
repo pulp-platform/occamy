@@ -1,6 +1,3 @@
-
-CFG_OVERRIDE ?= 
-
 .PHONY: clean bootrom sw rtl occamy_ip_vcu128 occamy_ip_vcu128_gui occamy_system_vcu128 occamy_system_vcu128_gui
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
@@ -17,17 +14,17 @@ clean:
 
 # Software Generation
 bootrom: # In Occamy Docker
-	make -C ./target/sim bootrom CFG_OVERRIDE=../rtl/cfg/$(CFG)
+	make -C ./target/sim bootrom CFG_OVERRIDE=../rtl/cfg/occamy_cfg/$(CFG)
 	make -C ./target/fpga/bootrom bootrom
 
 sw: # In Occamy Docker
-	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/$(CFG)
+	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/occamy_cfg/$(CFG)
 
 # The software from simulation and FPGA prototyping comes from one source. If we intend to download the sodtware to FPGA, elf2bin should be done by objcopy in Occamy docker. 
 
 # Hardware Generation
 rtl: # In SNAX Docker
-	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/$(CFG)
+	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/occamy_cfg/$(CFG)
 
 # FPGA Workflow
 occamy_system_vivado_preparation: # In SNAX Docker

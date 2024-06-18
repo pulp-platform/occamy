@@ -88,6 +88,10 @@ sources:
     files:
       - target/rtl/src/snax_xiaoling_0_wrapper.sv
       - target/rtl/src/snax_xiaoling_1_wrapper.sv
+  
+  - target: snax_minimal
+    files:
+     - target/rtl/src/snax_minimal_wrapper.sv
 
   # auto-generated soc
   - target: occamy

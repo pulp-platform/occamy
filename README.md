@@ -53,7 +53,7 @@ The following files are released under Solderpad v0.51 (`SHL-0.51`) see `hw/LICE
 @ Occamy Docker: make sw
 @ Occamy Docker: make -C target/fpga/sw [APP=???] (Which binary file you want to use)
 @ SNAX Docker: make rtl CFG=snax_two_clusters.hjson
-@ SNAX Docker: make occamy_system_vivado_preparation
+@ SNAX Docker: make occamy_system_vivado_preparation SNAX_XIAOLING=1
 @ Barnard3: make occamy_system_vcu128
 @ Barnard3: make occamy_system_vcu128_gui
 @ Barnard3: make -C target/fpga/sw download_sw
@@ -75,6 +75,6 @@ make occamy_system_vsim
 make bootrom
 make sw
 make rtl CFG=snax_two_clusters.hjson
-make occamy_system_vsim_preparation
+make occamy_system_vsim_preparation SNAX_XIAOLING=1
 make occamy_system_vsim
 ```

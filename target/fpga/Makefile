@@ -16,8 +16,12 @@ NPROC  ?= $(shell nproc)
 
 BENDER_TARGETS += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster
 
-ifndef SNAX_MINIMAL
-	BENDER_TARGETS += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
+ifdef SNAX_XIAOLING
+	BENDER_TARGETS += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler -t snax_xiaoling
+endif
+
+ifdef SNAX_MINIMAL
+	BENDER_TARGETS += -t snax_minimal
 endif
 
 default: all
