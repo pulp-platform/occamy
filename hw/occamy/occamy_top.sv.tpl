@@ -454,6 +454,7 @@ module ${name}_top
       spim_sd_io = spim_sd_o;
     end else begin                          // Input Mode
       spim_sd_i = spim_sd_io;
+      spim_sd_io = 4'bZ;                    // Disable output functionality
     end
   end
 
@@ -525,6 +526,7 @@ module ${name}_top
       i2c_sda_io = i2c_sda_o ? 1'bZ : 1'b0; // Open-drain connection;
     end else begin                          // Input Mode
       i2c_sda_i = i2c_sda_io;
+      i2c_sda_io = 1'bZ;                    // Disable output functionality
     end
   end
 
@@ -534,6 +536,7 @@ module ${name}_top
       i2c_scl_io = i2c_scl_o ? 1'bZ : 1'b0; // Open-drain connection
     end else begin                          // Input Mode
       i2c_scl_i = i2c_scl_io;
+      i2c_scl_io = 1'bZ;                    // Disable output functionality
     end
   end
 

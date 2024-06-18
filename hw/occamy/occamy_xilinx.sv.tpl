@@ -41,12 +41,8 @@ import ${name}_pkg::*;
   inout  logic        i2c_scl_io,
   // `SPI Host` Interface
   output logic        spim_sck_o,
-  output logic        spim_sck_en_o,
   output logic [1:0]  spim_csb_o,
-  output logic [1:0]  spim_csb_en_o,
-  output logic [3:0]  spim_sd_o,
-  output logic [3:0]  spim_sd_en_o,
-  input        [3:0]  spim_sd_i,
+  inout  logic [3:0]  spim_sd_io,
 
   input  logic [11:0] ext_irq_i,
 
