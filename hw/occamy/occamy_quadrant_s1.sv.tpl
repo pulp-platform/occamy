@@ -14,14 +14,14 @@
   cuts_widexpost_with_wideiwc_out = 1
   cuts_wideisolate_with_wideiwc_in = 1
   cuts_wideiwc_with_wideout = 1
-  nr_clusters = int(cfg["s1_quadrant"]["nr_clusters"])
-  wide_trans = int(cfg["s1_quadrant"]["wide_trans"])
-  narrow_trans = int(cfg["s1_quadrant"]["narrow_trans"])
-  ro_cache_cfg = cfg["s1_quadrant"].get("ro_cache_cfg", {})
+  nr_clusters = len(occamy_cfg["clusters"])
+  wide_trans = int(occamy_cfg["s1_quadrant"]["wide_trans"])
+  narrow_trans = int(occamy_cfg["s1_quadrant"]["narrow_trans"])
+  ro_cache_cfg = occamy_cfg["s1_quadrant"].get("ro_cache_cfg", {})
   ro_cache_regions = ro_cache_cfg.get("address_regions", 1)
-  narrow_tlb_cfg = cfg["s1_quadrant"].get("narrow_tlb_cfg", {})
+  narrow_tlb_cfg = occamy_cfg["s1_quadrant"].get("narrow_tlb_cfg", {})
   narrow_tlb_entries = narrow_tlb_cfg.get("l1_num_entries", 1)
-  wide_tlb_cfg = cfg["s1_quadrant"].get("wide_tlb_cfg", {})
+  wide_tlb_cfg = occamy_cfg["s1_quadrant"].get("wide_tlb_cfg", {})
   wide_tlb_entries = wide_tlb_cfg.get("l1_num_entries", 1)
 %>
 
@@ -218,24 +218,24 @@ module ${name}_quadrant_s1
   // Cluster ${i} //
   ///////////////
   <%
-    narrow_cluster_in = narrow_xbar_quadrant_s1.__dict__["out_cluster_{}".format(i)].change_iw(context, cfg["cluster"]["id_width_in"], "narrow_in_iwc_{}".format(i)).cut(context, cuts_narrx_with_cluster)
+    narrow_cluster_in = narrow_xbar_quadrant_s1.__dict__["out_cluster_{}".format(i)].change_iw(context, cluster_cfgs[i]["id_width_in"], "narrow_in_iwc_{}".format(i)).cut(context, cuts_narrx_with_cluster)
     narrow_cluster_out = narrow_xbar_quadrant_s1.__dict__["in_cluster_{}".format(i)].copy(name="narrow_out_{}".format(i)).declare(context)
     narrow_cluster_out.cut(context, cuts_narrx_with_cluster, to=narrow_xbar_quadrant_s1.__dict__["in_cluster_{}".format(i)])
-    wide_cluster_in = wide_xbar_quadrant_s1.__dict__["out_cluster_{}".format(i)].change_iw(context, cfg["cluster"]["dma_id_width_in"], "wide_in_iwc_{}".format(i), max_txns_per_id=wide_trans).cut(context, cuts_widex_with_cluster)
+    wide_cluster_in = wide_xbar_quadrant_s1.__dict__["out_cluster_{}".format(i)].change_iw(context, cluster_cfgs[i]["dma_id_width_in"], "wide_in_iwc_{}".format(i), max_txns_per_id=wide_trans).cut(context, cuts_widex_with_cluster)
     wide_cluster_out = wide_xbar_quadrant_s1.__dict__["in_cluster_{}".format(i)].copy(name="wide_out_{}".format(i)).declare(context)
     wide_cluster_out.cut(context, cuts_widex_with_cluster, to=wide_xbar_quadrant_s1.__dict__["in_cluster_{}".format(i)])
-    cluster_name = cfg["clusters"][i]["name"]
+    cluster_name = cluster_cfgs[i]["name"]
   %>
 
   logic [9:0] hart_base_id_${i};
-  assign hart_base_id_${i} = HartIdOffset + tile_id_i * NrCoresS1Quadrant + ${i} * NrCoresCluster;
+  assign hart_base_id_${i} = HartIdOffset + tile_id_i * NrCoresS1Quadrant + NrCoresClusterOffset[${i}];
 
   ${cluster_name}_wrapper i_${name}_cluster_${i} (
     .clk_i (clk_quadrant),
     .rst_ni (rst_quadrant_n),
-    .meip_i (meip_i[${i}*NrCoresCluster+:NrCoresCluster]),
-    .mtip_i (mtip_i[${i}*NrCoresCluster+:NrCoresCluster]),
-    .msip_i (msip_i[${i}*NrCoresCluster+:NrCoresCluster]),
+    .meip_i (meip_i[NrCoresCluster[${i}]+:NrCoresCluster[${i}]]),
+    .mtip_i (mtip_i[NrCoresCluster[${i}]+:NrCoresCluster[${i}]]),
+    .msip_i (msip_i[NrCoresCluster[${i}]+:NrCoresCluster[${i}]]),
     .hart_base_id_i (hart_base_id_${i}),
     .cluster_base_addr_i (cluster_base_addr[${i}]),
     .narrow_in_req_i (${narrow_cluster_in.req_name()}),

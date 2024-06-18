@@ -8,7 +8,7 @@
 APPS  = blas/axpy
 APPS += blas/gemm
 APPS += blas/test
-APPS += snax/snax-wide-gemm-data-reshuffler
+APPS += snax/snax-streamer-gemm-conv
 TARGET ?= all
 
 APP_SUBDIRS = $(addprefix apps/,$(APPS))
@@ -21,6 +21,7 @@ SUBDIRS += snax/gemm
 SUBDIRS += snax/mac
 SUBDIRS += snax/streamer-gemm
 SUBDIRS += snax/streamer-simd
+SUBDIRS += snax/streamer-gemm-conv
 SUBDIRS += $(APP_SUBDIRS)
 
 

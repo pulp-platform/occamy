@@ -86,7 +86,7 @@
 
     // Start RO cache region fields at regular offset
     { skipto: "0x100" }
-% for r in range(cfg["s1_quadrant"].get("ro_cache_cfg", {}).get("address_regions", 1)):
+% for r in range(occamy_cfg["s1_quadrant"].get("ro_cache_cfg", {}).get("address_regions", 1)):
     { name: "RO_START_ADDR_LOW_${r}",
       desc: "Read-only cache start address low",
       swaccess: "rw",
@@ -124,7 +124,7 @@
 % for i, t in enumerate(("narrow", "wide")):
     // Start ${t} TLB fields at regular offset
     { skipto: "${hex(0x800*(1+i))}" }
-% for e in range(cfg["s1_quadrant"]["{}_tlb_cfg".format(t)].get("l1_num_entries", 1)):
+% for e in range(occamy_cfg["s1_quadrant"]["{}_tlb_cfg".format(t)].get("l1_num_entries", 1)):
 
     // ${t} TLB entry ${e}
     { name: "TLB_${t.upper()}_ENTRY_${e}_PAGEIN_FIRST_LOW",

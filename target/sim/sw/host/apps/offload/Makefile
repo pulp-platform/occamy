@@ -20,6 +20,7 @@ DEVICE_APPS  = blas/axpy
 DEVICE_APPS += blas/gemm
 DEVICE_APPS += blas/test
 DEVICE_APPS += snax/snax-wide-gemm-data-reshuffler
+DEVICE_APPS += snax/snax-streamer-gemm-conv
 # Compiler toolchain
 RISCV_CC      = riscv64-unknown-elf-gcc
 RISCV_OBJCOPY = riscv64-unknown-elf-objcopy

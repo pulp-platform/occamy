@@ -30,16 +30,16 @@ module ${name}_cva6 import ${name}_pkg::*; (
     BHTEntries: 128,
     // DRAM -- SPM, SPM -- Boot ROM, Boot ROM -- Debug Module
     NrNonIdempotentRules: 3,
-    NonIdempotentAddrBase: {64'd${cfg["spm_narrow"]["address"]+cfg["spm_narrow"]["length"]}           , 64'd${cfg["peripherals"]["rom"]["address"]+cfg["peripherals"]["rom"]["length"]}                      , 64'h1000},
-    NonIdempotentLength:   {64'd${0x80000000-cfg["spm_narrow"]["address"]-cfg["spm_narrow"]["length"]}, 64'd${cfg["spm_narrow"]["address"]-cfg["peripherals"]["rom"]["address"]-cfg["peripherals"]["rom"]["length"]}, 64'd${cfg["peripherals"]["rom"]["address"]-0x1000}},
+    NonIdempotentAddrBase: {64'd${occamy_cfg["spm_narrow"]["address"]+occamy_cfg["spm_narrow"]["length"]}           , 64'd${occamy_cfg["peripherals"]["rom"]["address"]+occamy_cfg["peripherals"]["rom"]["length"]}                      , 64'h1000},
+    NonIdempotentLength:   {64'd${0x80000000-occamy_cfg["spm_narrow"]["address"]-occamy_cfg["spm_narrow"]["length"]}, 64'd${occamy_cfg["spm_narrow"]["address"]-occamy_cfg["peripherals"]["rom"]["address"]-occamy_cfg["peripherals"]["rom"]["length"]}, 64'd${occamy_cfg["peripherals"]["rom"]["address"]-0x1000}},
     NrExecuteRegionRules: 5,
     // DRAM, Boot ROM, SPM, Debug Module
-    ExecuteRegionAddrBase: {64'h10_0000_0000, 64'h8000_0000, 64'd${cfg["peripherals"]["rom"]["address"]}, 64'd${cfg["spm_narrow"]["address"]}, 64'h0   },
-    ExecuteRegionLength:   {64'h2_0000_0000 , 64'h8000_0000, 64'd${cfg["peripherals"]["rom"]["length"]} , 64'd${cfg["spm_narrow"]["length"]} , 64'h1000},
+    ExecuteRegionAddrBase: {64'h10_0000_0000, 64'h8000_0000, 64'd${occamy_cfg["peripherals"]["rom"]["address"]}, 64'd${occamy_cfg["spm_narrow"]["address"]}, 64'h0   },
+    ExecuteRegionLength:   {64'h2_0000_0000 , 64'h8000_0000, 64'd${occamy_cfg["peripherals"]["rom"]["length"]} , 64'd${occamy_cfg["spm_narrow"]["length"]} , 64'h1000},
     // cached region
     NrCachedRegionRules:    2,
-    CachedRegionAddrBase:  {64'h8000_0000, 64'd${cfg["spm_narrow"]["address"]}},
-    CachedRegionLength:    {(64'hff_ffff_ffff-64'h8000_0000), 64'd${cfg["spm_narrow"]["length"]}},
+    CachedRegionAddrBase:  {64'h8000_0000, 64'd${occamy_cfg["spm_narrow"]["address"]}},
+    CachedRegionLength:    {(64'hff_ffff_ffff-64'h8000_0000), 64'd${occamy_cfg["spm_narrow"]["length"]}},
     //  cache config
     AxiCompliant:           1'b1,
     SwapEndianess:          1'b0,
@@ -64,7 +64,7 @@ module ${name}_cva6 import ${name}_pkg::*; (
   sync #(.STAGES (2))
     i_sync_irq_1  (.clk_i, .rst_ni, .serial_i (irq_i[1]), .serial_o (irq[1]));
 
-  localparam logic [63:0] BootAddr = 'd${cfg["peripherals"]["rom"]["address"]};
+  localparam logic [63:0] BootAddr = 'd${occamy_cfg["peripherals"]["rom"]["address"]};
 
 
   ariane #(

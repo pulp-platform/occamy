@@ -16,21 +16,33 @@ package ${name}_pkg;
   localparam int unsigned MaxTransaction = 16;
 
   // Re-exports
-  localparam int unsigned AddrWidth = ${cfg["cluster"]["name"]}_pkg::AddrWidth;
-  localparam int unsigned NarrowUserWidth = ${cfg["cluster"]["name"]}_pkg::NarrowUserWidth;
-  localparam int unsigned WideUserWidth = ${cfg["cluster"]["name"]}_pkg::WideUserWidth;
+  localparam int unsigned AddrWidth = ${addr_width};
+  localparam int unsigned NarrowUserWidth = ${narrow_user_width};
+  localparam int unsigned WideUserWidth = ${wide_user_width};
 
-  localparam int unsigned NrClustersS1Quadrant = ${nr_s1_clusters};
-  localparam int unsigned NrCoresCluster = ${cfg["cluster"]["name"]}_pkg::NrCores;
-  localparam int unsigned NrCoresS1Quadrant = NrClustersS1Quadrant * NrCoresCluster;
+  localparam int unsigned NrClustersS1Quadrant = ${nr_clusters_s1_quadrant};
+  localparam int unsigned NrCoresCluster [NrClustersS1Quadrant] = '${core_per_cluster};
+  localparam int unsigned NrCoresClusterOffset [NrClustersS1Quadrant] = '${nr_cores_cluster_offset};
+  localparam int unsigned NrCoresS1Quadrant = ${nr_cores_quadrant};
 
   // Memory cut configurations: one per memory parameterization
-  typedef ${cfg["cluster"]["name"]}_pkg::sram_cfg_t sram_cfg_t;
+  // SRAM configurations
+  typedef struct packed {
+% for field, width in sram_cfg_fields.items():
+    logic [${width-1}:0] ${field};
+% endfor
+  } sram_cfg_t;
+
+  typedef struct packed {
+    sram_cfg_t icache_tag;
+    sram_cfg_t icache_data;
+    sram_cfg_t tcdm;
+  } cluster_sram_cfgs_t;
 
   typedef struct packed {
     sram_cfg_t rocache_tag;
     sram_cfg_t rocache_data;
-    ${cfg["cluster"]["name"]}_pkg::sram_cfgs_t cluster;
+    cluster_sram_cfgs_t cluster;
   } sram_cfg_quadrant_t;
 
   typedef struct packed {
@@ -103,31 +115,16 @@ package ${name}_pkg;
   /// We reserve hartid `0` for CVA6.
   localparam logic [9:0] HartIdOffset = 1;
   /// The base offset for each cluster.
-  localparam addr_t ClusterBaseOffset = ${util.to_sv_hex(cfg["cluster"]["cluster_base_addr"])};
+  localparam addr_t ClusterBaseOffset = ${cluster_base_addr};
   /// The address space set aside for each slave.
-  localparam addr_t ClusterAddressSpace = ${util.to_sv_hex(cfg["cluster"]["cluster_base_offset"])};
+  localparam addr_t ClusterAddressSpace = ${cluster_base_offset};
   /// The address space of a single S1 quadrant.
   localparam addr_t S1QuadrantAddressSpace = ClusterAddressSpace * NrClustersS1Quadrant;
   /// The base offset of the quadrant configuration region.
-  localparam addr_t S1QuadrantCfgBaseOffset = ${util.to_sv_hex(cfg["s1_quadrant"]["cfg_base_addr"])};
+  localparam addr_t S1QuadrantCfgBaseOffset = ${quad_cfg_base_addr};
   /// The address space set aside for the configuration of each slave.
-  localparam addr_t S1QuadrantCfgAddressSpace = ${util.to_sv_hex(cfg["s1_quadrant"]["cfg_base_offset"])};
+  localparam addr_t S1QuadrantCfgAddressSpace = ${quad_cfg_base_offset};
 
-% for i, rmq in enumerate(remote_quadrants):
-  /// Struct for signals to/from remote quadrant ${i}
-  typedef struct packed {
-    logic [${rmq["nr_clusters"]*rmq["nr_cluster_cores"]-1}:0] mtip;
-    logic [${rmq["nr_clusters"]*rmq["nr_cluster_cores"]-1}:0] msip;
-  } rmq_${i}_mst_out_t;
-% endfor
-
-% if is_remote_quadrant:
-  /// Struct for signals to/from remote quadrants
-  typedef struct packed {
-    logic [${nr_s1_clusters*nr_cluster_cores-1}:0] mtip;
-    logic [${nr_s1_clusters*nr_cluster_cores-1}:0] msip;
-  } rmq_mst_out_t;
-% endif
 
   ${package}
 
