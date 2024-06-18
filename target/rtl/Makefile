@@ -324,8 +324,10 @@ OTHER_SNAX_WRAPPER_FILES := $(filter-out $(FIRST_SNAX_WRAPPER_FILE),$(SNAX_WRAPP
 # Implemented as documented in:
 # https://www.gnu.org/software/automake/manual/html_node/Multiple-Outputs.html
 # Please note the limitations of this method over there
-$(FIRST_SNAX_WRAPPER_FILE) : $(SNAX_TEMPLATE_SOURCES) $(CFG) $(SNAX_SCALA_SOURCES)
-	${WRAPPERGEN} --cfg_path="$(CFG)" \
+
+SNAX_CFG ?= $(ROOT)/target/rtl/cfg/cluster_cfg/snax_xiaoling_0.hjson
+$(FIRST_SNAX_WRAPPER_FILE) : $(SNAX_TEMPLATE_SOURCES) $(SNAX_CFG) $(SNAX_SCALA_SOURCES)
+	${WRAPPERGEN} --cfg_path="$(SNAX_CFG)" \
 	--tpl_path="${SNAX_TPL_PATH}" \
 	--chisel_path="${CHISEL_PATH}" \
 	--gen_path="${SNAX_GENERATED_DIR}/"

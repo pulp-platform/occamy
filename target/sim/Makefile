@@ -15,7 +15,7 @@ CFG_OVERRIDE ?=     # Override default config file
 .DEFAULT_GOAL := help
 .PHONY: all clean
 all: rtl sw addrmap
-clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vcs clean-logs
+clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vcs clean-logs clean-work
 
 ############
 # Makefrag #
@@ -94,9 +94,14 @@ CVA6_TRACE            = trace_hart_0.log
 # VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
 # This target is to snax-streamer-gemm
 
-VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster
+VSIM_BENDER += -t cv64a6_imafdc_sv39 
+VSIM_BENDER += -t occamy
+VSIM_BENDER += -t snax_xiaoling
 
-VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy -t snax_cluster
+VLT_BENDER  += -t cv64a6_imafdc_sv39 
+VLT_BENDER  += -t occamy 
+VLT_BENDER += -t snax_xiaoling
+
 VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
 
 ifndef SNAX_MINIMAL
@@ -380,6 +385,10 @@ $(BIN_DIR)/occamy_top.vsim: $(VSIM_BUILDDIR)/compile.vsim.tcl |$(BIN_DIR)
 	@echo 'vsim +permissive $(VSIM_FLAGS) $$3 -work $(SIM_MKFILE_DIR)/$(VSIM_BUILDDIR) -c \
 				-ldflags "-Wl,-rpath,$(FESVR)/lib -L$(FESVR)/lib -lfesvr -lutil" \
 				tb_bin_opt +permissive-off ++$$binary ++$$2' >> $@
+	@# Rename CVA6 trace to align with Snitch trace names
+	@echo "mv ${CVA6_TRACE} $(LOGS_DIR)/trace_hart_00000.txt" >> $@
+	@# Move all other traces to logs folder as well
+	@echo "mv *trace*.log $(LOGS_DIR)/" >> $@
 	@chmod +x $@
 	@echo "#!/bin/bash" > $@.gui
 	@echo 'binary=$$(realpath $$1)' >> $@.gui
@@ -387,6 +396,8 @@ $(BIN_DIR)/occamy_top.vsim: $(VSIM_BUILDDIR)/compile.vsim.tcl |$(BIN_DIR)
 	@echo 'vsim +permissive $(VSIM_FLAGS) -work $(SIM_MKFILE_DIR)/$(VSIM_BUILDDIR) \
 				-ldflags "-Wl,-rpath,$(FESVR)/lib -L$(FESVR)/lib -lfesvr -lutil" \
 				tb_bin_opt +permissive-off ++$$binary ++$$2' >> $@.gui
+	@echo "mv ${CVA6_TRACE} $(LOGS_DIR)/trace_hart_00000.txt" >> $@.gui
+	@echo "mv *trace*.log $(LOGS_DIR)/" >> $@.gui
 	@chmod +x $@.gui
 
 clean-vsim: clean-work
@@ -428,6 +439,7 @@ fpga: rtl
 
 clean-work:
 	rm -rf work
+	rm -rf work-vsim
 
 clean-bender:
 	rm -rf $(ROOT)/Bender.lock $(ROOT)/.bender/ $(ROOT)/deps

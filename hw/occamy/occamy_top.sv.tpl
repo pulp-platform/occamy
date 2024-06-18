@@ -73,19 +73,19 @@ module ${name}_top
 
 <%
 
-  cuts_clint_cfg = cfg["cuts"]["periph_axi_lite_narrow_clint_cfg"]
-  cuts_soc_ctrl_cfg = cfg["cuts"]["periph_axi_lite_narrow_soc_ctrl_cfg"]
-  cuts_chip_ctrl_cfg = cfg["cuts"]["periph_axi_lite_narrow_chip_ctrl_cfg"]
-  cuts_uart_cfg = cfg["cuts"]["periph_axi_lite_narrow_uart_cfg"]
-  cuts_bootrom_cfg = cfg["cuts"]["periph_axi_lite_narrow_bootrom_cfg"]
-  cuts_fll_system_cfg = cfg["cuts"]["periph_axi_lite_narrow_fll_system_cfg"]
-  cuts_fll_periph_cfg = cfg["cuts"]["periph_axi_lite_narrow_fll_periph_cfg"]
-  cuts_fll_hbm2e_cfg = cfg["cuts"]["periph_axi_lite_narrow_fll_hbm2e_cfg"]
-  cuts_plic_cfg = cfg["cuts"]["periph_axi_lite_narrow_plic_cfg"]
-  cuts_spim_cfg = cfg["cuts"]["periph_axi_lite_narrow_spim_cfg"]
-  cuts_gpio_cfg = cfg["cuts"]["periph_axi_lite_narrow_gpio_cfg"]
-  cuts_i2c_cfg = cfg["cuts"]["periph_axi_lite_narrow_i2c_cfg"]
-  cuts_timer_cfg = cfg["cuts"]["periph_axi_lite_narrow_timer_cfg"]
+  cuts_clint_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_clint_cfg"]
+  cuts_soc_ctrl_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_soc_ctrl_cfg"]
+  cuts_chip_ctrl_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_chip_ctrl_cfg"]
+  cuts_uart_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_uart_cfg"]
+  cuts_bootrom_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_bootrom_cfg"]
+  cuts_fll_system_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_fll_system_cfg"]
+  cuts_fll_periph_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_fll_periph_cfg"]
+  cuts_fll_hbm2e_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_fll_hbm2e_cfg"]
+  cuts_plic_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_plic_cfg"]
+  cuts_spim_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_spim_cfg"]
+  cuts_gpio_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_gpio_cfg"]
+  cuts_i2c_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_i2c_cfg"]
+  cuts_timer_cfg = occamy_cfg["cuts"]["periph_axi_lite_narrow_timer_cfg"]
 %>
 
   ${name}_soc_reg_pkg::${name}_soc_reg2hw_t soc_ctrl_out;
