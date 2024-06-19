@@ -18,8 +18,12 @@ ifeq ($(EXT_JTAG), 0)
 	BENDER_TARGETS += -t bscane
 endif
 
-ifndef SNAX_MINIMAL
-	BENDER_TARGETS += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler
+ifdef SNAX_XIAOLING
+	BENDER_TARGETS += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler -t snax_xiaoling
+endif
+
+ifdef SNAX_MINIMAL
+	BENDER_TARGETS += -t snax_minimal
 endif
 
 include $(ROOT)/util/Makefrag

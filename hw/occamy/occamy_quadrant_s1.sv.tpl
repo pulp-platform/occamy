@@ -233,9 +233,9 @@ module ${name}_quadrant_s1
   ${cluster_name}_wrapper i_${name}_cluster_${i} (
     .clk_i (clk_quadrant),
     .rst_ni (rst_quadrant_n),
-    .meip_i (meip_i[NrCoresCluster[${i}]+:NrCoresCluster[${i}]]),
-    .mtip_i (mtip_i[NrCoresCluster[${i}]+:NrCoresCluster[${i}]]),
-    .msip_i (msip_i[NrCoresCluster[${i}]+:NrCoresCluster[${i}]]),
+    .meip_i (meip_i[NrCoresClusterOffset[${i}]+:NrCoresCluster[${i}]]),
+    .mtip_i (mtip_i[NrCoresClusterOffset[${i}]+:NrCoresCluster[${i}]]),
+    .msip_i (msip_i[NrCoresClusterOffset[${i}]+:NrCoresCluster[${i}]]),
     .hart_base_id_i (hart_base_id_${i}),
     .cluster_base_addr_i (cluster_base_addr[${i}]),
     .narrow_in_req_i (${narrow_cluster_in.req_name()}),

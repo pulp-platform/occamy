@@ -448,15 +448,19 @@ module ${name}_top
 
 
   // Unidirectional - Bidirectional transform
+  logic [3:0] spim_sd_io_reg;
+
   always_comb begin
     if (spim_sd_en_o > 0) begin             // Output Mode
-      spim_sd_i = 4'b1;                     // Tie-off input
-      spim_sd_io = spim_sd_o;
+      spim_sd_i = 4'b1111;                  // Tie-off input
+      spim_sd_io_reg = spim_sd_o;
     end else begin                          // Input Mode
       spim_sd_i = spim_sd_io;
-      spim_sd_io = 4'bZ;                    // Disable output functionality
+      spim_sd_io_reg = 4'bZZZZ;             // Disable output functionality
     end
   end
+
+  assign spim_sd_io = spim_sd_io_reg;
 
   //////////////
   //   GPIO   //
@@ -485,7 +489,7 @@ module ${name}_top
     .cut(context, cuts_i2c_cfg, name="soc_axi_lite_narrow_periph_xbar_out_i2c_cut") \
     .to_reg(context, "axi_lite_to_reg_i2c") %>
 
-  logic i2c_scl_i i2c_scl_o i2c_scl_en_o i2c_sda_i i2c_sda_o i2c_sda_en_o;
+  logic i2c_scl_i, i2c_scl_o, i2c_scl_en_o, i2c_sda_i, i2c_sda_o, i2c_sda_en_o;
   
   i2c #(
     .reg_req_t (${regbus_i2c.req_type()}),
@@ -520,25 +524,30 @@ module ${name}_top
   );
 
   // Unidirectional - Bidirectional transform
+  logic i2c_sda_io_reg, i2c_scl_io_reg;
   always_comb begin
-    if (i2c_sda_en_o) begin                 // Output Mode
-      i2c_sda_i = 1'b1;                     // Tie-off input
-      i2c_sda_io = i2c_sda_o ? 1'bZ : 1'b0; // Open-drain connection;
-    end else begin                          // Input Mode
+    if (i2c_sda_en_o) begin                     // Output Mode
+      i2c_sda_i = 1'b1;                         // Tie-off input
+      i2c_sda_io_reg = i2c_sda_o ? 1'bZ : 1'b0; // Open-drain connection;
+    end else begin                              // Input Mode
       i2c_sda_i = i2c_sda_io;
-      i2c_sda_io = 1'bZ;                    // Disable output functionality
+      i2c_sda_io_reg = 1'bZ;                    // Disable output functionality
     end
   end
 
+  assign i2c_sda_io = i2c_sda_io_reg;
+
   always_comb begin
-    if (i2c_scl_en_o) begin                 // Output Mode
-      i2c_scl_i = 1'b1;                     // Tie-off input
-      i2c_scl_io = i2c_scl_o ? 1'bZ : 1'b0; // Open-drain connection
-    end else begin                          // Input Mode
+    if (i2c_scl_en_o) begin                     // Output Mode
+      i2c_scl_i = 1'b1;                         // Tie-off input
+      i2c_scl_io_reg = i2c_scl_o ? 1'bZ : 1'b0; // Open-drain connection
+    end else begin                              // Input Mode
       i2c_scl_i = i2c_scl_io;
-      i2c_scl_io = 1'bZ;                    // Disable output functionality
+      i2c_scl_io_reg = 1'bZ;                    // Disable output functionality
     end
   end
+
+  assign i2c_scl_io = i2c_scl_io_reg;
 
   /////////////
   //  Timer  //

@@ -342,9 +342,14 @@ def get_quadrant_kwargs(occamy_cfg,cluster_generators,soc_narrow_xbar,quadrant_i
     return quadrant_kwargs
 
 
-
-
-
+def get_xilinx_kwargs(occamy_cfg, soc_wide_xbar, soc_axi_lite_narrow_periph_xbar, name): 
+    xilinx_kwargs={
+        "name": name,
+        "occamy_cfg": occamy_cfg,
+        "soc_wide_xbar": soc_wide_xbar, 
+        "soc_axi_lite_narrow_periph_xbar": soc_axi_lite_narrow_periph_xbar
+    }
+    return xilinx_kwargs
 
 
 def get_cores_cluster_offset(core_per_cluster):
@@ -995,6 +1000,19 @@ def main():
                     print(outdir, args.name)
                     with open("{}/{}_quadrant_s1.sv".format(outdir, args.name), 'w') as f:
                         f.write("// no quadrants in this design")
+
+
+    ##################
+    # Xilinx Wrapper #
+    ##################
+    if args.xilinx_sv:
+        xilinx_kwargs = get_xilinx_kwargs(occamy_cfg, soc_wide_xbar, soc_axi_lite_narrow_periph_xbar, args.name)
+        write_template(args.xilinx_sv,
+                    outdir,
+                    fname="{}_xilinx.sv".format(args.name),
+                    module= "",
+                    **xilinx_kwargs)
+
     ###########
     # Package #
     ###########

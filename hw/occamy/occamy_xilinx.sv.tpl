@@ -104,6 +104,7 @@ import ${name}_pkg::*;
     .bootrom_rsp_i   (bootrom_axi_lite_rsp),
     .ext_irq_i(ext_irq_i),
     // Tie-off unused ports
+    .chip_ctrl_req_o(), 
     .chip_ctrl_rsp_i ('0),
     .sram_cfgs_i ('0),
     .*
