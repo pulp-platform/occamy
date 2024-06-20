@@ -1,0 +1,5 @@
+*.bin
+*.tcl
+*.coe
+!download_sw.tcl
+!verify_sw.tcl

@@ -6,13 +6,13 @@
 
 # Parse arguments:
 # 0: Debug 1/0
-# 1: nproc
-# 2: Path to coe for bootrom preconfiguration
+# 1: EXT_JTAG 1/0
 set DEBUG false
 set EXT_JTAG false
 if {$argc > 0 && [lindex $argv 0]} { set DEBUG true }
 if {$argc > 1 && [lindex $argv 1]} { set EXT_JTAG true }
-set nproc [lindex $argv 2]
+
+set nproc [exec nproc]
 
 # Create project
 set project hemaia_system_vcu128
@@ -30,11 +30,11 @@ source hemaia_system_vcu128_bd.tcl
 # Add constraint files
 add_files -fileset constrs_1 -norecurse hemaia_system_vcu128_impl.xdc
 import_files -fileset constrs_1 hemaia_system_vcu128_impl.xdc
-set_property used_in_synthesis false [get_files hemaia_system_vcu128/hemaia_system_vcu128.srcs/constrs_1/imports/fpga/hemaia_system_vcu128_impl.xdc]
+set_property used_in_synthesis false [get_files hemaia_system_vcu128/hemaia_system_vcu128.srcs/constrs_1/imports/hemaia_system/hemaia_system_vcu128_impl.xdc]
 if { $EXT_JTAG } {
     add_files -fileset constrs_1 -norecurse hemaia_system_vcu128_impl_ext_jtag.xdc
     import_files -fileset constrs_1 hemaia_system_vcu128_impl_ext_jtag.xdc
-    set_property used_in_synthesis false [get_files hemaia_system_vcu128/hemaia_system_vcu128.srcs/constrs_1/imports/fpga/hemaia_system_vcu128_impl.xdc]
+    set_property used_in_synthesis false [get_files hemaia_system_vcu128/hemaia_system_vcu128.srcs/constrs_1/imports/hemaia_system/hemaia_system_vcu128_impl.xdc]
 } else {
     delete_bd_objs [get_bd_nets -of_objects [get_bd_ports "jtag_tck_i jtag_tdi_i jtag_tdo_o jtag_tms_i" ]]
     delete_bd_objs [get_bd_ports jtag_*]
@@ -53,8 +53,8 @@ create_ip_run [get_files -of_objects [get_fileset sources_1] ./hemaia_system_vcu
 # Re-add hemaia chip includes
 set build hemaia_system_vcu128
 
-export_ip_user_files -of_objects [get_ips hemaia_system_vcu128_chip_0] -no_script -sync -force -quiet
-eval [exec sed {s/current_fileset/get_filesets hemaia_system_vcu128_chip_0/} define_defines_includes_no_simset.tcl]
+export_ip_user_files -of_objects [get_ips occamy_chip_0] -no_script -sync -force -quiet
+eval [exec sed {s/current_fileset/get_filesets hemaia_system_vcu128_occamy_chip_0_0/} define_defines_includes_no_simset.tcl]
 
 # Do NOT insert BUFGs on high-fanout nets (e.g. reset). This will backfire during placement.
 set_param logicopt.enableBUFGinsertHFN no
@@ -144,9 +144,9 @@ if ($DEBUG) {
         set netNameLast $netName
     }
 
-    set_property target_constrs_file hemaia_system_vcu128/hemaia_system_vcu128.srcs/constrs_1/imports/fpga/hemaia_system_vcu128_impl.xdc [current_fileset -constrset]
+    set_property target_constrs_file hemaia_system_vcu128/hemaia_system_vcu128.srcs/constrs_1/imports/hemaia_system/hemaia_system_vcu128_impl.xdc [current_fileset -constrset]
     if { $EXT_JTAG } {
-        set_property target_constrs_file hemaia_system_vcu128/hemaia_system_vcu128.srcs/constrs_1/imports/fpga/hemaia_system_vcu128_impl_ext_jtag.xdc [current_fileset -constrset]
+        set_property target_constrs_file hemaia_system_vcu128/hemaia_system_vcu128.srcs/constrs_1/imports/hemaia_system/hemaia_system_vcu128_impl_ext_jtag.xdc [current_fileset -constrset]
     }
     save_constraints -force
 

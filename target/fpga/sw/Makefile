@@ -12,7 +12,7 @@ BIN_VERIFY	?= $(ROOT)/util/bin2jtag_only_verify.py
 
 .PHONY: sw download_sw clean verify_sw
 
-sw: bootrom.coe bootrom.tcl app.tcl app_verify.tcl
+sw: bootrom.tcl app.tcl app_verify.tcl
 
 bootrom.coe: $(BOOTROM)
 	bin2coe -i $< -w 32 -o $@

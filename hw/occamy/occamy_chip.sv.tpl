@@ -41,12 +41,8 @@ import ${name}_pkg::*;
   inout  logic        i2c_scl_io,
   // `SPI Host` Interface
   output logic        spim_sck_o,
-  output logic        spim_sck_en_o,
   output logic [1:0]  spim_csb_o,
-  output logic [1:0]  spim_csb_en_o,
-  output logic [3:0]  spim_sd_o,
-  output logic [3:0]  spim_sd_en_o,
-  input        [3:0]  spim_sd_i,
+  inout  logic [3:0]  spim_sd_io,
 
   input  logic [11:0] ext_irq_i
 );
@@ -55,8 +51,9 @@ import ${name}_pkg::*;
   // SRAM as main memory //
   /////////////////////////
 
-  ${soc_wide_xbar.out_spm_wide.req_type()} spm_axi_wide_req_o;
-  ${soc_wide_xbar.out_spm_wide.rsp_type()} spm_axi_wide_rsp_i;
+  <%
+    ram_axi = soc_wide_xbar.out_spm_wide.copy(name="ram_axi").declare(context)
+  %> \
 
   <% spm_wide_words = occamy_cfg["spm_wide"]["length"]//(soc_wide_xbar.out_spm_wide.dw//8) %>\
 
@@ -81,8 +78,8 @@ import ${name}_pkg::*;
     .clk_i (${soc_wide_xbar.out_spm_wide.clk}),
     .rst_ni (${soc_wide_xbar.out_spm_wide.rst}),
     .busy_o (),
-    .axi_req_i (${soc_wide_xbar.out_spm_wide.req_name()}),
-    .axi_resp_o (${soc_wide_xbar.out_spm_wide.rsp_name()}),
+    .axi_req_i (${ram_axi.req_name()}),
+    .axi_resp_o (${ram_axi.rsp_name()}),
     .mem_req_o (spm_wide_req),
     .mem_gnt_i (spm_wide_gnt),
     .mem_addr_o (spm_wide_addr),
@@ -125,7 +122,7 @@ import ${name}_pkg::*;
 
   <% regbus_bootrom = soc_axi_lite_narrow_periph_xbar.out_bootrom.to_reg(context, "bootrom", fr="bootrom_axi_lite") %>
 
-  module bootrom (
+  bootrom i_bootrom (
     .clk_i(clk_i), 
     .rst_ni(rst_ni), 
     .req_i(bootrom_req.valid), 
@@ -144,7 +141,11 @@ import ${name}_pkg::*;
     .bootrom_req_o   (bootrom_axi_lite_req),
     .bootrom_rsp_i   (bootrom_axi_lite_rsp),
     .ext_irq_i       (ext_irq_i),
+    // RAM
+    .spm_axi_wide_req_o(${ram_axi.req_name()}), 
+    .spm_axi_wide_rsp_i(${ram_axi.rsp_name()}), 
     // Tie-off unused ports
+    .chip_ctrl_req_o (), 
     .chip_ctrl_rsp_i ('0),
     .sram_cfgs_i ('0),
     .*

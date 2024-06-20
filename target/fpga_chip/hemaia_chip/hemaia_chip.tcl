@@ -32,7 +32,7 @@ set_property IS_ENABLED 0 [get_files -regex .*/axi_intf.sv]
 set_property IS_ENABLED 0 [get_files -regex .*/reg_intf.sv]
 
 # Package IP
-set_property top hemaia_chip [current_fileset]
+set_property top occamy_chip [current_fileset]
 
 update_compile_order -fileset sources_1
 synth_design -rtl -name rtl_1

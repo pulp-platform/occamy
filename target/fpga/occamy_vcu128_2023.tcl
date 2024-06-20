@@ -6,13 +6,13 @@
 
 # Parse arguments:
 # 0: Debug 1/0
-# 1: nproc
-# 2: Path to coe for bootrom preconfiguration
+# 1: EXT_JTAG 1/0
 set DEBUG false
 set EXT_JTAG false
 if {$argc > 0 && [lindex $argv 0]} { set DEBUG true }
 if {$argc > 1 && [lindex $argv 1]} { set EXT_JTAG true }
-set nproc [lindex $argv 2]
+
+set nproc [exec nproc]
 
 # Create project
 set project occamy_vcu128_2023

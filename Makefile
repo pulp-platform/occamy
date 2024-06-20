@@ -45,17 +45,38 @@ occamy_ip_vcu128_gui: # In ESAT Server
 	sh -c "cd ./target/fpga/vivado_ips/occamy_xilinx/;vivado occamy_xilinx.xpr"
 
 occamy_system_vcu128: occamy_ip_vcu128 # In ESAT Server
-	#                                                                                          debug  jtag  (put 1 or 0)   threads  
-	sh -c "cd ./target/fpga;vivado -mode batch -source occamy_vcu128_2023.tcl -tclargs             1     1                      16
+	#                                                                                          debug  jtag  (put 1 or 0)
+	sh -c "cd ./target/fpga;vivado -mode batch -source occamy_vcu128_2023.tcl -tclargs             1     1"
 
 occamy_system_vcu128_gui: # In ESAT Server
 	sh -c "cd ./target/fpga/occamy_vcu128_2023/;vivado occamy_vcu128_2023.xpr"
 
-occamy_system_download_sw: # In ESAT Server
+occamy_system_download_sw: # In ESAT Server; this procedure will only inject the bootrom at present; however, it can also inject the software.
 	make -C ./target/fpga/sw download_sw
 
-open_terminal:	# It opens ttyUSB1 (Turn off HW flowcontrol in the software, as IP on Occamy is not supported)
-	sh minicom -D /dev/ttyUSB1 
+open_terminal:	# It opens ttyUSB1 without locking it, and set baudrate at 1Mbps
+	sh minicom -D /dev/ttyUSB1 -b 1000000 -o
+
+
+# FPGA Workflow (with no Xilinx IP - tapeout configuration)
+# Please be attention that in this configuration, injecting any binary files by Xilinx Vivado are not possible anymore; please use JTAG or embedded bootrom to load the binary
+hemaia_system_vivado_preparation: # In SNAX Docker
+	make -C ./target/fpga_chip/hemaia_system/ define_defines_includes_no_simset.tcl
+	make -C ./target/fpga_chip/hemaia_chip/ define-sources.tcl
+
+hemaia_chip_vcu128:	# In ESAT Server
+	#                                                                                          			debug  jtag  (put 1 or 0)
+	sh -c "cd ./target/fpga_chip/hemaia_chip/;vivado -mode batch -source hemaia_chip.tcl -tclargs     		1     1"
+
+hemaia_chip_vcu128_gui: # In ESAT Server
+	sh -c "cd ./target/fpga/fpga_chip/hemaia_chip/hemaia_chip/;vivado hemaia_chip.xpr"
+
+hemaia_system_vcu128: occamy_ip_vcu128 # In ESAT Server
+	#                                                                                         						debug  jtag  (put 1 or 0)   
+	sh -c "cd ./target/fpga_chip/hemaia_system/;vivado -mode batch -source hemaia_system_vcu128.tcl -tclargs           	1     1"
+
+hemaia_system_vcu128_gui: # In ESAT Server
+	sh -c "cd ./target/fpga_chip/hemaia_system/hemaia_system_vcu128/;vivado hemaia_system_vcu128.xpr"
 
 # Questasim Workflow
 occamy_system_vsim_preparation: # In SNAX Docker

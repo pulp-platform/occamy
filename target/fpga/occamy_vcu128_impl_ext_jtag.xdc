@@ -1,4 +1,4 @@
-# Copyright 2020 ETH Zurich and University of Bologna.
+# Copyright 2024 KU Leuven, ETH Zurich and University of Bologna.
 # Solderpad Hardware License, Version 0.51, see LICENSE for details.
 # SPDX-License-Identifier: SHL-0.51
 #
@@ -24,21 +24,21 @@ set_max_delay -to   [get_ports { jtag_tdo_o }] 20
 set_max_delay -from [get_ports { jtag_tms_i }] 20
 set_max_delay -from [get_ports { jtag_tdi_i }] 20
 
-# B23 - C14 (FMCP_HSPC_LA10_P) - J1.02 - VDD
-set_property PACKAGE_PIN B23     [get_ports jtag_vdd_o]
+# C23 - C18 (FMCP_HSPC_LA14_P) - J1.02 - VDD
+set_property PACKAGE_PIN C23     [get_ports jtag_vdd_o]
 set_property IOSTANDARD LVCMOS18 [get_ports jtag_vdd_o]
-# A23 - C15 (FMCP_HSPC_LA10_N) - J1.04 - GND
-set_property PACKAGE_PIN A23     [get_ports jtag_gnd_o]
+# B22 - C19 (FMCP_HSPC_LA14_N) - J1.04 - GND
+set_property PACKAGE_PIN B22     [get_ports jtag_gnd_o]
 set_property IOSTANDARD LVCMOS18 [get_ports jtag_gnd_o]
-# B26 - H16 (FMCP_HSPC_LA11_P) - J1.06 - TCK
-set_property PACKAGE_PIN B26     [get_ports jtag_tck_i]
+# E19 - C22 (FMCP_HSPC_LA18_CC_P) - J1.06 - TCK
+set_property PACKAGE_PIN E19     [get_ports jtag_tck_i]
 set_property IOSTANDARD LVCMOS18 [get_ports jtag_tck_i]
-# B25 - H17 (FMCP_HSPC_LA11_N) - J1.08 - TDO
-set_property PACKAGE_PIN B25     [get_ports jtag_tdo_o]
+# E18 - C23 (FMCP_HSPC_LA19_CC_N) - J1.08 - TDO
+set_property PACKAGE_PIN E18     [get_ports jtag_tdo_o]
 set_property IOSTANDARD LVCMOS18 [get_ports jtag_tdo_o]
-# J22 - G15 (FMCP_HSPC_LA12_P) - J1.10 - TDI
-set_property PACKAGE_PIN J22     [get_ports jtag_tdi_i]
+# E21 - C26 (FMCP_HSPC_LA27_P) - J1.10 - TDI
+set_property PACKAGE_PIN E21     [get_ports jtag_tdi_i]
 set_property IOSTANDARD LVCMOS18 [get_ports jtag_tdi_i]
-# H22 - G16 (FMCP_HSPC_LA12_N) - J1.12 - TNS
-set_property PACKAGE_PIN H22     [get_ports jtag_tms_i]
+# D21 - C27 (FMCP_HSPC_LA27_N) - J1.12 - TNS
+set_property PACKAGE_PIN D21     [get_ports jtag_tms_i]
 set_property IOSTANDARD LVCMOS18 [get_ports jtag_tms_i]
