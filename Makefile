@@ -7,6 +7,8 @@ CFG ?= snax_two_clusters.hjson
 clean:
 	make -C ./target/fpga/ clean
 	make -C ./target/fpga/vivado_ips/ clean
+	make -C ./target/fpga_chip/hemaia_chip/ clean
+	make -C ./target/fpga_chip/hemaia_system/ clean
 	make -C ./target/sim/ clean
 	make -C ./target/rtl/ clean
 	make -C ./target/fpga/sw clean
@@ -71,7 +73,7 @@ hemaia_chip_vcu128:	# In ESAT Server
 hemaia_chip_vcu128_gui: # In ESAT Server
 	sh -c "cd ./target/fpga/fpga_chip/hemaia_chip/hemaia_chip/;vivado hemaia_chip.xpr"
 
-hemaia_system_vcu128: occamy_ip_vcu128 # In ESAT Server
+hemaia_system_vcu128: hemaia_chip_vcu128 # In ESAT Server
 	#                                                                                         						debug  jtag  (put 1 or 0)   
 	sh -c "cd ./target/fpga_chip/hemaia_system/;vivado -mode batch -source hemaia_system_vcu128.tcl -tclargs           	1     1"
 

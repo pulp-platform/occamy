@@ -340,6 +340,14 @@ add_files -norecurse -fileset [current_fileset] [list \
     $ROOT/.bender/git/checkouts/scm-d89f244665221304/fpga_scm/register_file_3r_2w.sv \
 ]
 add_files -norecurse -fileset [current_fileset] [list \
+    $ROOT/.bender/git/checkouts/snax-gemm-de08232e0fde30e0/generated/gemm/BareBlockGemm.sv \
+    $ROOT/.bender/git/checkouts/snax-gemm-de08232e0fde30e0/src/snax_streamer_gemm_shell_wrapper.sv \
+]
+add_files -norecurse -fileset [current_fileset] [list \
+    $ROOT/.bender/git/checkouts/snax-postprocessing-simd-b38ddfb2514b271e/src/snax_streamer_simd_shell_wrapper.sv \
+    $ROOT/.bender/git/checkouts/snax-postprocessing-simd-b38ddfb2514b271e/generated/simd/SIMD.sv \
+]
+add_files -norecurse -fileset [current_fileset] [list \
     $ROOT/.bender/git/checkouts/apb_timer-7f0a4fb67c0644d7/src/timer.sv \
     $ROOT/.bender/git/checkouts/apb_timer-7f0a4fb67c0644d7/src/apb_timer.sv \
 ]
@@ -615,6 +623,29 @@ add_files -norecurse -fileset [current_fileset] [list \
     $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/hw/snax_hwpe_mac/src/snax_mac_wrapper.sv \
 ]
 add_files -norecurse -fileset [current_fileset] [list \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_gemm/snax_streamer_gemm_csrman_CsrManager.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_gemm/snax_streamer_gemm_streamer_StreamerTop.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_gemm/snax_streamer_gemm_csrman_wrapper.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_gemm/snax_streamer_gemm_streamer_wrapper.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_gemm/snax_streamer_gemm_wrapper.sv \
+]
+add_files -norecurse -fileset [current_fileset] [list \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_simd/snax_streamer_simd_csrman_CsrManager.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_simd/snax_streamer_simd_streamer_StreamerTop.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_simd/snax_streamer_simd_csrman_wrapper.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_simd/snax_streamer_simd_streamer_wrapper.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_streamer_simd/snax_streamer_simd_wrapper.sv \
+]
+add_files -norecurse -fileset [current_fileset] [list \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/hw/snax_data_reshuffler/src/data_reshuffler.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_data_reshuffler/snax_data_reshuffler_csrman_CsrManager.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_data_reshuffler/snax_data_reshuffler_streamer_StreamerTop.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_data_reshuffler/snax_data_reshuffler_csrman_wrapper.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_data_reshuffler/snax_data_reshuffler_streamer_wrapper.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/hw/snax_data_reshuffler/src/snax_data_reshuffler_shell_wrapper.sv \
+    $ROOT/.bender/git/checkouts/snitch_cluster-9a64e6b3572c7a8d/target/snitch_cluster/generated/snax_data_reshuffler/snax_data_reshuffler_wrapper.sv \
+]
+add_files -norecurse -fileset [current_fileset] [list \
     $ROOT/hw/future/reg_to_apb.sv \
     $ROOT/hw/snitch_read_only_cache/src/snitch_axi_to_cache.sv \
     $ROOT/hw/snitch_read_only_cache/src/snitch_read_only_cache.sv \
@@ -632,7 +663,8 @@ add_files -norecurse -fileset [current_fileset] [list \
     $ROOT/hw/occamy/soc_ctrl/occamy_soc_ctrl.sv \
 ]
 add_files -norecurse -fileset [current_fileset] [list \
-    $ROOT/target/rtl/src/snax_minimal_wrapper.sv \
+    $ROOT/target/rtl/src/snax_xiaoling_0_wrapper.sv \
+    $ROOT/target/rtl/src/snax_xiaoling_1_wrapper.sv \
 ]
 add_files -norecurse -fileset [current_fileset] [list \
     $ROOT/target/rtl/src/quadrant_s1_ctrl/occamy_quadrant_s1_reg_pkg.sv \
@@ -703,7 +735,10 @@ set_property verilog_define [list \
     TARGET_FPGA \
     TARGET_OCCAMY \
     TARGET_SNAX_CLUSTER \
-    TARGET_SNAX_MINIMAL \
+    TARGET_SNAX_DATA_RESHUFFLER \
+    TARGET_SNAX_STREAMER_GEMM \
+    TARGET_SNAX_STREAMER_SIMD \
+    TARGET_SNAX_XIAOLING \
     TARGET_SYNTHESIS \
     TARGET_TAPEOUT \
     TARGET_VIVADO \
@@ -717,7 +752,10 @@ set_property verilog_define [list \
     TARGET_FPGA \
     TARGET_OCCAMY \
     TARGET_SNAX_CLUSTER \
-    TARGET_SNAX_MINIMAL \
+    TARGET_SNAX_DATA_RESHUFFLER \
+    TARGET_SNAX_STREAMER_GEMM \
+    TARGET_SNAX_STREAMER_SIMD \
+    TARGET_SNAX_XIAOLING \
     TARGET_SYNTHESIS \
     TARGET_TAPEOUT \
     TARGET_VIVADO \

@@ -104,6 +104,8 @@ module testharness import occamy_pkg::*; (
     .chip_id_i ('0),
     .boot_mode_i ('0),
     .uart_tx_o (tx),
+    .uart_cts_ni ('0),
+    .uart_rts_no (),
     .uart_rx_i (rx),
     .gpio_d_i ('0),
     .gpio_d_o (),
@@ -113,19 +115,11 @@ module testharness import occamy_pkg::*; (
     .jtag_tms_i ('0),
     .jtag_tdi_i ('0),
     .jtag_tdo_o (),
-    .i2c_sda_o (),
-    .i2c_sda_i ('0),
-    .i2c_sda_en_o (),
-    .i2c_scl_o (),
-    .i2c_scl_i ('0),
-    .i2c_scl_en_o (),
+    .i2c_sda_io (),
+    .i2c_scl_io (),
     .spim_sck_o (),
-    .spim_sck_en_o (),
     .spim_csb_o (),
-    .spim_csb_en_o (),
-    .spim_sd_o (),
-    .spim_sd_en_o (),
-    .spim_sd_i ('0),
+    .spim_sd_io (),
     .bootrom_req_o (axi_lite_bootrom_req),
     .bootrom_rsp_i (axi_lite_bootrom_rsp),
     .spm_axi_wide_req_o (spm_wide_req),
@@ -137,7 +131,7 @@ module testharness import occamy_pkg::*; (
   localparam int unsigned UartDPIFreq = 1_000_000_000;
 
   uartdpi #(
-    .BAUD ('d115_200),
+    .BAUD ('d20_000_000),
     // Frequency shouldn't matter since we are sending with the same clock.
     .FREQ (UartDPIFreq),
     .NAME("uart0")

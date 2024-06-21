@@ -125,11 +125,11 @@ module csr_regfile import ariane_pkg::*; #(
     riscv::xlen_t mie_q,       mie_d;
     riscv::xlen_t mcounteren_q,mcounteren_d;
     riscv::xlen_t mscratch_q,  mscratch_d;
-    (* mark_debug = "true" *) riscv::xlen_t mepc_q;
+    riscv::xlen_t mepc_q;
     riscv::xlen_t mepc_d;
-    (* mark_debug = "true" *) riscv::xlen_t mcause_q;
+    riscv::xlen_t mcause_q;
     riscv::xlen_t mcause_d;
-    (* mark_debug = "true" *) riscv::xlen_t mtval_q;
+    riscv::xlen_t mtval_q;
     riscv::xlen_t mtval_d;
 
     riscv::xlen_t stvec_q,     stvec_d;

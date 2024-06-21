@@ -143,21 +143,6 @@
                 length: 4096, // 4 kiB 0x1000
             },
             {
-                name: "fll_system",
-                address: 33558528, // 0x0200_1000
-                length: 1024, // 1 kiB 0x400
-            },
-            {
-                name: "fll_periph",
-                address: 33559552, // 0x0200_1400
-                length: 1024, // 1 kiB 0x400
-            },
-            {
-                name: "fll_hbm2e",
-                address: 33560576, // 0x0200_1800
-                length: 1024, // 1 kiB 0x400
-            },
-            {
                 name: "uart",
                 address: 33562624, // 0x0200_2000
                 length: 4096, // 4 kiB 0x1000
@@ -183,29 +168,9 @@
                 length: 4096, // 4 kiB 0x1000
             },
             {
-                name: "hbm_xbar_cfg",
-                address: 33583104, // 0x0200_7000
-                length: 4096, // 4 kiB 0x1000
-            },
-            {
                 name: "spim",
                 address: 50331648, // 0x0300_0000
                 length: 131072, // 4 kiB 0x2_0000
-            },
-            {
-                name: "pcie_cfg",
-                address: 83886080, // 0x0500_0000
-                length: 131072, // 128 kiB 0x2_0000
-            },
-            {
-                name: "hbi_wide_cfg",
-                address: 100663296, // 0x0600_0000
-                length: 65536, // 64 kiB 0x1_0000
-            },
-            {
-                name: "hbi_narrow_cfg",
-                address: 117440512, // 0x0700_0000
-                length: 65536, // 64 kiB 0x1_0000
             },
             {
                 name: "plic",

@@ -35,25 +35,25 @@
 #define MSTATUS_MIE_OFFSET 3
 #define MSTATUS_FS_OFFSET 13
 
-//===============================================================
-// Memory map pointers
-//===============================================================
+// //===============================================================
+// // Memory map pointers
+// //===============================================================
 
-#if SELECT_FLL == 0  // ETH FLL
-volatile uint32_t* const fll_system_base =
-    (volatile uint32_t*)FLL_SYSTEM_BASE_ADDR;
-volatile uint32_t* const fll_periph_base =
-    (volatile uint32_t*)FLL_PERIPH_BASE_ADDR;
-volatile uint32_t* const fll_hbm2e_base =
-    (volatile uint32_t*)FLL_HBM2E_BASE_ADDR;
-#elif SELECT_FLL == 1  // GF FLL
-volatile uint32_t* const fll_system_base =
-    (volatile uint32_t*)FLL_SYSTEM_BASE_ADDR + (0x200 >> 2);
-volatile uint32_t* const fll_periph_base =
-    (volatile uint32_t*)FLL_PERIPH_BASE_ADDR + (0x200 >> 2);
-volatile uint32_t* const fll_hbm2e_base =
-    (volatile uint32_t*)FLL_HBM2E_BASE_ADDR + (0x200 >> 2);
-#endif
+// #if SELECT_FLL == 0  // ETH FLL
+// volatile uint32_t* const fll_system_base =
+//     (volatile uint32_t*)FLL_SYSTEM_BASE_ADDR;
+// volatile uint32_t* const fll_periph_base =
+//     (volatile uint32_t*)FLL_PERIPH_BASE_ADDR;
+// volatile uint32_t* const fll_hbm2e_base =
+//     (volatile uint32_t*)FLL_HBM2E_BASE_ADDR;
+// #elif SELECT_FLL == 1  // GF FLL
+// volatile uint32_t* const fll_system_base =
+//     (volatile uint32_t*)FLL_SYSTEM_BASE_ADDR + (0x200 >> 2);
+// volatile uint32_t* const fll_periph_base =
+//     (volatile uint32_t*)FLL_PERIPH_BASE_ADDR + (0x200 >> 2);
+// volatile uint32_t* const fll_hbm2e_base =
+//     (volatile uint32_t*)FLL_HBM2E_BASE_ADDR + (0x200 >> 2);
+// #endif
 
 // volatile uint32_t* const fll_base[N_CLOCKS] = {fll_system_base,
 // fll_periph_base, fll_hbm2e_base};
@@ -719,14 +719,14 @@ uint32_t check_isolated_timeout(uint32_t max_tries, uint32_t quadrant_idx,
 // SoC configuration
 //===============================================================
 
-void activate_interleaved_mode_hbm() {
-    uint64_t addr =
-        OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
-    *((volatile uint32_t*)addr) = 1;
-}
+// void activate_interleaved_mode_hbm() {
+//     uint64_t addr =
+//         OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
+//     *((volatile uint32_t*)addr) = 1;
+// }
 
-void deactivate_interleaved_mode_hbm() {
-    uint64_t addr =
-        OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
-    *((volatile uint32_t*)addr) = 1;
-}
+// void deactivate_interleaved_mode_hbm() {
+//     uint64_t addr =
+//         OCCAMY_HBM_XBAR_INTERLEAVED_ENA_REG_OFFSET + HBM_XBAR_CFG_BASE_ADDR;
+//     *((volatile uint32_t*)addr) = 1;
+// }

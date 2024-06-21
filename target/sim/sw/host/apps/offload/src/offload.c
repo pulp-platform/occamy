@@ -6,6 +6,8 @@
 
 int main() {
     // Reset and ungate all quadrants, deisolate
+    init_uart(50000000, 1000000);
+    print_uart("[Occamy] The Offload main function \r\n");
     reset_and_ungate_quadrants();
     deisolate_all();
 
@@ -18,6 +20,8 @@ int main() {
     // Compiler fence to ensure Snitch entry point is
     // programmed before Snitches are woken up
     asm volatile("" ::: "memory");
+
+    print_uart("[Occamy] Calling snitch cluster to execute the task \r\n");
 
     // Start Snitches
     wakeup_snitches_cl();

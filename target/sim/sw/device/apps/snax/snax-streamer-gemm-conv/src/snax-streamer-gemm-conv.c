@@ -12,6 +12,8 @@
 
 #include "snax-streamer-gemm-conv-lib.h"
 
+#include "uart.h"
+
 // This is the main function for the SNAX GEMM for Conv2d
 // We use several nested loops to iterate over the input data and weights,
 // achieving implicit im2col
@@ -21,9 +23,7 @@ int main() {
     uint32_t group0_bound_lower = 0;
     uint32_t group0_bound_upper = snrt_cluster_core_num(); // 2
     // only test one cluster
-    if(snrt_global_core_idx()<group0_bound_upper){
-        printf("Start Loading Data\n");
-        
+    if(snrt_global_core_idx()<group0_bound_upper){        
         // Prepare addresses in TCDM
         int8_t *local_a, *local_b;
         int32_t* local_c;
