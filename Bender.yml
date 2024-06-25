@@ -29,7 +29,7 @@ dependencies:
   cva6:                   { path: hw/vendor/openhwgroup_cva6                                                }
   opentitan_peripherals:  { path: hw/vendor/pulp_platform_opentitan_peripherals                             }
   register_interface:     { git:  https://github.com/pulp-platform/register_interface.git, version: 0.3.8   }
-  snitch_cluster:         { git:  https://github.com/KULeuven-MICAS/snax_cluster.git,      rev:        ydeng/fpga_debug }
+  snitch_cluster:         { git:  https://github.com/KULeuven-MICAS/snax_cluster.git,      rev:        main }
   tech_cells_generic:     { git:  https://github.com/pulp-platform/tech_cells_generic.git, rev:     v0.2.11 }
   cluster_icache:         { git:  https://github.com/pulp-platform/cluster_icache.git,     version: 0.1.0   }
 

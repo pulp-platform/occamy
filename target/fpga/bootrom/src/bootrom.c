@@ -64,14 +64,14 @@ void delay_cycles(uint64_t cycle) {
 }
 
 void uart_xmodem(uint64_t start_address) {
-    uint32_t block_number = 1;
     uint8_t received_char;
-    uint8_t expected_packet_number = 1;
     bool transmission_end = false;
 
     delay_cycles(50000000); // Delay for 1s
 
     write_serial(NAK);  // Request for data
+
+    uint32_t current_offset = 0;
 
     while (!transmission_end) {
         uint8_t data[1024];
@@ -98,12 +98,12 @@ void uart_xmodem(uint64_t start_address) {
                 received_parity = read_serial();
 
                 calculated_parity = compute_parity(data, index);
-
+                
                 if (received_parity == calculated_parity) {
                     // Copy data to memory
+                    memcpy((void *)(start_address + current_offset), data, index);
+                    current_offset += index;
                     write_serial(ACK);
-                    memcpy((void *)(start_address + (block_number - 1) * index), data, index);
-                    block_number++;
                 } else {
                     write_serial(NAK); // CRC error, request retransmission
                 }
@@ -133,7 +133,7 @@ void bootrom() {
         print_uart("\r\n\t\t Welcome to Occamy Bootrom");
         print_uart("\r\n");
         print_uart("\r\n\t Enter the number to select the mode: ");
-        print_uart("\r\n\t 1. Load from JTAG\r\n\t 2. Load from UART\r\n\t 3. Print memory from 0x80000000\r\n\t 4. Continue to Boot from 0x80000000");
+        print_uart("\r\n\t 1. Load from JTAG\r\n\t 2. Load from UART to 0x80000000\r\n\t 3. Print memory from 0x80000000\r\n\t 4. Continue to Boot from 0x80000000");
         boot_mode = read_serial() - '0' - 1;
 
         switch (boot_mode) {

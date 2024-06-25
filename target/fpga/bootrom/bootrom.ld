@@ -23,6 +23,7 @@ SECTIONS
   /* Global and stack pointer */
   __global_pointer$ = ADDR(.rodata) + SIZEOF(.rodata) / 2;
   __stack_pointer$  = ORIGIN(spm) + LENGTH(spm) - 8;
+
   /* Quadrant Parameters */
   __quad_stride     = 0x10000;
   __quad_int_base   = 0x0b000000;

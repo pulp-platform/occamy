@@ -110,6 +110,10 @@ inline static void print_uart_hex(char *str, uint32_t length) {
         if (i % 16 == 0) {
             write_serial('\r');
             write_serial('\n');
+            for (int j = 28; j >= 0; j = j - 4) write_serial(lut[(i >> j) % 16]);
+            write_serial(':');
+            write_serial(' ');
+
         }
         char temp = str[i];
         write_serial(lut[temp / 16]);
