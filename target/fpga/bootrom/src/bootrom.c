@@ -101,9 +101,9 @@ void uart_xmodem(uint64_t start_address) {
                 
                 if (received_parity == calculated_parity) {
                     // Copy data to memory
+                    write_serial(ACK);
                     memcpy((void *)(start_address + current_offset), data, index);
                     current_offset += index;
-                    write_serial(ACK);
                 } else {
                     write_serial(NAK); // CRC error, request retransmission
                 }

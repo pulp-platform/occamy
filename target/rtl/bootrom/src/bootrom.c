@@ -100,8 +100,8 @@ void uart_xmodem(uint64_t start_address) {
                 calculated_parity = compute_parity(data, index);
                 
                 if (received_parity == calculated_parity) {
-                    write_serial(ACK);
                     // Copy data to memory
+                    write_serial(ACK);
                     memcpy((void *)(start_address + current_offset), data, index);
                     current_offset += index;
                 } else {
@@ -130,7 +130,7 @@ void bootrom() {
     while (1) {
         start_address = 0x80000000;
         print_uart("\033[2J");
-        print_uart("\r\n\t\t Welcome to Occamy Bootrom");
+        print_uart("\r\n\t\t Welcome to HeMAiA Bootrom");
         print_uart("\r\n");
         print_uart("\r\n\t Enter the number to select the mode: ");
         print_uart("\r\n\t 1. Load from JTAG\r\n\t 2. Load from UART to 0x80000000\r\n\t 3. Print memory from 0x80000000\r\n\t 4. Continue to Boot from 0x80000000");
