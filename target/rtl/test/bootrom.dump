@@ -11,7 +11,7 @@ Disassembly of section .text:
 0000000001000008 <_snitch_park>:
  1000008:	f1402573          	csrr	a0,mhartid
  100000c:	00000597          	auipc	a1,0x0
- 1000010:	0d858593          	addi	a1,a1,216 # 10000e4 <device_tree>
+ 1000010:	0a858593          	addi	a1,a1,168 # 10000b4 <device_tree>
  1000014:	00000297          	auipc	t0,0x0
  1000018:	02028293          	addi	t0,t0,32 # 1000034 <_snitch_resume>
  100001c:	30529073          	csrw	mtvec,t0
@@ -30,14 +30,14 @@ Disassembly of section .text:
 
 0000000001000048 <_cva6_init>:
  1000048:	00000197          	auipc	gp,0x0
- 100004c:	06818193          	addi	gp,gp,104 # 10000b0 <__global_pointer$>
+ 100004c:	04f18193          	addi	gp,gp,79 # 1000097 <__global_pointer$>
  1000050:	6f020117          	auipc	sp,0x6f020
  1000054:	fa810113          	addi	sp,sp,-88 # 7001fff8 <__stack_pointer$>
  1000058:	00000397          	auipc	t2,0x0
  100005c:	01838393          	addi	t2,t2,24 # 1000070 <exception>
  1000060:	30539073          	csrw	mtvec,t2
  1000064:	00000297          	auipc	t0,0x0
- 1000068:	07c2e283          	lwu	t0,124(t0) # 10000e0 <$d>
+ 1000068:	04c2e283          	lwu	t0,76(t0) # 10000b0 <entry_addr>
  100006c:	000280e7          	jalr	t0
 
 0000000001000070 <exception>:
@@ -47,46 +47,26 @@ Disassembly of section .text:
 Disassembly of section .misc:
 
 0000000001000080 <.misc>:
- 1000080:	3a41                	addiw	s4,s4,-16
+ 1000080:	2d41                	addiw	s10,s10,16
  1000082:	0000                	unimp
  1000084:	7200                	ld	s0,32(a2)
  1000086:	7369                	lui	t1,0xffffa
  1000088:	01007663          	bgeu	zero,a6,1000094 <exception+0x24>
- 100008c:	0030                	addi	a2,sp,8
- 100008e:	0000                	unimp
+ 100008c:	00000023          	sb	zero,0(zero) # 0 <__quad_stride-0x10000>
  1000090:	7205                	lui	tp,0xfffe1
  1000092:	3676                	fld	fa2,376(sp)
  1000094:	6934                	ld	a3,80(a0)
  1000096:	7032                	0x7032
- 1000098:	5f31                	li	t5,-20
+ 1000098:	5f30                	lw	a2,120(a4)
  100009a:	326d                	addiw	tp,tp,-5
  100009c:	3070                	fld	fa2,224(s0)
- 100009e:	615f 7032 5f31      	0x5f317032615f
+ 100009e:	615f 7032 5f30      	0x5f307032615f
  10000a4:	3266                	fld	ft4,120(sp)
- 10000a6:	3270                	fld	fa2,224(a2)
- 10000a8:	645f 7032 5f32      	0x5f327032645f
- 10000ae:	697a                	ld	s2,408(sp)
- 10000b0:	32727363          	bgeu	tp,t2,10003d6 <device_tree+0x2f2>
- 10000b4:	3070                	fld	fa2,224(s0)
- 10000b6:	0800                	addi	s0,sp,16
- 10000b8:	0a01                	addi	s4,s4,0
- 10000ba:	0004000b          	0x4000b
- 10000be:	0000                	unimp
- 10000c0:	0014                	0x14
- 10000c2:	0000                	unimp
- 10000c4:	00000003          	lb	zero,0(zero) # 0 <__quad_stride-0x10000>
- 10000c8:	00554e47          	fmsub.s	ft8,fa0,ft5,ft0,rmm
- 10000cc:	39dcf4f3          	csrrci	s1,0x39d,25
- 10000d0:	9d3c                	0x9d3c
- 10000d2:	1301                	addi	t1,t1,-32
- 10000d4:	236a                	fld	ft6,152(sp)
- 10000d6:	6a9c                	ld	a5,16(a3)
- 10000d8:	af7d                	j	1000896 <device_tree+0x7b2>
- 10000da:	57bfc12b          	0x57bfc12b
- 10000de:	5b2d                	li	s6,-21
+ 10000a6:	3070                	fld	fa2,224(s0)
+ 10000a8:	645f 7032 0030      	0x307032645f
 
 Disassembly of section .end:
 
-00000000010000e0 <$d>:
- 10000e0:	0000                	unimp
- 10000e2:	8000                	0x8000
+00000000010000b0 <entry_addr>:
+ 10000b0:	0000                	unimp
+ 10000b2:	8000                	0x8000

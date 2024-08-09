@@ -115,8 +115,8 @@
       cfg_base_offset: 65536 // 0x10000
     },
     clusters:[
-        "snax_xiaoling_0",
-        "snax_xiaoling_1",
+        "snax_xiaoling",
+        "snax_gemmX_xdma",
     ],
 
     // peripherals

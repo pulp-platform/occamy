@@ -1,6 +1,6 @@
 {
 		cluster: {
-        name: "snax_minimal"
+        name: "snax_minimal_cluster"
         boot_addr: 4096, // 0x1000
         cluster_base_addr: 268435456, // 0x10000000
         cluster_base_offset: 262144 // 0x40000
@@ -15,7 +15,7 @@
         cluster_periph_size: 64, // kB
         zero_mem_size: 64, // kB
         dma_data_width: 512,
-        dma_axi_req_fifo_depth: 24,
+        dma_axi_req_fifo_depth: 16,
         dma_req_fifo_depth: 8,
         narrow_trans: 4,
         wide_trans: 32,
@@ -83,10 +83,8 @@
         },
     },
 
-		dma_core_template: {
+	dma_core_template: {
         isa: "rv32ima",
-        // Xdiv_sqrt: true,
-        # isa: "rv32ema",
         xdma: true, 
         xssr: false, 
         xfrep: false

@@ -4,33 +4,22 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-# Add user applications to APPS variable
-APPS  = blas/axpy
-APPS += blas/gemm
-APPS += blas/test
-APPS += snax/snax-streamer-gemm-conv
+# Add user applications to APPS variable automatically. This is located in the apps directory with depth of 2.
+
+APPDIR  = $(shell find apps -mindepth 2 -maxdepth 2 -type d)
 TARGET ?= all
 
-APP_SUBDIRS = $(addprefix apps/,$(APPS))
+RTDIR    = runtime
+RTDIR   += math
 
-SUBDIRS  = runtime
-SUBDIRS += math
+RTDIR   += $(shell find snax -mindepth 1 -maxdepth 1 -type d)
 
-SUBDIRS += snax/data-reshuffler
-SUBDIRS += snax/gemm
-SUBDIRS += snax/mac
-SUBDIRS += snax/streamer-gemm
-SUBDIRS += snax/streamer-simd
-SUBDIRS += snax/streamer-gemm-conv
-SUBDIRS += $(APP_SUBDIRS)
+.PHONY: all $(RTDIR) $(APPDIR)
 
+all: $(APPDIR)
 
-.PHONY: all $(SUBDIRS)
-
-all: $(SUBDIRS)
-
-$(SUBDIRS):
+$(RTDIR):
 	$(MAKE) -C $@ $(TARGET)
 
-# Explicit dependency of apps on runtime
-$(APP_SUBDIRS): runtime math snax
+$(APPDIR): $(RTDIR)
+	$(MAKE) -C $@ $(TARGET)

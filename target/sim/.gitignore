@@ -3,6 +3,7 @@
 /addrmap/
 /work/
 /work-vsim/
+/work-vlt/
 /*.log
 /*.jou
 /.*_targets_group

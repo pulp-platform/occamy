@@ -17,7 +17,7 @@ from jsonref import JsonRef
 
 from mako.template import Template
 
-from occamy import check_occamy_cfg, get_cluster_generators, generate_wrappers, generate_memories
+from occamy import check_occamy_cfg, get_cluster_generators, generate_wrappers, generate_memories, get_cluster_cfg_list, generate_snitch
 
 sys.path.append(str(pathlib.Path(__file__).parent / '../'))
 from solder import solder, device_tree, util  # noqa: E402
@@ -399,11 +399,6 @@ def get_pkg_kwargs(occamy_cfg,cluster_generators, name):
     return pkg_kwargs
 
 
-
-
-
-
-
 def get_cva6_kwargs(occamy_cfg,soc_narrow_xbar,name):
     cva6_kwargs={
         "name": name,
@@ -411,7 +406,6 @@ def get_cva6_kwargs(occamy_cfg,soc_narrow_xbar,name):
         "soc_narrow_xbar": soc_narrow_xbar
     }
     return cva6_kwargs
-
 
 
 def get_cheader_kwargs(occamy_cfg,cluster_generators,name):
@@ -543,6 +537,9 @@ def main():
     parser.add_argument("--cva6-sv",
                         metavar="CVA6_SV",
                         help="Name of the CVA6 wrapper file (output).")
+    parser.add_argument("--snitch",
+                        metavar="SNITCH",
+                        help="Define this to generate Snitch Cluster.")
     parser.add_argument("--bootdata",
                         metavar="BOOTDATA",
                         help="Name of the bootdata file (output)")
@@ -582,7 +579,7 @@ def main():
     # If name argument provided, change config
     if args.name != DEFAULT_NAME:
         occamy_cfg["cluster"]["name"] = args.name+"_cluster"
-        # occamy_cfg["cluster"]["name"] = args.name
+        # occamy_cfg["clster"]["name"] = args.name
 
     # Check the outdir
     outdir = args.outdir
@@ -610,6 +607,13 @@ def main():
     # e.g
     # cluster: {
     #     name: "snax_streamer_gemm"
+
+    # As all the source is able to be generated inside snax cluster, Occamy does not need to handle the wrapper gen any more. 
+    cluster_cfg_list = get_cluster_cfg_list(occamy_cfg, cluster_cfg_dir)
+    if args.snitch:
+        print(cluster_cfg_list)
+        generate_snitch(cluster_cfg_list, args.snitch)
+
     if args.wrapper:
         generate_wrappers(cluster_generators,outdir)
 

@@ -85,32 +85,10 @@ CVA6_TRACE            = trace_hart_0.log
 # Simulator options #
 #####################
 
-
-# We need to change the Bender.yml of the snax_gemm repo
-# The original target: snax-gemm will trigger the questasim error
-# So i change it to snax_gemm
-# VSIM_BENDER += -t snax_gemm
-# This target is to match the header of the snax_gemm_wrapper.sv
-# VSIM_BENDER += -t SYNTHESIS_SNAX_DEV_ONLY
-# This target is to snax-streamer-gemm
-
-VSIM_BENDER += -t cv64a6_imafdc_sv39 
-VSIM_BENDER += -t occamy
-
-VLT_BENDER  += -t cv64a6_imafdc_sv39 
-VLT_BENDER  += -t occamy 
+VSIM_BENDER += $(shell cat ../rtl/src/bender_targets.tmp)
+VLT_BENDER += $(shell cat ../rtl/src/bender_targets.tmp)
 
 VLT_BENDER  += -t SYNTHESIS_SNAX_DEV_ONLY
-
-ifdef SNAX_XIAOLING
-	VSIM_BENDER += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler -t snax_xiaoling
-	VLT_BENDER  += -t snax_streamer_gemm -t snax_streamer_simd -t snax_data_reshuffler -t snax_xiaoling
-endif
-
-ifdef SNAX_MINIMAL
-	VSIM_BENDER += -t snax_minimal
-	VLT_BENDER += -t snax_minimal
-endif
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
@@ -424,15 +402,6 @@ clean-vcs: clean-work
 	rm -rf AN.DB
 	rm -rf work-vcs
 	rm -f $(BIN_DIR)/$(TARGET).vcs
-
-########
-# FPGA #
-########
-
-# Build a small Occamy version (CVA6 + 1 cluster) for the VCU128 FPGA board
-.PHONY: fpga
-fpga: rtl
-	${MAKE} -C ../fpga occamy_vcu128
 
 ########
 # Util #

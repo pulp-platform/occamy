@@ -8,6 +8,7 @@ import hjson
 from jsonref import JsonRef
 sys.path.append(str(Path(__file__).parent / '../../deps/snitch_cluster/util/clustergen'))
 from cluster import Generator, PMA, PMACfg, SnitchCluster, clog2  # noqa: E402
+import subprocess
 
 def read_json_file(file):
     try:
@@ -70,6 +71,16 @@ def get_cluster_generators(occamy_cfg, cluster_cfg_dir):
         cluster_generators.append(cluster_obj)
     return cluster_generators
 
+def get_cluster_cfg_list(occamy_cfg, cluster_cfg_dir):
+    cluster_name_list = occamy_cfg["clusters"]
+    get_cluster_cfg_list = list()
+    for cluster_name in cluster_name_list:
+        get_cluster_cfg_list.append(cluster_cfg_dir / f"{cluster_name}.hjson")
+    return get_cluster_cfg_list
+
+def generate_snitch(cluster_cfg_dir, snitch_path):
+    for cfg in cluster_cfg_dir:
+        subprocess.call(f"make -C {snitch_path}/target/snitch_cluster CFG_OVERRIDE={cfg} rtl-gen", shell=True)
 
 def generate_wrappers(cluster_generators,out_dir):
     for cluster_generator in cluster_generators:

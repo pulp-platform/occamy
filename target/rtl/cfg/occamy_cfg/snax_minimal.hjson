@@ -115,7 +115,7 @@
       cfg_base_offset: 65536 // 0x10000
     },
     clusters:[
-        "snax_minimal",
+        "snax_minimal_cluster",
     ],
 
     // peripherals

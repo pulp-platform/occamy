@@ -11,4 +11,5 @@
 
 # Auto-generated sources
 /src/
+/testharness.sv
 /*_group

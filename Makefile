@@ -1,8 +1,13 @@
-.PHONY: clean bootrom sw rtl occamy_ip_vcu128 occamy_ip_vcu128_gui occamy_system_vcu128 occamy_system_vcu128_gui
+.PHONY: clean bootrom sw rtl occamy_ip_vcu128 occamy_ip_vcu128_gui occamy_system_vcu128 \
+		occamy_system_vcu128_gui occamy_system_download_sw open_terminal hemaia_system_vivado_preparation \
+		hemaia_chip_vcu128 hemaia_chip_vcu128_gui hemaia_system_vcu128 hemaia_system_vcu128_gui \
+		occamy_system_vlt occamy_system_vsim_preparation occamy_system_vsim
+
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
 
-CFG ?= snax_two_clusters.hjson
+CFG_OVERRIDE ?= target/rtl/cfg/occamy_cfg/snax_two_clusters.hjson
+CFG = $(realpath $(CFG_OVERRIDE))
 
 clean:
 	make -C ./target/fpga/ clean
@@ -17,22 +22,23 @@ clean:
 # Software Generation
 bootrom: # In Occamy Docker
 # The bootrom used for simulation (light-weight bootrom)
-	make -C ./target/sim bootrom CFG_OVERRIDE=../rtl/cfg/occamy_cfg/$(CFG)
+	make -C ./target/sim bootrom CFG_OVERRIDE=$(CFG)
 
 # The bootrom used for FPGA protoyping (emulated eeprom, full-functional bootrom)
-	make -C ./target/fpga/bootrom bootrom
+	make -C ./target/fpga/bootrom bootrom CFG_OVERRIDE=$(CFG)
 
 # The bootrom used for tapeout (embedded real rom, full-functional bootrom with different frequency settings)
-	make -C ./target/rtl/bootrom bootrom
+	make -C ./target/rtl/bootrom bootrom CFG_OVERRIDE=$(CFG)
 
 sw: # In Occamy Docker
-	make -C ./target/sim sw CFG_OVERRIDE=../rtl/cfg/occamy_cfg/$(CFG)
+	make -C ./target/sim sw CFG_OVERRIDE=$(CFG)
 
-# The software from simulation and FPGA prototyping comes from one source. If we intend to download the sodtware to FPGA, elf2bin should be done by objcopy in Occamy docker. 
+# The software from simulation and FPGA prototyping comes from one source. 
+# If we intend to download the sodtware to FPGA, the bin should be extracted from elf by objcopy in Occamy docker. 
 
 # Hardware Generation
 rtl: # In SNAX Docker
-	make -C ./target/rtl/ rtl CFG_OVERRIDE=cfg/occamy_cfg/$(CFG)
+	make -C ./target/rtl/ rtl CFG_OVERRIDE=$(CFG)
 
 # FPGA Workflow
 occamy_system_vivado_preparation: # In SNAX Docker
@@ -79,6 +85,12 @@ hemaia_system_vcu128: hemaia_chip_vcu128 # In ESAT Server
 
 hemaia_system_vcu128_gui: # In ESAT Server
 	sh -c "cd ./target/fpga_chip/hemaia_system/hemaia_system_vcu128/;vivado hemaia_system_vcu128.xpr"
+
+# Verilator Workflow (not working, many errors comes from AXI)
+occamy_system_vlt: # In SNAX Docker
+	make -C ./target/sim work/lib/libfesvr.a
+	make -C ./target/sim tb
+	make -C ./target/sim bin/occamy_top.vlt
 
 # Questasim Workflow
 occamy_system_vsim_preparation: # In SNAX Docker
