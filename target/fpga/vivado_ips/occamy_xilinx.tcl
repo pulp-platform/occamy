@@ -35,6 +35,7 @@ set_property IS_ENABLED 0 [get_files -regex .*/reg_intf.sv]
 set_property top occamy_xilinx [current_fileset]
 
 update_compile_order -fileset sources_1
+# This is just a quick synthesize to ensure there is no errors in source code
 synth_design -rtl -name rtl_1
 
 ipx::package_project -root_dir . -vendor ethz.ch -library user -taxonomy /UserIP -set_current true

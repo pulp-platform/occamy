@@ -68,8 +68,8 @@ foreach run $all_ooc_synth {
     if {[get_property PROGRESS [get_run $run]] != "100%"} {
         puts "Launching run $run"
         lappend runs_queued $run
-        # Default synthesis strategy
-        set_property strategy Flow_AlternateRoutability [get_runs $run]
+        # The synthesis strategy for each IP core (including SoC, regarding as an IP)
+        set_property strategy Flow_AreaOptimized_high [get_runs $run]
     } else {
         puts "Skipping 100% complete run: $run"
     }
@@ -87,6 +87,7 @@ if {[llength $runs_queued] != 0} {
 
 # top-level synthesis
 set run synth_1
+set_property strategy Flow_PerfOptimized_high [get_runs $run]
 if {[get_property PROGRESS [get_run $run]] != "100%"} {
     puts "Launching run $run"
     reset_run $run
@@ -164,12 +165,12 @@ if { [info exists incremental_impl_dcp]} {
 }
 
 # Implement
-set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]
-launch_runs impl_1 -jobs 12
+set_property strategy Performance_ExploreWithRemap [get_runs impl_1]
+launch_runs impl_1 -jobs ${nproc}
 wait_on_run impl_1
 
 # Generate Bitstream
-launch_runs impl_1 -to_step write_bitstream -jobs 12
+launch_runs impl_1 -to_step write_bitstream -jobs ${nproc}
 wait_on_run impl_1
 
 # Reports
