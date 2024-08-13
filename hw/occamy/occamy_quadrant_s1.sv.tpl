@@ -238,6 +238,8 @@ module ${name}_quadrant_s1
     .msip_i (msip_i[NrCoresClusterOffset[${i}]+:NrCoresCluster[${i}]]),
     .hart_base_id_i (hart_base_id_${i}),
     .cluster_base_addr_i (cluster_base_addr[${i}]),
+    // Boot Address is fixed to 0x100_0000 for now
+    .boot_addr_i (32'h0100_0000), 
     .narrow_in_req_i (${narrow_cluster_in.req_name()}),
     .narrow_in_resp_o (${narrow_cluster_in.rsp_name()}),
     .narrow_out_req_o  (${narrow_cluster_out.req_name()}),

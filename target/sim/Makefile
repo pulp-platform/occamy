@@ -137,7 +137,7 @@ TB_CC_SOURCES += $(TARGET_TEST_DIR)/uartdpi/uartdpi.c
 
 FESVR = $(SIM_MKFILE_DIR)/work
 
-TB_CC_FLAGS  = -std=c++14
+TB_CC_FLAGS  = -std=c++17
 TB_CC_FLAGS +=-I$(SIM_MKFILE_DIR)
 TB_CC_FLAGS +=-I$(SIM_MKFILE_DIR)/test
 TB_CC_FLAGS +=-I$(FESVR)/include
@@ -329,7 +329,7 @@ $(VLT_BUILDDIR)/test/uartdpi/uartdpi.o: test/uartdpi/uartdpi.c
 # Link verilated archive wich $(VLT_COBJ)
 $(BIN_DIR)/$(TARGET).vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
 	mkdir -p $(dir $@)
-	$(CXX) $(LDFLAGS) -std=c++14 -L ${VLT_BUILDDIR}/lib -o $@ $(VLT_COBJ) $(VLT_AR) -lfesvr -lpthread -lutil
+	$(CXX) $(LDFLAGS) -std=c++17 -L ${VLT_BUILDDIR}/lib -o $@ $(VLT_COBJ) $(VLT_AR) -lfesvr -lpthread -lutil
 
 # Clean all build directories and temporary files for Verilator simulation
 .PHONY: clean-vlt
