@@ -90,7 +90,7 @@ hemaia_system_vcu128_gui: # In ESAT Server
 occamy_system_vlt: # In SNAX Docker
 	make -C ./target/sim work/lib/libfesvr.a
 	make -C ./target/sim tb
-	make -C ./target/sim bin/occamy_top.vlt
+	make -C ./target/sim bin/occamy_top.vlt -j $(shell nproc)
 
 # Questasim Workflow
 occamy_system_vsim_preparation: # In SNAX Docker

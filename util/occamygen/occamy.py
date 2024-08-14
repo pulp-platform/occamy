@@ -109,12 +109,11 @@ def cluster_processing(cluster_cfg, occamy_cfg):
 
     # Overwrite boot address with base of bootrom
     cluster_cfg["boot_addr"] = occamy_cfg["peripherals"]["rom"]["address"]
-
     cluster_cfg["cluster_base_expose"] = True
-    # Set the cluster base addr as 0x1000_0000
-    cluster_cfg["cluster_base_addr"] = 268435456
-    # Set the cluster base offset as 0x0004_000
-    cluster_cfg["cluster_base_offset"] = 262144
+    # # Set the cluster base addr as 0x1000_0000
+    # cluster_cfg["cluster_base_addr"] = 268435456
+    # # Set the cluster base offset as 0x0004_000
+    # cluster_cfg["cluster_base_offset"] = 262144
     # Set the cluster base id as 1
     cluster_cfg["cluster_base_hartid"] = 1
     # Set the enable_debug to false, since we do not need snitch debugging in occamy

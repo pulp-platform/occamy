@@ -156,6 +156,10 @@ VLT_COBJ += $(VLT_BUILDDIR)/test/bootdata.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_dpi.o
 VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
+ifeq ($(VERILATOR_VERSION), 5)
+	VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_timing.o
+	VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_threads.o
+endif
 
 ############
 # Boot ROM #
