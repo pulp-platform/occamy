@@ -314,6 +314,10 @@ ifeq ($(findstring snax_xdma_cluster,$(SNAX_CFGS)),snax_xdma_cluster)
 	$(eval BENDER_TARGETS += -t snax_xdma -t snax_xdma_cluster)
 endif
 
+ifeq ($(findstring snax_kul_cluster_all_narrow,$(SNAX_CFGS)),snax_kul_cluster_all_narrow)
+	$(eval BENDER_TARGETS += -t snax_KUL_cluster)
+endif
+
 # Create the dependency in SNAX: when generating snax, the bender target should be stored into file, which will be used by other targets (e.g. tapeout, fpga, simulation)
 snax: SNAX_ACC_GEN # SNAX_WRAPPER_GEN
 	echo $(BENDER_TARGETS) > src/bender_targets.tmp
