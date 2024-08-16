@@ -282,7 +282,7 @@ $(TARGET_CLINT_DIR)/clint.%: $(SOURCE_CLINT_DIR)/data/clint.%.tpl $(CFG) | $(TAR
 # SNAX Accelerator  + Wrapper Generations #
 ###########################################
 # TODO: This SNAX_CFGS should not be fixed! It should be created dynamically instead. 
-SNAX_CFGS += cfg/cluster_cfg/snax_streamer_gemm_add_c_cluster.hjson
+SNAX_CFGS += cfg/cluster_cfg/snax_KUL_cluster.hjson
 SNAX_CFGS += cfg/cluster_cfg/snax_streamer_gemmX_xdma_cluster.hjson
 
 #######################
@@ -314,7 +314,7 @@ ifeq ($(findstring snax_xdma_cluster,$(SNAX_CFGS)),snax_xdma_cluster)
 	$(eval BENDER_TARGETS += -t snax_xdma -t snax_xdma_cluster)
 endif
 
-ifeq ($(findstring snax_kul_cluster_all_narrow,$(SNAX_CFGS)),snax_kul_cluster_all_narrow)
+ifeq ($(findstring snax_KUL_cluster,$(SNAX_CFGS)),snax_KUL_cluster)
 	$(eval BENDER_TARGETS += -t snax_KUL_cluster)
 endif
 
