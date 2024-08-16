@@ -115,7 +115,7 @@
       cfg_base_offset: 65536 // 0x10000
     },
     clusters:[
-        "snax_streamer_gemm_add_c_cluster",
+        "snax_kul_cluster_all_narrow",
         "snax_streamer_gemmX_xdma_cluster",
     ],
 
