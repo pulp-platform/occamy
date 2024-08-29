@@ -14,11 +14,10 @@ DEBUG ?= OFF # ON to turn on debugging symbols
 # Build variables #
 ###################
 
-# Compiler toolchain
-RISCV_CC      = riscv64-unknown-elf-gcc
-RISCV_OBJCOPY = riscv64-unknown-elf-objcopy
-RISCV_OBJDUMP = riscv64-unknown-elf-objdump
-RISCV_READELF = riscv64-unknown-elf-readelf
+# Usage of absolute paths is required to externally include this Makefile
+MK_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
+include $(MK_DIR)/../toolchain.mk
 
 # Directories
 BUILDDIR    = $(abspath build)
@@ -32,32 +31,6 @@ INCDIRS += $(HOST_DIR)/../shared/platform/generated
 INCDIRS += $(HOST_DIR)/../shared/platform
 INCDIRS += $(HOST_DIR)/../shared/runtime
 SRCS    += $(RUNTIME_DIR)/start.S
-
-# Compiler flags
-RISCV_CFLAGS += $(addprefix -I,$(INCDIRS))
-RISCV_CFLAGS += -march=rv64imafdc
-RISCV_CFLAGS += -mabi=lp64d
-RISCV_CFLAGS += -mcmodel=medany
-RISCV_CFLAGS += -ffast-math
-RISCV_CFLAGS += -fno-builtin-printf
-RISCV_CFLAGS += -fno-common
-RISCV_CFLAGS += -O3
-RISCV_CFLAGS += -ffunction-sections
-RISCV_CFLAGS += -Wextra
-RISCV_CFLAGS += -Werror
-ifeq ($(DEBUG), ON)
-RISCV_CFLAGS += -g
-endif
-
-# Linking sources
-LINKER_SCRIPT = $(abspath $(HOST_DIR)/runtime/host.ld)
-LD_SRCS       = $(LINKER_SCRIPT)
-
-# Linker flags
-RISCV_LDFLAGS += -nostartfiles
-RISCV_LDFLAGS += -lm
-RISCV_LDFLAGS += -lgcc
-RISCV_LDFLAGS += -T$(LINKER_SCRIPT)
 
 # Device binary
 ifeq ($(INCL_DEVICE_BINARY),true)
