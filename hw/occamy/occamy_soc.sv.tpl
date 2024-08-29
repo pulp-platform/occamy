@@ -415,7 +415,7 @@ module ${name}_soc
   <% in_sys_idma_mst  = soc_wide_xbar.__dict__["in_sys_idma_mst"] %>\
 
   // local regbus definition
-  `REG_BUS_TYPEDEF_ALL(idma_cfg_reg_a${wide_in.aw}_d31, logic [${wide_in.aw-1}:0], logic [31:0], logic [7:0])
+  `REG_BUS_TYPEDEF_ALL(idma_cfg_reg_a${wide_in.aw}_d32, logic [${wide_in.aw-1}:0], logic [31:0], logic [7:0])
 
   // iDMA types
   localparam int unsigned iDMAStrbWidth = ${wide_in.dw} / 32'd8;
