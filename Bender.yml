@@ -44,13 +44,6 @@ sources:
   # future
   - hw/future/reg_to_apb.sv
 
-  # snitch_read_only_cache
-  - hw/snitch_read_only_cache/src/snitch_axi_to_cache.sv
-  - hw/snitch_read_only_cache/src/snitch_read_only_cache.sv
-  - target: test
-    files:
-      - hw/snitch_read_only_cache/test/snitch_read_only_cache_tb.sv
-
   # spm_interface
   - files:
       # Level 1

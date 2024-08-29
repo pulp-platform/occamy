@@ -1,7 +1,0 @@
-compile.tcl
-transcript
-*.log
-*.lock
-work
-axi_log
-Bender.lock
