@@ -462,15 +462,15 @@ clean-sw: clean-headers
 	$(MAKE) -C sw/ clean
 
 # REGGEN headers
-$(PLATFORM_HEADERS_DIR)/clint.h: src/clint/clint.hjson
+$(PLATFORM_HEADERS_DIR)/clint.h: $(TARGET_CLINT_DIR)/clint.hjson
 	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h: src/soc_ctrl/occamy_soc_reg.hjson
+$(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson
 	$(call reggen_generate_header,$@,$<)
 $(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h: $(SNITCH_ROOT)/hw/snitch_cluster/src/snitch_cluster_peripheral/snitch_cluster_peripheral_reg.hjson
 	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h: src/quadrant_s1_ctrl/occamy_quadrant_s1_reg.hjson
+$(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson
 	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h: src/hbm_xbar_ctrl/occamy_hbm_xbar_reg.hjson
+$(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
 	$(call reggen_generate_header,$@,$<)
 
 # OCCAMYGEN headers
