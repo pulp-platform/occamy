@@ -36,6 +36,13 @@ packages:
     - axi
     - common_cells
     - common_verification
+  axi_stream:
+    revision: 54891ff40455ca94a37641b9da4604647878cc07
+    version: 0.1.1
+    source:
+      Git: https://github.com/pulp-platform/axi_stream.git
+    dependencies:
+    - common_cells
   axi_tlb:
     revision: null
     version: null
@@ -103,6 +110,26 @@ packages:
       Git: https://github.com/pulp-platform/fpu_div_sqrt_mvp.git
     dependencies:
     - common_cells
+  idma:
+    revision: c12caf59bb482fe44b27361f6924ad346b2d22fe
+    version: 0.6.3
+    source:
+      Git: https://github.com/pulp-platform/iDMA
+    dependencies:
+    - axi
+    - axi_stream
+    - common_cells
+    - common_verification
+    - obi
+    - register_interface
+  obi:
+    revision: 5321106817e177d6c16ecc4daa922b96b1bc946b
+    version: 0.1.5
+    source:
+      Git: https://github.com/pulp-platform/obi.git
+    dependencies:
+    - common_cells
+    - common_verification
   opentitan_peripherals:
     revision: null
     version: null
@@ -136,7 +163,7 @@ packages:
       Git: https://github.com/pulp-platform/scm.git
     dependencies: []
   snitch_cluster:
-    revision: 269830af872fa943d8b079470120d42d62e1cb69
+    revision: da57b043dfe0ba563a55a9d83bf362873c713648
     version: null
     source:
       Git: https://github.com/pulp-platform/snitch_cluster.git
@@ -146,6 +173,7 @@ packages:
     - cluster_icache
     - common_cells
     - fpnew
+    - idma
     - register_interface
     - riscv-dbg
     - tech_cells_generic
