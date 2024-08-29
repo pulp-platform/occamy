@@ -77,7 +77,8 @@ CVA6_TRACE            = trace_hart_0.log
 # (LRU) config, all targets depending on the configuration file have
 # to be rebuilt. This file is used to express this condition as a
 # prerequisite for other rules.
-CFG = cfg/lru.hjson
+DEFAULT_CFG = cfg/full.hjson
+CFG         = cfg/lru.hjson
 
 #####################
 # Simulator options #
@@ -155,21 +156,31 @@ VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
 # Prerequisites #
 #################
 
+# This target is always evaluated and creates a symlink to the least
+# recently used config file. Because it is a symlink, targets to which it is a
+# prerequisite will only be updated if the symlink target is newer than the
+# depending targets, regardless of the symlink timestamp itself. The symlink
+# timestamp can be taken into account by using the `make -L` flag on the
+# command-line, however for simplicity we touch the symlink targets so it can
+# be used without.
 $(CFG): FORCE
 	@# If the LRU config file doesn't exist, we use the default config.
-	@if [ ! -e $@ ] ; then \
-		DEFAULT_CFG="cfg/full.hjson"; \
-		echo "Using default config file: $$DEFAULT_CFG"; \
-		cp $$DEFAULT_CFG $@; \
+	@if [ ! -e "$@" ] ; then \
+		echo "Using default config file: $(DEFAULT_CFG)"; \
+		ln -s --relative $(DEFAULT_CFG) $@; \
+		touch $(DEFAULT_CFG); \
 	fi
-	@# If a config file is provided on the command-line and it differs
-	@# from the LRU config file then we override the LRU file with it
+	@# If a config file is provided on the command-line and the LRU
+	@# config file doesn't point to it already, then we make it point to it
 	@if [ $(CFG_OVERRIDE) ] ; then \
 		echo "Overriding config file with: $(CFG_OVERRIDE)"; \
-		if cmp -s $(CFG_OVERRIDE) $@ ; then \
-			echo "Override and LRU config files are equivalent. Nothing to be done."; \
+		target=$$(readlink -f $@); \
+		if [ "$$target" = "$(abspath $(CFG_OVERRIDE))" ] ; then \
+			echo "LRU config file already points to $(CFG_OVERRIDE). Nothing to be done."; \
 		else \
-			cp $(CFG_OVERRIDE) $@; \
+			rm -f $@; \
+			ln -s --relative $(CFG_OVERRIDE) $@; \
+			touch $(CFG_OVERRIDE); \
 		fi \
 	fi
 FORCE:
@@ -314,7 +325,7 @@ socctrl: $(SOCCTRL_OCCAMYGEN_TARGETS) $(SOCCTRL_REGGEN_TARGETS)
 clean-socctrl:
 	rm -rf $(SOCCTRL_OCCAMYGEN_TARGETS) $(SOCCTRL_REGGEN_TARGETS) .socctrl_reggen_targets_group
 
-$(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson: $(SOURCE_SOCCTRL_DIR)/occamy_soc_reg.hjson.tpl | $(TARGET_SOCCTRL_DIR)
+$(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson: $(SOURCE_SOCCTRL_DIR)/occamy_soc_reg.hjson.tpl $(CFG) | $(TARGET_SOCCTRL_DIR)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_SOCCTRL_DIR) --chip $<
 
@@ -337,7 +348,7 @@ hbmctrl: $(HBMCTRL_OCCAMYGEN_TARGETS) $(HBMCTRL_REGGEN_TARGETS)
 clean-hbmctrl:
 	rm -rf $(HBMCTRL_OCCAMYGEN_TARGETS) $(HBMCTRL_REGGEN_TARGETS) .hbmctrl_reggen_targets_group
 
-$(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson: $(SOURCE_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson.tpl | $(TARGET_HBMCTRL_DIR)
+$(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson: $(SOURCE_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson.tpl $(CFG) | $(TARGET_HBMCTRL_DIR)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_HBMCTRL_DIR) --chip $<
 
@@ -360,7 +371,7 @@ quadctrl: $(QUADCTRL_OCCAMYGEN_TARGETS) $(QUADCTRL_REGGEN_TARGETS)
 clean-quadctrl:
 	rm -rf $(QUADCTRL_OCCAMYGEN_TARGETS) $(QUADCTRL_REGGEN_TARGETS) .quadctrl_reggen_targets_group
 
-$(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson: $(SOURCE_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson.tpl | $(TARGET_QUADCTRL_DIR)
+$(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson: $(SOURCE_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson.tpl $(CFG) | $(TARGET_QUADCTRL_DIR)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir $(TARGET_QUADCTRL_DIR) --chip $<
 
