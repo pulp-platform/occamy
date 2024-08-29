@@ -25,7 +25,7 @@ clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vcs clean-l
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-ROOT        := $(MKFILE_DIR)../..
+ROOT        := $(realpath $(MKFILE_DIR)../..)
 SNITCH_ROOT := $(shell bender path snitch_cluster)
 
 TARGET = occamy_top
@@ -58,12 +58,12 @@ PLATFORM_HEADERS_DIR ?= sw/shared/platform/generated
 TARGET_ADDRMAP_DIR   ?= $(abspath addrmap)
 SOURCE_ADDRMAP_DIR   ?= $(ROOT)/util/addrmap
 DOCS_DIR             ?= $(ROOT)/docs
-TARGET_SRC_DIR       ?= src
-TARGET_PLIC_DIR      ?= src/rv_plic
-TARGET_CLINT_DIR     ?= src/clint
-TARGET_SOCCTRL_DIR   ?= src/soc_ctrl
-TARGET_HBMCTRL_DIR   ?= src/hbm_xbar_ctrl
-TARGET_QUADCTRL_DIR  ?= src/quadrant_s1_ctrl
+TARGET_SRC_DIR       ?= $(ROOT)/target/sim/src
+TARGET_PLIC_DIR      ?= $(ROOT)/target/sim/src/rv_plic
+TARGET_CLINT_DIR     ?= $(ROOT)/target/sim/src/clint
+TARGET_SOCCTRL_DIR   ?= $(ROOT)/target/sim/src/soc_ctrl
+TARGET_HBMCTRL_DIR   ?= $(ROOT)/target/sim/src/hbm_xbar_ctrl
+TARGET_QUADCTRL_DIR  ?= $(ROOT)/target/sim/src/quadrant_s1_ctrl
 SOURCE_OCCAMY_DIR    ?= $(ROOT)/hw/occamy
 SOURCE_SOCCTRL_DIR   ?= $(ROOT)/hw/occamy/soc_ctrl
 SOURCE_HBMCTRL_DIR   ?= $(ROOT)/hw/occamy/hbm_xbar_ctrl
@@ -178,7 +178,9 @@ FORCE:
 # Boot ROM #
 ############
 
-BOOTROM_TARGETS = test/bootrom.elf test/bootrom.dump test/bootrom.bin
+BOOTROM_TARGETS  = $(TARGET_TEST_DIR)/bootrom.elf
+BOOTROM_TARGETS += $(TARGET_TEST_DIR)/bootrom.dump
+BOOTROM_TARGETS += $(TARGET_TEST_DIR)/bootrom.bin
 
 .PHONY: bootrom clean-bootrom
 
@@ -187,11 +189,11 @@ bootrom: $(BOOTROM_TARGETS)
 clean-bootrom:
 	rm -rf $(BOOTROM_TARGETS)
 
-test/bootrom.elf: test/bootrom.S test/bootrom.ld
-	riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -Ttest/bootrom.ld $< -o test/bootrom.elf
-test/bootrom.dump: test/bootrom.elf
+$(TARGET_TEST_DIR)/bootrom.elf: $(TARGET_TEST_DIR)/bootrom.S $(TARGET_TEST_DIR)/bootrom.ld
+	riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
+$(TARGET_TEST_DIR)/bootrom.dump: $(TARGET_TEST_DIR)/bootrom.elf
 	riscv64-unknown-elf-objdump -D $< > $@
-test/bootrom.bin: test/bootrom.elf
+$(TARGET_TEST_DIR)/bootrom.bin: $(TARGET_TEST_DIR)/bootrom.elf
 	riscv64-unknown-elf-objcopy -O binary $< $@
 
 ###############
@@ -238,11 +240,11 @@ $(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
 	@$(VERIBLE_FMT) --inplace $(MISC_OCCAMYGEN_SV_TARGETS)
 	@touch $@
 
-tb: test/testharness.sv
+tb: $(TARGET_TEST_DIR)/testharness.sv
 clean-tb:
-	rm -rf test/testharness.sv
+	rm -rf $(TARGET_TEST_DIR)/testharness.sv
 
-test/testharness.sv: test/testharness.sv.tpl $(CFG)
+$(TARGET_TEST_DIR)/testharness.sv: $(TARGET_TEST_DIR)/testharness.sv.tpl $(CFG)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir test --testharness-sv $<
 	@$(VERIBLE_FMT) --inplace $@
@@ -512,11 +514,11 @@ $(VLT_BUILDDIR)/tb/%.o: $(TB_DIR)/%.cc $(VLT_AR) ${VLT_BUILDDIR}/lib/libfesvr.a
 $(VLT_BUILDDIR)/vlt/%.o: $(VLT_ROOT)/include/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-$(VLT_BUILDDIR)/test/%.o: test/%.cc ${VLT_BUILDDIR}/lib/libfesvr.a
+$(VLT_BUILDDIR)/test/%.o: $(TARGET_TEST_DIR)/%.cc ${VLT_BUILDDIR}/lib/libfesvr.a
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
 
-$(VLT_BUILDDIR)/test/uartdpi/uartdpi.o: test/uartdpi/uartdpi.c
+$(VLT_BUILDDIR)/test/uartdpi/uartdpi.o: $(TARGET_TEST_DIR)/uartdpi/uartdpi.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(VLT_CFLAGS) -c $< -o $@
 
@@ -538,14 +540,14 @@ clean-vlt: clean-work
 include $(SNITCH_ROOT)/target/common/vsim.mk
 
 # Add dependency on bootrom
-$(BIN_DIR)/$(TARGET).vsim: test/bootrom.bin
+$(BIN_DIR)/$(TARGET).vsim: $(TARGET_TEST_DIR)/bootrom.bin
 
 #######
 # VCS #
 #######
 
 # Build compilation script and compile all sources for VCS simulation
-$(BIN_DIR)/$(TARGET).vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} test/bootrom.bin
+$(BIN_DIR)/$(TARGET).vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} $(TARGET_TEST_DIR)/bootrom.bin
 	mkdir -p bin
 	vcs $(VCS_FLAGS) -o $(BIN_DIR)/$(TARGET).vcs tb_bin -cc $(CC) -cpp $(CXX) \
 		$(TB_CC_SOURCES) -CFLAGS "$(TB_CC_FLAGS)" -LDFLAGS "-L${FESVR}/lib" -lfesvr -lutil
