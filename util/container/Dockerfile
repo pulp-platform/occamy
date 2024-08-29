@@ -20,4 +20,4 @@ WORKDIR /tools
 RUN curl -Ls -o riscv-gcc.tar.gz https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-${RISCV_GCC_VERSION}-x86_64-linux-ubuntu14.tar.gz && \
     mkdir -p /tools/riscv && chmod 777 /tools/riscv && \
     tar -C /tools/riscv -xf riscv-gcc.tar.gz --strip-components=1
-ENV PATH="/tools/riscv/bin:${PATH}"
+ENV RISCV_GCC_BINROOT="/tools/riscv/bin"
