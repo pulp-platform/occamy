@@ -8,19 +8,9 @@ $BENDER checkout
 
 source deps/snitch_cluster/iis-setup.sh
 
-# TODO: uncomment if needed else remove
-# export CLANG=/usr/pack/riscv-1.0-kgf/pulp-llvm-0.12.0/bin/clang
+# Define required environment variables
 export CLANG_FORMAT=clang-format-10.0.1
-
-# Install CVA6 compiler toolchain
-RISCV_GCC_VERSION=8.3.0-2020.04.0
-mkdir -p tools/riscv
-chmod 777 tools/riscv
-cd tools/riscv
-curl -Ls -o riscv-gcc.tar.gz https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-$RISCV_GCC_VERSION-x86_64-linux-ubuntu14.tar.gz
-tar -xf riscv-gcc.tar.gz --strip-components=1
-export PATH=$(pwd)/bin:$PATH
-cd -
+export RISCV_GCC_BINROOT=/usr/pack/riscv-1.0-kgf/riscv64-gcc-12.2.0/bin
 
 # Install verible
 mkdir -p tools/verible
