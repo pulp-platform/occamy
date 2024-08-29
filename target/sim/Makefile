@@ -589,7 +589,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf $(BENDER_LOCK) $(ROOT)/.bender/ $(ROOT)/deps
+	rm -rf $(ROOT)/.bender/ $(ROOT)/deps
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/
