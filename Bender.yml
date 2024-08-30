@@ -61,14 +61,14 @@ sources:
       - hw/spm_interface/test/tb_spm_1p_adv.sv
 
   # soc_ctrl
-  - target: occamy
+  - target: occamy_sim
     files:
       - target/sim/src/soc_ctrl/occamy_soc_reg_pkg.sv
       - target/sim/src/soc_ctrl/occamy_soc_reg_top.sv
   - hw/occamy/soc_ctrl/occamy_soc_ctrl.sv
 
   # auto-generated soc
-  - target: occamy
+  - target: occamy_sim
     files:
       # quadrant_s1_ctrl
       - target/sim/src/quadrant_s1_ctrl/occamy_quadrant_s1_reg_pkg.sv

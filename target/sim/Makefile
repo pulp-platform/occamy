@@ -84,7 +84,7 @@ CFG         = cfg/lru.hjson
 # Simulator options #
 #####################
 
-VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
+VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy_sim -t snitch_cluster
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
