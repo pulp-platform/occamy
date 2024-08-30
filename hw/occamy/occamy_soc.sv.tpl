@@ -412,7 +412,14 @@ module ${name}_soc
   .change_dw(context, 32, "out_sys_idma_cfg_dw") \
   %>\
 
-  <% in_sys_idma_mst  = soc_wide_xbar.__dict__["in_sys_idma_mst"] %>\
+  // iDMA master AXI bus
+  <% 
+  in_sys_idma_mst = soc_wide_xbar.__dict__["in_sys_idma_mst"].copy(name="sys_idma_mst")
+  in_sys_idma_mst.uw = 1
+  in_sys_idma_mst.type_prefix = in_sys_idma_mst.emit_struct()
+  in_sys_idma_mst.declare(context)
+  in_sys_idma_mst.change_uw(context, soc_wide_xbar.__dict__["in_sys_idma_mst"].uw, "", to=soc_wide_xbar.__dict__["in_sys_idma_mst"])
+  %>\
 
   // local regbus definition
   `REG_BUS_TYPEDEF_ALL(idma_cfg_reg_a${wide_in.aw}_d32, logic [${wide_in.aw-1}:0], logic [31:0], logic [7:0])
@@ -433,7 +440,7 @@ module ${name}_soc
 
   // AXI meta channels
   typedef struct packed {
-    ${out_sys_idma_cfg.ar_chan_type()} ar_chan;
+    ${in_sys_idma_mst.ar_chan_type()} ar_chan;
   } axi_read_meta_channel_t;
 
   typedef struct packed {
@@ -441,7 +448,7 @@ module ${name}_soc
   } read_meta_channel_t;
 
   typedef struct packed {
-    ${out_sys_idma_cfg.aw_chan_type()} aw_chan;
+    ${in_sys_idma_mst.aw_chan_type()} aw_chan;
   } axi_write_meta_channel_t;
 
   typedef struct packed {
@@ -467,8 +474,8 @@ module ${name}_soc
   idma_pkg::idma_busy_t idma_busy;
 
   // Regbus instance
-  idma_cfg_reg_a${wide_in.aw}_d32_req_t idma_cfg_reg_req;
-  idma_cfg_reg_a${wide_in.aw}_d32_rsp_t idma_cfg_reg_rsp;
+  idma_cfg_reg_a${out_sys_idma_cfg.aw}_d32_req_t idma_cfg_reg_req;
+  idma_cfg_reg_a${out_sys_idma_cfg.aw}_d32_rsp_t idma_cfg_reg_rsp;
 
   axi_to_reg #(
     .ADDR_WIDTH( ${out_sys_idma_cfg.aw}                 ),
@@ -477,8 +484,8 @@ module ${name}_soc
     .USER_WIDTH( ${out_sys_idma_cfg.uw}                 ),
     .axi_req_t ( ${out_sys_idma_cfg.req_type()}         ),
     .axi_rsp_t ( ${out_sys_idma_cfg.rsp_type()}         ),
-    .reg_req_t ( idma_cfg_reg_a${wide_in.aw}_d32_req_t  ),
-    .reg_rsp_t ( idma_cfg_reg_a${wide_in.aw}_d32_rsp_t  )
+    .reg_req_t ( idma_cfg_reg_a${out_sys_idma_cfg.aw}_d32_req_t  ),
+    .reg_rsp_t ( idma_cfg_reg_a${out_sys_idma_cfg.aw}_d32_rsp_t  )
   ) i_axi_to_reg_sys_idma_cfg (
     .clk_i,
     .rst_ni,
@@ -493,8 +500,8 @@ module ${name}_soc
     .NumRegs        ( 32'd1 ),
     .NumStreams     ( 32'd1 ),
     .IdCounterWidth ( 32'd32 ),
-    .reg_req_t      ( idma_cfg_reg_a${wide_in.aw}_d32_req_t ),
-    .reg_rsp_t      ( idma_cfg_reg_a${wide_in.aw}_d32_rsp_t ),
+    .reg_req_t      ( idma_cfg_reg_a${out_sys_idma_cfg.aw}_d32_req_t ),
+    .reg_rsp_t      ( idma_cfg_reg_a${out_sys_idma_cfg.aw}_d32_rsp_t ),
     .dma_req_t      ( idma_req_t )
   ) i_idma_reg64_1d (
     .clk_i,
@@ -530,13 +537,13 @@ module ${name}_soc
   );
 
   idma_backend_rw_axi #(
-    .DataWidth            ( ${wide_in.dw-1} ),
-    .AddrWidth            ( ${wide_in.aw-1} ),
-    .UserWidth            ( ${wide_in.uw} ),
-    .AxiIdWidth           ( ${wide_in.iw-1} ),
+    .DataWidth            ( ${in_sys_idma_mst.dw} ),
+    .AddrWidth            ( ${in_sys_idma_mst.aw} ),
+    .UserWidth            ( ${in_sys_idma_mst.uw} ),
+    .AxiIdWidth           ( ${in_sys_idma_mst.iw} ),
     .NumAxInFlight        ( 32'd64 ),
     .BufferDepth          ( 32'd3 ),
-    .TFLenWidth           ( ${wide_in.aw-1} ),
+    .TFLenWidth           ( ${in_sys_idma_mst.aw} ),
     .MemSysDepth          ( 32'd16 ),
     .CombinedShifter      ( 1'b1 ),
     .RAWCouplingAvail     ( 1'b1 ),
