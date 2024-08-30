@@ -15,7 +15,7 @@ CFG_OVERRIDE ?=     # Override default config file
 .DEFAULT_GOAL := help
 .PHONY: all clean
 all: rtl sw addrmap
-clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vcs clean-logs
+clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vcs clean-logs
 
 ############
 # Makefrag #
@@ -85,7 +85,6 @@ CFG         = cfg/lru.hjson
 #####################
 
 VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
-VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
@@ -114,13 +113,6 @@ VLOG_FLAGS += -suppress 13314
 VLOG_FLAGS += ${QUESTA_64BIT}
 VLOG_FLAGS += -timescale 1ns/1ps
 
-# Verilated and compiled Occamy system
-VLT_AR     = ${VLT_BUILDDIR}/Vtestharness__ALL.a
-
-VLT_FLAGS += -Wno-SYMRSVDWORD -Wno-BLKLOOPINIT
-VLT_FLAGS += --trace       # Enable VCD dumping
-VLT_FLAGS += --prof-cfuncs # Enable code profiling
-
 ###############
 # C testbench #
 ###############
@@ -138,19 +130,6 @@ TB_CC_FLAGS +=-I$(MKFILE_DIR)/test
 TB_CC_FLAGS +=-I$(FESVR)/include
 TB_CC_FLAGS +=-I$(SNITCH_TEST_DIR)
 TB_CC_FLAGS +=-I$(TARGET_TEST_DIR)/uartdpi
-
-# Required C sources for the verilator TB that are linked against the verilated model
-VLT_COBJ  = $(VLT_BUILDDIR)/tb/bootrom.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/ipc.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/common_lib.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/verilator_lib.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/tb_bin.o
-VLT_COBJ += $(VLT_BUILDDIR)/test/uartdpi/uartdpi.o
-VLT_COBJ += $(VLT_BUILDDIR)/test/bootdata.o
-# Sources from verilator root
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated.o
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_dpi.o
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
 
 #################
 # Prerequisites #
@@ -508,42 +487,6 @@ $(CVA6_ANNOTATED_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
 $(CVA6_DIFF_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
 	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $< -d
 
-#############
-# Verilator #
-#############
-
-${VLT_AR}: ${VLT_SOURCES} ${TB_SRCS}
-	$(call VERILATE,testharness)
-
-# Quick sanity check, not really meant for simulation.
-verilate: ${VLT_AR}
-
-# Build targets for verilator TB
-$(VLT_BUILDDIR)/tb/%.o: $(TB_DIR)/%.cc $(VLT_AR) ${VLT_BUILDDIR}/lib/libfesvr.a
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-$(VLT_BUILDDIR)/vlt/%.o: $(VLT_ROOT)/include/%.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-$(VLT_BUILDDIR)/test/%.o: $(TARGET_TEST_DIR)/%.cc ${VLT_BUILDDIR}/lib/libfesvr.a
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-
-$(VLT_BUILDDIR)/test/uartdpi/uartdpi.o: $(TARGET_TEST_DIR)/uartdpi/uartdpi.c
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(VLT_CFLAGS) -c $< -o $@
-
-# Link verilated archive wich $(VLT_COBJ)
-$(BIN_DIR)/$(TARGET).vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
-	mkdir -p $(dir $@)
-	$(CXX) $(LDFLAGS) -std=c++14 -L ${VLT_BUILDDIR}/lib -o $@ $(VLT_COBJ) $(VLT_AR) -lfesvr -lpthread -lutil
-
-# Clean all build directories and temporary files for Verilator simulation
-.PHONY: clean-vlt
-clean-vlt: clean-work
-	rm -rf work-vlt
-	rm -f $(BIN_DIR)/$(TARGET).vlt
-
 ############
 # Questasim #
 ############
@@ -604,7 +547,6 @@ help:
 	@echo -e "${Blue}help           ${Black}Show an overview of all Makefile targets."
 	@echo -e ""
 	@echo -e "${Blue}bin/$(TARGET).vcs  ${Black}Build compilation script and compile all sources for VCS simulation. @IIS: vcs-2020.12 make bin/$(TARGET).vcs"
-	@echo -e "${Blue}bin/$(TARGET).vlt  ${Black}Build compilation script and compile all sources for Verilator simulation."
 	@echo -e "${Blue}bin/$(TARGET).vsim ${Black}Build compilation script and compile all sources for Questasim simulation. @IIS: QUESTA_HOME=/usr/pack/modelsim-10.7b-kgf/questasim/ CC=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/gcc CXX=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/g++ LD=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/ld make bin/$(TARGET).vsim"
 	@echo -e ""
 	@echo -e "${Blue}all            ${Black}Update all SW and HW related sources (by, e.g., re-generating the RegGen registers and their c-header files)."
@@ -618,7 +560,6 @@ help:
 	@echo -e "${Blue}clean-addrmap  ${Black}Delete all addrmap outputs."
 	@echo -e "${Blue}clean-logs     ${Black}Delete all traces in logs directory."
 	@echo -e "${Blue}clean-vcs      ${Black}Clean all build directories and temporary files for VCS simulation."
-	@echo -e "${Blue}clean-vlt      ${Black}Clean all build directories and temporary files for Verilator simulation."
 	@echo -e "${Blue}clean-vsim     ${Black}Clean all build directories and temporary files for Questasim simulation."
 	@echo -e ""
 	@echo -e "${Blue}sw             ${Black}Build all software."
