@@ -11,3 +11,4 @@ runs:
     cmd: [../../../deps/snitch_cluster/sw/blas/gemm/scripts/verify.py,
           --symbols-bin, ./device/apps/blas/gemm/build/gemm.elf,
           "${sim_bin}", "${elf}"]
+  - elf: host/apps/test_sys_dma/build/test_sys_dma.elf
