@@ -421,6 +421,8 @@ $(ADDRMAP_PDF): $(ADDRMAP_TEX) | $(TARGET_ADDRMAP_DIR)
 # Software #
 ############
 
+IDMAROOT = $(shell $(BENDER) path idma)
+
 PLATFORM_HEADERS  = $(PLATFORM_HEADERS_DIR)/occamy_cfg.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/clint.h
@@ -428,6 +430,7 @@ PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h
+PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/idma.h
 
 .PHONY: sw clean-headers clean-sw
 
@@ -450,6 +453,8 @@ $(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h: $(SNITCH_ROOT)/hw/snitch_cl
 $(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson
 	$(call reggen_generate_header,$@,$<)
 $(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
+	$(call reggen_generate_header,$@,$<)
+$(PLATFORM_HEADERS_DIR)/idma.h: $(IDMAROOT)/target/rtl/idma_reg64_1d.hjson
 	$(call reggen_generate_header,$@,$<)
 
 # OCCAMYGEN headers

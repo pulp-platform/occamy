@@ -2,13 +2,10 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-extern volatile uint64_t *sys_dma_src_ptr(void);
-extern volatile uint64_t *sys_dma_dst_ptr(void);
-extern volatile uint64_t *sys_dma_num_bytes_ptr(void);
-extern volatile uint64_t *sys_dma_conf_ptr(void);
-extern volatile uint64_t *sys_dma_status_ptr(void);
-extern volatile uint64_t *sys_dma_nextid_ptr(void);
-extern volatile uint64_t *sys_dma_done_ptr(void);
+extern void sys_dma_write_reg64(uint64_t offset, uint64_t value);
+extern uint64_t sys_dma_read_reg64(uint64_t offset);
+extern void sys_dma_write_reg32(uint32_t offset, uint32_t value);
+extern uint32_t sys_dma_read_reg32(uint32_t offset);
 
-extern uint64_t sys_dma_memcpy(uint64_t dst, uint64_t src, uint64_t size);
+extern uint32_t sys_dma_memcpy(uint64_t dst, uint64_t src, uint64_t size);
 extern void sys_dma_blk_memcpy(uint64_t dst, uint64_t src, uint64_t size);
