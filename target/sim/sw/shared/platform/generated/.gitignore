@@ -8,3 +8,4 @@ occamy_soc_peripheral.h
 snitch_cluster_peripheral.h
 snitch_hbm_xbar_peripheral.h
 snitch_quad_peripheral.h
+idma.h

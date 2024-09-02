@@ -13,3 +13,4 @@ runs:
           "${sim_bin}", "${elf}"]
   - elf: host/apps/hello_world/build/hello_world.elf
     cmd: [./host/apps/hello_world/verify.py, "${sim_bin}", "${elf}"]
+  - elf: host/apps/test_sys_dma/build/test_sys_dma.elf

@@ -6,6 +6,7 @@
 
 # Add user applications to APPS variable
 APPS  = hello_world
+APPS += test_sys_dma
 APPS += offload
 
 TARGET ?= all

@@ -15,7 +15,7 @@ CFG_OVERRIDE ?=     # Override default config file
 .DEFAULT_GOAL := help
 .PHONY: all clean
 all: rtl sw addrmap
-clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vlt clean-vcs clean-logs
+clean: clean-bender clean-rtl clean-sw clean-addrmap clean-vcs clean-logs
 
 ############
 # Makefrag #
@@ -33,6 +33,7 @@ TARGET = occamy_top
 CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
 CVA6_PERF_DUMP       = $(LOGS_DIR)/hart_00000_perf.json
 CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
+CVA6_BINARY         ?= $(shell cat $(SIM_DIR)/.rtlbinary)
 TXT_TRACES          += $(CVA6_TXT_TRACE)
 PERF_DUMPS          += $(CVA6_PERF_DUMP)
 ANNOTATED_TRACES    += $(CVA6_ANNOTATED_TRACE)
@@ -84,8 +85,7 @@ CFG         = cfg/lru.hjson
 # Simulator options #
 #####################
 
-VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy
-VLT_BENDER  += -t cv64a6_imafdc_sv39 -t occamy
+VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy_sim -t snitch_cluster
 
 VSIM_FLAGS += -t 1ps
 VSIM_FLAGS += -voptargs=+acc
@@ -114,13 +114,6 @@ VLOG_FLAGS += -suppress 13314
 VLOG_FLAGS += ${QUESTA_64BIT}
 VLOG_FLAGS += -timescale 1ns/1ps
 
-# Verilated and compiled Occamy system
-VLT_AR     = ${VLT_BUILDDIR}/Vtestharness__ALL.a
-
-VLT_FLAGS += -Wno-SYMRSVDWORD -Wno-BLKLOOPINIT
-VLT_FLAGS += --trace       # Enable VCD dumping
-VLT_FLAGS += --prof-cfuncs # Enable code profiling
-
 ###############
 # C testbench #
 ###############
@@ -138,19 +131,6 @@ TB_CC_FLAGS +=-I$(MKFILE_DIR)/test
 TB_CC_FLAGS +=-I$(FESVR)/include
 TB_CC_FLAGS +=-I$(SNITCH_TEST_DIR)
 TB_CC_FLAGS +=-I$(TARGET_TEST_DIR)/uartdpi
-
-# Required C sources for the verilator TB that are linked against the verilated model
-VLT_COBJ  = $(VLT_BUILDDIR)/tb/bootrom.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/ipc.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/common_lib.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/verilator_lib.o
-VLT_COBJ += $(VLT_BUILDDIR)/tb/tb_bin.o
-VLT_COBJ += $(VLT_BUILDDIR)/test/uartdpi/uartdpi.o
-VLT_COBJ += $(VLT_BUILDDIR)/test/bootdata.o
-# Sources from verilator root
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated.o
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_dpi.o
-VLT_COBJ += $(VLT_BUILDDIR)/vlt/verilated_vcd_c.o
 
 #################
 # Prerequisites #
@@ -201,11 +181,11 @@ clean-bootrom:
 	rm -rf $(BOOTROM_TARGETS)
 
 $(TARGET_TEST_DIR)/bootrom.elf: $(TARGET_TEST_DIR)/bootrom.S $(TARGET_TEST_DIR)/bootrom.ld
-	riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
+	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
 $(TARGET_TEST_DIR)/bootrom.dump: $(TARGET_TEST_DIR)/bootrom.elf
-	riscv64-unknown-elf-objdump -D $< > $@
+	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objdump -D $< > $@
 $(TARGET_TEST_DIR)/bootrom.bin: $(TARGET_TEST_DIR)/bootrom.elf
-	riscv64-unknown-elf-objcopy -O binary $< $@
+	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objcopy -O binary $< $@
 
 ###############
 # RTL sources #
@@ -442,6 +422,8 @@ $(ADDRMAP_PDF): $(ADDRMAP_TEX) | $(TARGET_ADDRMAP_DIR)
 # Software #
 ############
 
+IDMAROOT = $(shell $(BENDER) path idma)
+
 PLATFORM_HEADERS  = $(PLATFORM_HEADERS_DIR)/occamy_cfg.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/clint.h
@@ -449,6 +431,7 @@ PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h
 PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h
+PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/idma.h
 
 .PHONY: sw clean-headers clean-sw
 
@@ -472,6 +455,8 @@ $(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h: $(TARGET_QUADCTRL_DIR)/occamy_
 	$(call reggen_generate_header,$@,$<)
 $(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
 	$(call reggen_generate_header,$@,$<)
+$(PLATFORM_HEADERS_DIR)/idma.h: $(IDMAROOT)/target/rtl/idma_reg64_1d.hjson
+	$(call reggen_generate_header,$@,$<)
 
 # OCCAMYGEN headers
 $(PLATFORM_HEADERS_DIR)/occamy_cfg.h: $(PLATFORM_HEADERS_DIR)/occamy_cfg.h.tpl $(CFG)
@@ -485,64 +470,17 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 # Traces #
 ##########
 
-CVA6_BINARY ?= $(shell cat $(LOGS_DIR)/.rtlbinary)
-
-CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
-CVA6_PERF_TRACE      = $(LOGS_DIR)/hart_00000_perf.json
-CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
-CVA6_DIFF_TRACE      = $(LOGS_DIR)/trace_hart_00000.diff
-
-TXT_TRACES       += $(CVA6_TXT_TRACE)
-PERF_TRACES      += $(CVA6_PERF_TRACE)
-ANNOTATED_TRACES += $(CVA6_ANNOTATED_TRACE)
-DIFF_TRACES      += $(CVA6_DIFF_TRACE)
-
-traces: $(CVA6_TXT_TRACE) $(CVA6_PERF_TRACE)
+traces: $(CVA6_TXT_TRACE) $(CVA6_PERF_DUMP)
 annotate: $(CVA6_ANNOTATED_TRACE)
 
+$(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
+	cp $< $@
+
 # CVA6 traces require different handling
-$(CVA6_PERF_TRACE): $(CVA6_TXT_TRACE) $(EVENTS_PY)
+$(CVA6_PERF_DUMP): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
 $(CVA6_ANNOTATED_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
 	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $<
-$(CVA6_DIFF_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
-	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $< -d
-
-#############
-# Verilator #
-#############
-
-${VLT_AR}: ${VLT_SOURCES} ${TB_SRCS}
-	$(call VERILATE,testharness)
-
-# Quick sanity check, not really meant for simulation.
-verilate: ${VLT_AR}
-
-# Build targets for verilator TB
-$(VLT_BUILDDIR)/tb/%.o: $(TB_DIR)/%.cc $(VLT_AR) ${VLT_BUILDDIR}/lib/libfesvr.a
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-$(VLT_BUILDDIR)/vlt/%.o: $(VLT_ROOT)/include/%.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-$(VLT_BUILDDIR)/test/%.o: $(TARGET_TEST_DIR)/%.cc ${VLT_BUILDDIR}/lib/libfesvr.a
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(VLT_CFLAGS) -c $< -o $@
-
-$(VLT_BUILDDIR)/test/uartdpi/uartdpi.o: $(TARGET_TEST_DIR)/uartdpi/uartdpi.c
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(VLT_CFLAGS) -c $< -o $@
-
-# Link verilated archive wich $(VLT_COBJ)
-$(BIN_DIR)/$(TARGET).vlt: $(VLT_AR) $(VLT_COBJ) ${VLT_BUILDDIR}/lib/libfesvr.a
-	mkdir -p $(dir $@)
-	$(CXX) $(LDFLAGS) -std=c++14 -L ${VLT_BUILDDIR}/lib -o $@ $(VLT_COBJ) $(VLT_AR) -lfesvr -lpthread -lutil
-
-# Clean all build directories and temporary files for Verilator simulation
-.PHONY: clean-vlt
-clean-vlt: clean-work
-	rm -rf work-vlt
-	rm -f $(BIN_DIR)/$(TARGET).vlt
 
 ############
 # Questasim #
@@ -589,7 +527,7 @@ clean-work:
 	rm -rf work
 
 clean-bender:
-	rm -rf $(BENDER_LOCK) $(ROOT)/.bender/ $(ROOT)/deps
+	rm -rf $(ROOT)/.bender/ $(ROOT)/deps
 
 clean-logs:
 	rm -rf $(LOGS_DIR)/
@@ -604,7 +542,6 @@ help:
 	@echo -e "${Blue}help           ${Black}Show an overview of all Makefile targets."
 	@echo -e ""
 	@echo -e "${Blue}bin/$(TARGET).vcs  ${Black}Build compilation script and compile all sources for VCS simulation. @IIS: vcs-2020.12 make bin/$(TARGET).vcs"
-	@echo -e "${Blue}bin/$(TARGET).vlt  ${Black}Build compilation script and compile all sources for Verilator simulation."
 	@echo -e "${Blue}bin/$(TARGET).vsim ${Black}Build compilation script and compile all sources for Questasim simulation. @IIS: QUESTA_HOME=/usr/pack/modelsim-10.7b-kgf/questasim/ CC=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/gcc CXX=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/g++ LD=$(QUESTA_HOME)/gcc-5.3.0-linux_x86_64/bin/ld make bin/$(TARGET).vsim"
 	@echo -e ""
 	@echo -e "${Blue}all            ${Black}Update all SW and HW related sources (by, e.g., re-generating the RegGen registers and their c-header files)."
@@ -618,7 +555,6 @@ help:
 	@echo -e "${Blue}clean-addrmap  ${Black}Delete all addrmap outputs."
 	@echo -e "${Blue}clean-logs     ${Black}Delete all traces in logs directory."
 	@echo -e "${Blue}clean-vcs      ${Black}Clean all build directories and temporary files for VCS simulation."
-	@echo -e "${Blue}clean-vlt      ${Black}Clean all build directories and temporary files for Verilator simulation."
 	@echo -e "${Blue}clean-vsim     ${Black}Clean all build directories and temporary files for Questasim simulation."
 	@echo -e ""
 	@echo -e "${Blue}sw             ${Black}Build all software."
