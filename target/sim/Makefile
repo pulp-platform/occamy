@@ -181,11 +181,11 @@ clean-bootrom:
 	rm -rf $(BOOTROM_TARGETS)
 
 $(TARGET_TEST_DIR)/bootrom.elf: $(TARGET_TEST_DIR)/bootrom.S $(TARGET_TEST_DIR)/bootrom.ld
-	riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
+	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
 $(TARGET_TEST_DIR)/bootrom.dump: $(TARGET_TEST_DIR)/bootrom.elf
-	riscv64-unknown-elf-objdump -D $< > $@
+	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objdump -D $< > $@
 $(TARGET_TEST_DIR)/bootrom.bin: $(TARGET_TEST_DIR)/bootrom.elf
-	riscv64-unknown-elf-objcopy -O binary $< $@
+	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objcopy -O binary $< $@
 
 ###############
 # RTL sources #
