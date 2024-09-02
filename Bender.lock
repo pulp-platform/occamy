@@ -111,8 +111,8 @@ packages:
     dependencies:
     - common_cells
   idma:
-    revision: c12caf59bb482fe44b27361f6924ad346b2d22fe
-    version: 0.6.3
+    revision: 1a42da9d5c76f1cff0bcdaaacc474ed85631d734
+    version: null
     source:
       Git: https://github.com/pulp-platform/iDMA
     dependencies:
@@ -163,7 +163,7 @@ packages:
       Git: https://github.com/pulp-platform/scm.git
     dependencies: []
   snitch_cluster:
-    revision: da57b043dfe0ba563a55a9d83bf362873c713648
+    revision: 0cf164035ce87802fd549753286cb06443123fe7
     version: null
     source:
       Git: https://github.com/pulp-platform/snitch_cluster.git

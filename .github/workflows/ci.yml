@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build docs
         run: |
-          bender update && bender checkout
+          bender checkout
           mkdocs build
 
   #######################
@@ -38,6 +38,8 @@ jobs:
           submodules: 'recursive'
       - name: Build Software
         run: |
+          bender checkout
+          pip install deps/snitch_cluster
           make -C target/sim sw
 
   ###############################

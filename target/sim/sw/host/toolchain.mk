@@ -15,7 +15,7 @@ DEBUG ?= OFF # ON to turn on debugging symbols
 ###################
 
 # Compiler toolchain
-RISCV_GCC_BINROOT ?= $(dir $(shell which riscv32-unknown-elf-clang))
+RISCV_GCC_BINROOT ?= $(dir $(shell which riscv32-unknown-elf-gcc))
 RISCV_CC           = $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-gcc
 RISCV_OBJCOPY      = $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objcopy
 RISCV_OBJDUMP      = $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objdump

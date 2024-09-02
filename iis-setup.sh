@@ -6,7 +6,9 @@
 export BENDER=bender-0.27.1
 $BENDER checkout
 
-source deps/snitch_cluster/iis-setup.sh
+cd deps/snitch_cluster
+source iis-setup.sh
+cd -
 
 # Define required environment variables
 export CLANG_FORMAT=clang-format-10.0.1

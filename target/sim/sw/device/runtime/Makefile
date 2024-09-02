@@ -25,6 +25,8 @@ INCDIRS += $(SW_DIR)/shared/platform
 INCDIRS += $(SW_DIR)/shared/platform/generated
 INCDIRS += $(SW_DIR)/shared/runtime
 
+RISCV_CFLAGS += $(addprefix -I,$(INCDIRS))
+
 # Sources
 SRCS += $(SRC_DIR)/occamy_start.S
 SRCS += $(SRC_DIR)/snrt.c
@@ -43,11 +45,11 @@ ALL_OUTPUTS = $(DEPS) $(LIB) $(DUMP)
 # Rules #
 #########
 
-.PHONY: all
-all: $(ALL_OUTPUTS)
+.PHONY: sw
+sw: $(ALL_OUTPUTS)
 
-.PHONY: clean
-clean:
+.PHONY: clean-sw
+clean-sw:
 	rm -rf $(BUILDDIR)
 
 $(BUILDDIR):
@@ -68,6 +70,6 @@ $(LIB): $(OBJS) | $(BUILDDIR)
 $(DUMP): $(LIB) | $(BUILDDIR)
 	$(RISCV_OBJDUMP) -D $< > $@
 
-ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),clean-sw)
 -include $(DEPS)
 endif

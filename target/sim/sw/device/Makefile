@@ -8,19 +8,21 @@
 APPS  = blas/axpy
 APPS += blas/gemm
 
-TARGET ?= all
+TARGET ?= sw
 
 APP_SUBDIRS = $(addprefix apps/,$(APPS))
 
 SUBDIRS  = runtime
 SUBDIRS += $(APP_SUBDIRS)
 
-.PHONY: all $(SUBDIRS)
+SUBMK_FLAGS = SNRT_TARGET_DIR=$(abspath runtime)
 
-all: $(SUBDIRS)
+.PHONY: sw $(SUBDIRS)
+
+sw: $(SUBDIRS)
 
 $(SUBDIRS):
-	$(MAKE) -C $@ $(TARGET)
+	$(SUBMK_FLAGS) $(MAKE) -C $@ $(TARGET)
 
 # Explicit dependency of apps on runtime
 $(APP_SUBDIRS): runtime

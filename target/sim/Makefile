@@ -9,7 +9,7 @@
 # Makefile invocation #
 #######################
 
-DEBUG        ?= OFF # ON to turn on debugging symbols
+DEBUG        ?= OFF # ON to turn on debugging symbols and wave logging
 CFG_OVERRIDE ?=     # Override default config file
 
 .DEFAULT_GOAL := help
@@ -28,8 +28,11 @@ MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := $(realpath $(MKFILE_DIR)../..)
 SNITCH_ROOT := $(shell bender path snitch_cluster)
 
-TARGET = occamy_top
+# Programs required before Makefile inclusion
+CVA6_ADDR2LINE ?= $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-addr2line
 
+# Other variables needed before Makefile inclusion
+TARGET               = occamy_top
 CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
 CVA6_PERF_DUMP       = $(LOGS_DIR)/hart_00000_perf.json
 CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
@@ -37,6 +40,7 @@ CVA6_BINARY         ?= $(shell cat $(SIM_DIR)/.rtlbinary)
 TXT_TRACES          += $(CVA6_TXT_TRACE)
 PERF_DUMPS          += $(CVA6_PERF_DUMP)
 ANNOTATED_TRACES    += $(CVA6_ANNOTATED_TRACE)
+VISUALIZE_PY_FLAGS  += --tracevis "$(CVA6_BINARY) $(CVA6_TXT_TRACE) --addr2line $(CVA6_ADDR2LINE) -f cva6"
 
 include $(SNITCH_ROOT)/target/common/common.mk
 
@@ -44,9 +48,9 @@ include $(SNITCH_ROOT)/target/common/common.mk
 # Programs #
 ############
 
-REGGEN     ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
-OCCAMYGEN  ?= $(ROOT)/util/occamygen/occamygen.py
-ADDRMAPGEN ?= $(ROOT)/util/addrmap/addrmapgen.py
+REGGEN         ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
+OCCAMYGEN      ?= $(ROOT)/util/occamygen/occamygen.py
+ADDRMAPGEN     ?= $(ROOT)/util/addrmap/addrmapgen.py
 
 CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 
@@ -87,9 +91,6 @@ CFG         = cfg/lru.hjson
 
 VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy_sim
 
-VSIM_FLAGS += -t 1ps
-VSIM_FLAGS += -voptargs=+acc
-VSIM_FLAGS += -do "log -r /*; run -a"
 # Downgraded from error as VSIM *wrongly* reports illegal enum assignments in riscv_dbg 4-phase CDCs
 # TODO: Workaround; revise
 VSIM_FLAGS += -warning 8386
@@ -470,9 +471,6 @@ $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
 # Traces #
 ##########
 
-traces: $(CVA6_TXT_TRACE) $(CVA6_PERF_DUMP)
-annotate: $(CVA6_ANNOTATED_TRACE)
-
 $(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
 	cp $< $@
 
@@ -480,11 +478,11 @@ $(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
 $(CVA6_PERF_DUMP): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
 $(CVA6_ANNOTATED_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
-	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $<
+	$(PYTHON) $(ANNOTATE_PY) -f cva6 -q --keep-time --addr2line=$(CVA6_ADDR2LINE) -o $@ $(CVA6_BINARY) $<
 
-############
+#############
 # Questasim #
-############
+#############
 
 include $(SNITCH_ROOT)/target/common/vsim.mk
 

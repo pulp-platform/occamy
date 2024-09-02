@@ -8,9 +8,9 @@
 
 all:
 	$(MAKE) -C host TARGET=partial-build
-	$(MAKE) -C device
+	$(MAKE) -C device TARGET=sw
 	$(MAKE) -C host TARGET=finalize-build
 
 clean:
-	$(MAKE) -C device TARGET=clean
+	$(MAKE) -C device TARGET=clean-sw
 	$(MAKE) -C host TARGET=clean

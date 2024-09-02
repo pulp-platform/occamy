@@ -4,7 +4,12 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-include ../../../../../../../deps/snitch_cluster/sw/blas/axpy/Makefile
-include ../../common.mk
+include $(abspath ../../common.mk)
 
-$(DEP): $(DATA_H)
+APP              := axpy
+$(APP)_BUILD_DIR ?= $(SNITCH_ROOT)/target/snitch_cluster/sw/apps/blas/$(APP)/build
+SRC_DIR          := $(SNITCH_ROOT)/sw/blas/$(APP)/src
+SRCS             := $(SRC_DIR)/main.c
+
+include $(SNITCH_ROOT)/sw/apps/common.mk
+include $(SNITCH_ROOT)/target/snitch_cluster/sw/apps/common.mk
