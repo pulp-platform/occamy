@@ -4,13 +4,8 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-.PHONY: all clean
+APP     = hello_world
+SRC_DIR = $(SW_DIR)/host/apps/$(APP)/src
+SRCS    = $(SRC_DIR)/main.c
 
-all:
-	$(MAKE) -C host TARGET=partial-build
-	$(MAKE) -C device TARGET=sw
-	$(MAKE) -C host TARGET=finalize-build
-
-clean:
-	$(MAKE) -C device TARGET=clean-sw
-	$(MAKE) -C host TARGET=clean
+include $(SW_DIR)/host/apps/common.mk

@@ -12,7 +12,7 @@ cd -
 
 # Define required environment variables
 export CLANG_FORMAT=clang-format-10.0.1
-export RISCV_GCC_BINROOT=/usr/pack/riscv-1.0-kgf/riscv64-gcc-12.2.0/bin
+export HOST_RISCV_GCC_BINROOT=/usr/pack/riscv-1.0-kgf/riscv64-gcc-12.2.0/bin
 
 # Install verible
 mkdir -p tools/verible

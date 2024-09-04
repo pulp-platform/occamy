@@ -29,7 +29,7 @@ ROOT        := $(realpath $(MKFILE_DIR)../..)
 SNITCH_ROOT := $(shell bender path snitch_cluster)
 
 # Programs required before Makefile inclusion
-CVA6_ADDR2LINE ?= $(RISCV_GCC_BINROOT)/riscv64-unknown-elf-addr2line
+CVA6_ADDR2LINE ?= $(HOST_RISCV_GCC_BINROOT)/riscv64-unknown-elf-addr2line
 
 # Other variables needed before Makefile inclusion
 TARGET               = occamy_top
@@ -59,7 +59,6 @@ CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 #########################
 
 BIN_DIR              ?= bin
-PLATFORM_HEADERS_DIR ?= sw/shared/platform/generated
 TARGET_ADDRMAP_DIR   ?= $(abspath addrmap)
 SOURCE_ADDRMAP_DIR   ?= $(ROOT)/util/addrmap
 DOCS_DIR             ?= $(ROOT)/docs
@@ -75,6 +74,8 @@ SOURCE_HBMCTRL_DIR   ?= $(ROOT)/hw/occamy/hbm_xbar_ctrl
 SOURCE_QUADCTRL_DIR  ?= $(ROOT)/hw/occamy/quadrant_s1_ctrl
 SNITCH_TEST_DIR      ?= $(SNITCH_ROOT)/target/common/test
 TARGET_TEST_DIR      ?= $(ROOT)/target/sim/test
+SW_DIR                = $(ROOT)/target/sim/sw
+PLATFORM_HEADERS_DIR  = $(SW_DIR)/shared/platform
 CVA6_TRACE            = trace_hart_0.log
 
 # If the configuration file is overriden on the command-line (through
@@ -182,11 +183,11 @@ clean-bootrom:
 	rm -rf $(BOOTROM_TARGETS)
 
 $(TARGET_TEST_DIR)/bootrom.elf: $(TARGET_TEST_DIR)/bootrom.S $(TARGET_TEST_DIR)/bootrom.ld
-	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
+	$(HOST_RISCV_GCC_BINROOT)/riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
 $(TARGET_TEST_DIR)/bootrom.dump: $(TARGET_TEST_DIR)/bootrom.elf
-	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objdump -D $< > $@
+	$(HOST_RISCV_GCC_BINROOT)/riscv64-unknown-elf-objdump -D $< > $@
 $(TARGET_TEST_DIR)/bootrom.bin: $(TARGET_TEST_DIR)/bootrom.elf
-	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objcopy -O binary $< $@
+	$(HOST_RISCV_GCC_BINROOT)/riscv64-unknown-elf-objcopy -O binary $< $@
 
 ###############
 # RTL sources #
@@ -423,49 +424,7 @@ $(ADDRMAP_PDF): $(ADDRMAP_TEX) | $(TARGET_ADDRMAP_DIR)
 # Software #
 ############
 
-IDMAROOT = $(shell $(BENDER) path idma)
-
-PLATFORM_HEADERS  = $(PLATFORM_HEADERS_DIR)/occamy_cfg.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/clint.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/idma.h
-
-.PHONY: sw clean-headers clean-sw
-
-sw: $(PLATFORM_HEADERS)
-	$(MAKE) -C sw/ all
-
-clean-headers:
-	rm -f $(PLATFORM_HEADERS)
-
-clean-sw: clean-headers
-	$(MAKE) -C sw/ clean
-
-# REGGEN headers
-$(PLATFORM_HEADERS_DIR)/clint.h: $(TARGET_CLINT_DIR)/clint.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h: $(SNITCH_ROOT)/hw/snitch_cluster/src/snitch_cluster_peripheral/snitch_cluster_peripheral_reg.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/idma.h: $(IDMAROOT)/target/rtl/idma_reg64_1d.hjson
-	$(call reggen_generate_header,$@,$<)
-
-# OCCAMYGEN headers
-$(PLATFORM_HEADERS_DIR)/occamy_cfg.h: $(PLATFORM_HEADERS_DIR)/occamy_cfg.h.tpl $(CFG)
-	@echo "[OCCAMYGEN] Generating $@"
-	@$(OCCAMYGEN) -c $(CFG) --outdir $(PLATFORM_HEADERS_DIR) --cheader $<
-$(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
-	@echo "[OCCAMYGEN] Generating $@"
-	@$(OCCAMYGEN) -c $(CFG) --outdir $(PLATFORM_HEADERS_DIR) -D $@
+include sw.mk
 
 ##########
 # Traces #

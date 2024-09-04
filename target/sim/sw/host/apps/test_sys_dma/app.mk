@@ -4,6 +4,8 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-BENDER ?= bender
-SNITCH_ROOT = $(shell $(BENDER) path snitch_cluster)
-include $(SNITCH_ROOT)/target/snitch_cluster/sw/toolchain.mk
+APP     = test_sys_dma
+SRC_DIR = $(SW_DIR)/host/apps/$(APP)/src
+SRCS    = $(SRC_DIR)/main.c
+
+include $(SW_DIR)/host/apps/common.mk

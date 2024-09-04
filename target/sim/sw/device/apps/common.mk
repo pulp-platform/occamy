@@ -4,32 +4,27 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-# Usage of absolute paths is required to externally include
-# this Makefile from multiple different locations
-MK_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-ROOT = $(abspath $(MK_DIR)/../../../../../)
+$(APP)_RISCV_CFLAGS  += -I$(SW_DIR)/shared/runtime
+MEMORY_LD             = $(SW_DIR)/device/apps/memory.ld
+offload_BUILDDIR	  = $(SW_DIR)/host/apps/offload/build
+ORIGIN_LD             = $(offload_BUILDDIR)/origin.ld
+$(APP)_RISCV_LDFLAGS += -L$(dir $(ORIGIN_LD))
+LD_DEPS               = $(ORIGIN_LD)
 
-SNITCH_ROOT = $(shell bender path snitch_cluster)
-include $(SNITCH_ROOT)/target/snitch_cluster/sw/toolchain.mk
+include $(SNITCH_ROOT)/target/snitch_cluster/sw/apps/common.mk
 
-SNRT_DIR      = $(SNITCH_ROOT)/sw/snRuntime
-SW_DIR        = $(ROOT)/target/sim/sw
-SNRT_BUILDDIR = $(SW_DIR)/device/runtime/build
-# Path relative to the app including this Makefile
-BUILDDIR = $(abspath build)
+RISCV_OBJCOPY_FLAGS  = -O binary
+RISCV_OBJCOPY_FLAGS += --remove-section=.comment
+RISCV_OBJCOPY_FLAGS += --remove-section=.riscv.attributes
+RISCV_OBJCOPY_FLAGS += --remove-section=.debug_info
+RISCV_OBJCOPY_FLAGS += --remove-section=.debug_abbrev
+RISCV_OBJCOPY_FLAGS += --remove-section=.debug_line
+RISCV_OBJCOPY_FLAGS += --remove-section=.debug_str
+RISCV_OBJCOPY_FLAGS += --remove-section=.debug_aranges
 
-RISCV_CFLAGS += -I$(SNRT_DIR)/src
-RISCV_CFLAGS += -I$(SNRT_DIR)/api
-RISCV_CFLAGS += -I$(SNRT_DIR)/src/omp
-RISCV_CFLAGS += -I$(SNRT_DIR)/api/omp
-RISCV_CFLAGS += -I$(SNRT_DIR)/vendor/riscv-opcodes
-RISCV_CFLAGS += -I$(SW_DIR)/device/runtime/src
-RISCV_CFLAGS += -I$(SW_DIR)/shared/platform/generated
-RISCV_CFLAGS += -I$(SW_DIR)/shared/platform
-RISCV_CFLAGS += -I$(SW_DIR)/shared/runtime
+BIN = $(abspath $(addprefix $($(APP)_BUILD_DIR)/,$(addsuffix .bin,$(APP))))
 
-# Linker paths
-MEMORY_LD      = $(SW_DIR)/device/apps/memory.ld
-$(info memory.ld path: $(MEMORY_LD))
-ORIGIN_LD      = $(BUILDDIR)/origin.ld
-RISCV_LDFLAGS += -L$(dir $(ORIGIN_LD))
+$(BIN): $(ELF) | $($(APP)_BUILD_DIR)
+	$(RISCV_OBJCOPY) $(RISCV_OBJCOPY_FLAGS) $< $@
+
+$(APP): $(BIN)
