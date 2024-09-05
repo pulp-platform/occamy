@@ -86,6 +86,10 @@ CVA6_TRACE            = trace_hart_0.log
 DEFAULT_CFG = cfg/full.hjson
 CFG         = cfg/lru.hjson
 
+# Common dependency for all RTL simulators
+$(BIN_DIR):
+	mkdir -p $@
+
 #####################
 # Simulator options #
 #####################
@@ -453,8 +457,7 @@ $(BIN_DIR)/$(TARGET).vsim: $(TARGET_TEST_DIR)/bootrom.bin
 #######
 
 # Build compilation script and compile all sources for VCS simulation
-$(BIN_DIR)/$(TARGET).vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} $(TARGET_TEST_DIR)/bootrom.bin
-	mkdir -p bin
+$(BIN_DIR)/$(TARGET).vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} $(TARGET_TEST_DIR)/bootrom.bin | $(BIN_DIR)
 	vcs $(VCS_FLAGS) -o $(BIN_DIR)/$(TARGET).vcs tb_bin -cc $(CC) -cpp $(CXX) \
 		$(TB_CC_SOURCES) -CFLAGS "$(TB_CC_FLAGS)" -LDFLAGS "-L${FESVR}/lib" -lfesvr -lutil
 
