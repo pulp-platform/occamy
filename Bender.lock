@@ -139,8 +139,8 @@ packages:
     - common_cells
     - register_interface
   register_interface:
-    revision: ae616e5a1ec2b41e72d200e5ab09c65e94aebd3d
-    version: 0.4.4
+    revision: 5daa85d164cf6b54ad061ea1e4c6f3624556e467
+    version: 0.4.5
     source:
       Git: https://github.com/pulp-platform/register_interface.git
     dependencies:
@@ -163,7 +163,7 @@ packages:
       Git: https://github.com/pulp-platform/scm.git
     dependencies: []
   snitch_cluster:
-    revision: 0cf164035ce87802fd549753286cb06443123fe7
+    revision: 26aae5c1dd4277a83a4271a49d86c51002afd852
     version: null
     source:
       Git: https://github.com/pulp-platform/snitch_cluster.git
