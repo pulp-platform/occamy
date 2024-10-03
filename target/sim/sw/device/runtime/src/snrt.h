@@ -19,11 +19,13 @@
 #include "cluster_interrupt_decls.h"
 #include "global_interrupt_decls.h"
 #include "memory_decls.h"
+#include "start_decls.h"
 #include "sync_decls.h"
 #include "team_decls.h"
 
 // Implementation
 #include "alloc.h"
+#include "alloc_v2.h"
 #include "cls.h"
 #include "cluster_interrupts.h"
 #include "dma.h"
@@ -31,10 +33,12 @@
 #include "global_interrupts.h"
 #include "occamy_device.h"
 #include "occamy_memory.h"
+#include "occamy_start.h"
 #include "printf.h"
 #include "riscv.h"
 #include "ssr.h"
 #include "sync.h"
 #include "team.h"
+#include "types.h"
 
 #endif  // SNRT_H

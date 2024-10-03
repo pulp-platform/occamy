@@ -27,12 +27,11 @@ plugins:
 use_directory_urls: false
 extra:
   repo: occamy
-  branch: init
+  branch: main
 nav:
   - Home: index.md
   - User Guide:
       - Getting Started: ug/getting_started.md
-      # - Repository Structure: ug/directory_structure.md
       - Tutorial: ug/tutorial.md
       - Documentation: ug/documentation.md
   - Reference Manual:
@@ -42,5 +41,4 @@ nav:
           - System Components: rm/3_system_components.md
           - Clocking: rm/4_clocking.md
           - Interrupts and Synchronization: rm/5_interrupts_and_synchronization.md
-      - Schema: schema-doc/occamy.md
   - Publications: publications.md
