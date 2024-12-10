@@ -16,12 +16,12 @@ class Occamy(Generator):
     def __init__(self, cfg):
         occamy_root = (Path(__file__).parent / "../../").resolve()
         snitch_root = (Path(__file__).parent / "../../deps/snitch_cluster").resolve()
-        schema = occamy_root / "docs/schema/occamy.schema.json"
-        remote_schemas = [occamy_root / "docs/schema/axi_xbar.schema.json",
-                          occamy_root / "docs/schema/axi_tlb.schema.json",
-                          occamy_root / "docs/schema/address_range.schema.json",
-                          occamy_root / "docs/schema/peripherals.schema.json",
-                          snitch_root / "docs/schema/snitch_cluster.schema.json"]
+        schema = occamy_root / "util/occamygen/schema/occamy.schema.json"
+        remote_schemas = [occamy_root / "util/occamygen/schema/axi_xbar.schema.json",
+                          occamy_root / "util/occamygen/schema/axi_tlb.schema.json",
+                          occamy_root / "util/occamygen/schema/address_range.schema.json",
+                          occamy_root / "util/occamygen/schema/peripherals.schema.json",
+                          snitch_root / "util/clustergen/schema/snitch_cluster.schema.json"]
         super().__init__(schema, remote_schemas)
         # Validate the schema.
         self.validate(cfg)

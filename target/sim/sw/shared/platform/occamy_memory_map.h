@@ -42,10 +42,6 @@
     (QUADRANT_0_CLUSTER_0_PERIPH_BASE_ADDR + \
      SNITCH_CLUSTER_PERIPHERAL_CL_CLINT_CLEAR_REG_OFFSET)
 
-#define cluster_hw_barrier_base              \
-    (QUADRANT_0_CLUSTER_0_PERIPH_BASE_ADDR + \
-     SNITCH_CLUSTER_PERIPHERAL_HW_BARRIER_REG_OFFSET)
-
 #define cluster_zero_memory_base QUADRANT_0_CLUSTER_0_ZERO_MEM_BASE_ADDR
 
 #define quad_cfg_reset_n_base \
@@ -111,10 +107,6 @@ inline uintptr_t cluster_tcdm_end_addr(uint32_t cluster_idx) {
                                      cluster_idx);
 }
 
-inline uintptr_t cluster_hw_barrier_addr(uint32_t cluster_idx) {
-    return translate_cluster_address(cluster_hw_barrier_base, cluster_idx);
-}
-
 inline uintptr_t cluster_zero_memory_addr(uint32_t cluster_idx) {
     return translate_cluster_address(cluster_zero_memory_base, cluster_idx);
 }
@@ -175,10 +167,6 @@ inline volatile uint32_t* cluster_clint_clr_ptr(uint32_t cluster_idx) {
 
 inline volatile uint32_t* cluster_clint_set_ptr(uint32_t cluster_idx) {
     return (volatile uint32_t*)cluster_clint_set_addr(cluster_idx);
-}
-
-inline volatile uint32_t* cluster_hw_barrier_ptr(uint32_t cluster_idx) {
-    return (volatile uint32_t*)cluster_hw_barrier_addr(cluster_idx);
 }
 
 inline volatile uint32_t* cluster_zero_memory_ptr(uint32_t cluster_idx) {

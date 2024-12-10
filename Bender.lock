@@ -19,8 +19,8 @@ packages:
       Git: https://github.com/pulp-platform/apb_uart.git
     dependencies: []
   axi:
-    revision: 587355b77b8ce94dcd600efbd5d5bd118ff913a7
-    version: 0.39.4
+    revision: 39f5f2d51c5e524f6fc5cf8b6e901f7dcc5622d7
+    version: 0.39.6
     source:
       Git: https://github.com/pulp-platform/axi.git
     dependencies:
@@ -80,8 +80,8 @@ packages:
     - common_verification
     - tech_cells_generic
   common_verification:
-    revision: 9c07fa860593b2caabd9b5681740c25fac04b878
-    version: 0.2.3
+    revision: fa2630f61666f61d9d78451c4d8b4d1ea403944e
+    version: 0.2.4
     source:
       Git: https://github.com/pulp-platform/common_verification.git
     dependencies: []
@@ -111,8 +111,8 @@ packages:
     dependencies:
     - common_cells
   idma:
-    revision: c12caf59bb482fe44b27361f6924ad346b2d22fe
-    version: 0.6.3
+    revision: d4010425e943c9845b8549b3c8f8cc8dba73ec47
+    version: null
     source:
       Git: https://github.com/pulp-platform/iDMA
     dependencies:
@@ -139,8 +139,8 @@ packages:
     - common_cells
     - register_interface
   register_interface:
-    revision: ae616e5a1ec2b41e72d200e5ab09c65e94aebd3d
-    version: 0.4.4
+    revision: 5daa85d164cf6b54ad061ea1e4c6f3624556e467
+    version: 0.4.5
     source:
       Git: https://github.com/pulp-platform/register_interface.git
     dependencies:
@@ -163,7 +163,7 @@ packages:
       Git: https://github.com/pulp-platform/scm.git
     dependencies: []
   snitch_cluster:
-    revision: da57b043dfe0ba563a55a9d83bf362873c713648
+    revision: 73d47eddf9a77798dd9f0da33a7a6e5d9afb626d
     version: null
     source:
       Git: https://github.com/pulp-platform/snitch_cluster.git

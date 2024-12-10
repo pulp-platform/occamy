@@ -4,102 +4,112 @@
 #
 # Luca Colagrande <colluca@iis.ee.ethz.ch>
 
-######################
-# Invocation options #
-######################
-
-DEBUG ?= OFF # ON to turn on debugging symbols
-
 ###################
 # Build variables #
 ###################
 
-# Usage of absolute paths is required to externally include this Makefile
-MK_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+HOST_DIR         = $(SW_DIR)/host
+$(APP)_BUILDDIR  = $(HOST_DIR)/apps/$(APP)/build
+HOST_RUNTIME_DIR = $(HOST_DIR)/runtime
 
-include $(MK_DIR)/../toolchain.mk
+HOST_INCDIRS  = $(HOST_RUNTIME_DIR)
+HOST_INCDIRS += $(PLATFORM_HEADERS_DIR)
+HOST_INCDIRS += $(SW_DIR)/shared/runtime
+SRCS         += $(HOST_RUNTIME_DIR)/start.S
+HEADERS      += $(PLATFORM_HEADERS)
 
-# Directories
-BUILDDIR    = $(abspath build)
-HOST_DIR    = $(abspath ../../)
-RUNTIME_DIR = $(abspath $(HOST_DIR)/runtime)
-DEVICE_DIR  = $(abspath $(HOST_DIR)/../device)
+$(APP)_HOST_RISCV_CFLAGS += $(HOST_RISCV_CFLAGS)
+$(APP)_HOST_RISCV_CFLAGS += $(addprefix -I,$(HOST_INCDIRS))
 
-# Dependencies
-INCDIRS += $(RUNTIME_DIR)
-INCDIRS += $(HOST_DIR)/../shared/platform/generated
-INCDIRS += $(HOST_DIR)/../shared/platform
-INCDIRS += $(HOST_DIR)/../shared/runtime
-SRCS    += $(RUNTIME_DIR)/start.S
+HOST_LINKER_SCRIPT  = $(HOST_RUNTIME_DIR)/host.ld
 
-# Device binary
-ifeq ($(INCL_DEVICE_BINARY),true)
-DEVICE_BUILDDIR = $(DEVICE_DIR)/apps/$(APP)/build
-DEVICE_BINARY   = $(DEVICE_BUILDDIR)/$(APP).bin
-ORIGIN_LD       = $(DEVICE_BUILDDIR)/origin.ld
-FINAL_CFLAGS    = -DDEVICEBIN=\"$(DEVICE_BINARY)\"
-endif
+$(APP)_HOST_RISCV_LDFLAGS += $(HOST_RISCV_LDFLAGS)
+$(APP)_HOST_RISCV_LDFLAGS += -T$(HOST_LINKER_SCRIPT)
+
+LD_DEPS = $(HOST_LINKER_SCRIPT)
 
 ###########
 # Outputs #
 ###########
 
-PARTIAL_ELF     = $(abspath $(BUILDDIR)/$(APP).part.elf)
-ELF             = $(abspath $(BUILDDIR)/$(APP).elf)
-DEP             = $(abspath $(BUILDDIR)/$(APP).d)
-PARTIAL_DUMP    = $(abspath $(BUILDDIR)/$(APP).part.dump)
-DUMP            = $(abspath $(BUILDDIR)/$(APP).dump)
-DWARF           = $(abspath $(BUILDDIR)/$(APP).dwarf)
-PARTIAL_OUTPUTS = $(PARTIAL_ELF) $(PARTIAL_DUMP) $(ORIGIN_LD)
-FINAL_OUTPUTS   = $(ELF) $(DUMP) $(DWARF)
+ELF                 = $($(APP)_BUILDDIR)/$(APP).elf
+DEP                 = $($(APP)_BUILDDIR)/$(APP).d
+DUMP                = $($(APP)_BUILDDIR)/$(APP).dump
+ORIGIN_LD           = $($(APP)_BUILDDIR)/origin.ld
+HETEROGENEOUS_APPS  = $(addprefix $(APP)-,$(notdir $($(APP)_DEVICE_APPS)))
+HETEROGENEOUS_ELFS  = $(addsuffix .elf, $(addprefix $($(APP)_BUILDDIR)/, $(HETEROGENEOUS_APPS)))
+HETEROGENEOUS_DUMPS = $(addsuffix .dump, $(addprefix $($(APP)_BUILDDIR)/$(APP)-, $(notdir $($(APP)_DEVICE_APPS))))
+ALL_OUTPUTS         = $(ELF) $(HETEROGENEOUS_ELFS) $(ORIGIN_LD)
+
+ifeq ($(DEBUG), ON)
+ALL_OUTPUTS += $(DUMP) $(HETEROGENEOUS_DUMPS)
+endif
 
 #########
 # Rules #
 #########
 
-.PHONY: partial-build
-partial-build: $(PARTIAL_OUTPUTS)
+.PHONY: $(APP) $(HETEROGENEOUS_APPS) clean-$(APP)
 
-.PHONY: finalize-build
-finalize-build: $(FINAL_OUTPUTS)
+sw: $(APP) $(HETEROGENEOUS_APPS)
+clean-sw: clean-$(APP)
 
-.PHONY: clean
-clean:
+$(APP): $(ALL_OUTPUTS)
+$(HETEROGENEOUS_APPS): $(APP)-%: $($(APP)_BUILDDIR)/$(APP)-%.elf %
+ifeq ($(DEBUG), ON)
+$(HETEROGENEOUS_APPS): $(APP)-%: $($(APP)_BUILDDIR)/$(APP)-%.dump
+endif
+
+clean-$(APP): BUILDDIR := $($(APP)_BUILDDIR)
+clean-$(APP): DEVICE_APPS := $($(APP)_DEVICE_APPS)
+clean-$(APP):
 	rm -rf $(BUILDDIR)
-	rm -f $(OFFSET_LD)
+	rm -rf $(foreach device,$(DEVICE_APPS),$($(notdir $(device))_BUILD_DIR))
 
-$(BUILDDIR):
+$($(APP)_BUILDDIR):
 	mkdir -p $@
 
-$(DEVICE_BUILDDIR):
-	mkdir -p $@
+$(DEP): ELF := $(ELF)
+$(ELF): SRCS := $(SRCS)
+# Guarantee that variables used in rule recipes (thus subject to deferred expansion)
+# have unique values, despite depending on variables with the same name across
+# applications, but which could have different values (e.g. the APP variable itself)
+$(DEP) $(ELF): HOST_RISCV_CFLAGS := $($(APP)_HOST_RISCV_CFLAGS)
+$(ELF): HOST_RISCV_LDFLAGS := $($(APP)_HOST_RISCV_LDFLAGS)
 
-$(DEP): $(SRCS) | $(BUILDDIR)
-	$(RISCV_CC) $(RISCV_CFLAGS) -MM -MT '$(PARTIAL_ELF)' $< > $@
-	$(RISCV_CC) $(RISCV_CFLAGS) -MM -MT '$(ELF)' $< >> $@
-
-# Partially linked object
-$(PARTIAL_ELF): $(DEP) $(LD_SRCS) | $(BUILDDIR)
-	$(RISCV_CC) $(RISCV_CFLAGS) $(RISCV_LDFLAGS) $(SRCS) -o $@
-
-$(PARTIAL_DUMP): $(PARTIAL_ELF) | $(BUILDDIR)
-	$(RISCV_OBJDUMP) -D $< > $@
+$(DEP): $(SRCS) $(HEADERS) | $($(APP)_BUILDDIR)
+	$(HOST_RISCV_CC) $(HOST_RISCV_CFLAGS) -MM -MT '$(ELF)' $< >> $@
 
 # Device object relocation address
-$(ORIGIN_LD): $(PARTIAL_ELF) | $(DEVICE_BUILDDIR)
-	@RELOC_ADDR=$$($(RISCV_OBJDUMP) -t $< | grep snitch_main | cut -c9-16); \
+$(ORIGIN_LD): $(ELF) | $($(APP)_BUILDDIR)
+	@RELOC_ADDR=$$($(HOST_RISCV_OBJDUMP) -t $< | grep snitch_main | cut -c9-16); \
 	echo "Writing device object relocation address 0x$$RELOC_ADDR to $@"; \
 	echo "L3_ORIGIN = 0x$$RELOC_ADDR;" > $@
 
-$(ELF): $(DEP) $(LD_SRCS) $(DEVICE_BINARY) | $(BUILDDIR)
-	$(RISCV_CC) $(RISCV_CFLAGS) $(FINAL_CFLAGS) $(RISCV_LDFLAGS) $(SRCS) -o $@
+$(ELF): $(DEP) $(LD_DEPS) | $($(APP)_BUILDDIR)
+	$(HOST_RISCV_CC) $(HOST_RISCV_CFLAGS) $(HOST_RISCV_LDFLAGS) $(SRCS) -o $@
 
-$(DUMP): $(ELF) | $(BUILDDIR)
-	$(RISCV_OBJDUMP) -D $< > $@
+$(DUMP): $(ELF) | $($(APP)_BUILDDIR)
+	$(HOST_RISCV_OBJDUMP) -D $< > $@
 
-$(DWARF): $(ELF) | $(BUILDDIR)
-	$(RISCV_READELF) --debug-dump $< > $@
+# Generates a rule which looks somewhat like:
+#
+# $($(APP)_BUILDDIR)/$(APP)-%.elf: $(DEVICE_APP)/build/%.bin $(DEP) $(LD_SRCS) | $($(APP)_BUILDDIR)
+# 	$(RISCV_CC) $(RISCV_CFLAGS) -DDEVICEBIN=\"$<\" $(RISCV_LDFLAGS) $(SRCS) -o $@
+#
+# This approach is required cause you can't use multiple %-signs in a prerequisite
+define elf_rule_template =
+    $$($(APP)_BUILDDIR)/$$(APP)-$(notdir $(1)).elf: SRCS := $$(SRCS)
+    $$($(APP)_BUILDDIR)/$$(APP)-$(notdir $(1)).elf: HOST_RISCV_CFLAGS := $$($$(APP)_HOST_RISCV_CFLAGS)
+    $$($(APP)_BUILDDIR)/$$(APP)-$(notdir $(1)).elf: HOST_RISCV_LDFLAGS := $$($$(APP)_HOST_RISCV_LDFLAGS)
+    $$($(APP)_BUILDDIR)/$$(APP)-$(notdir $(1)).elf: $(abspath $($(notdir $(1))_BUILD_DIR))/$(notdir $(1)).bin $$(ELF) $$(LD_DEPS) | $$($(APP)_BUILDDIR)
+	    $$(HOST_RISCV_CC) $$(HOST_RISCV_CFLAGS) -DDEVICEBIN=\"$$<\" $$(HOST_RISCV_LDFLAGS) $$(SRCS) -o $$@
+endef
+$(foreach f,$($(APP)_DEVICE_APPS),$(eval $(call elf_rule_template,$(f))))
 
-ifneq ($(MAKECMDGOALS),clean)
+$(HETEROGENEOUS_DUMPS): $($(APP)_BUILDDIR)/$(APP)-%.dump: $($(APP)_BUILDDIR)/$(APP)-%.elf | $($(APP)_BUILDDIR)
+	$(HOST_RISCV_OBJDUMP) -D $< > $@
+
+ifneq ($(filter sw $(APP) $(HETEROGENEOUS_APPS) $(ALL_OUTPUTS),$(MAKECMDGOALS)),)
 -include $(DEP)
 endif

@@ -9,7 +9,7 @@
 # Makefile invocation #
 #######################
 
-DEBUG        ?= OFF # ON to turn on debugging symbols
+DEBUG        ?= OFF # ON to turn on debugging symbols and wave logging
 CFG_OVERRIDE ?=     # Override default config file
 
 .DEFAULT_GOAL := help
@@ -28,8 +28,11 @@ MKFILE_DIR  := $(dir $(MKFILE_PATH))
 ROOT        := $(realpath $(MKFILE_DIR)../..)
 SNITCH_ROOT := $(shell bender path snitch_cluster)
 
-TARGET = occamy_top
+# Programs required before Makefile inclusion
+CVA6_ADDR2LINE ?= $(HOST_RISCV_GCC_BINROOT)/riscv64-unknown-elf-addr2line
 
+# Other variables needed before Makefile inclusion
+TARGET               = occamy_top
 CVA6_TXT_TRACE       = $(LOGS_DIR)/trace_hart_00000.txt
 CVA6_PERF_DUMP       = $(LOGS_DIR)/hart_00000_perf.json
 CVA6_ANNOTATED_TRACE = $(LOGS_DIR)/trace_hart_00000.s
@@ -37,6 +40,7 @@ CVA6_BINARY         ?= $(shell cat $(SIM_DIR)/.rtlbinary)
 TXT_TRACES          += $(CVA6_TXT_TRACE)
 PERF_DUMPS          += $(CVA6_PERF_DUMP)
 ANNOTATED_TRACES    += $(CVA6_ANNOTATED_TRACE)
+VISUALIZE_PY_FLAGS  += --tracevis "$(CVA6_BINARY) $(CVA6_TXT_TRACE) --addr2line $(CVA6_ADDR2LINE) -f cva6"
 
 include $(SNITCH_ROOT)/target/common/common.mk
 
@@ -44,9 +48,9 @@ include $(SNITCH_ROOT)/target/common/common.mk
 # Programs #
 ############
 
-REGGEN     ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
-OCCAMYGEN  ?= $(ROOT)/util/occamygen/occamygen.py
-ADDRMAPGEN ?= $(ROOT)/util/addrmap/addrmapgen.py
+REGGEN         ?= $(shell $(BENDER) path register_interface)/vendor/lowrisc_opentitan/util/regtool.py
+OCCAMYGEN      ?= $(ROOT)/util/occamygen/occamygen.py
+ADDRMAPGEN     ?= $(ROOT)/util/addrmap/addrmapgen.py
 
 CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 
@@ -55,7 +59,6 @@ CLANG_FORMAT ?= $(shell which clang-format-10.0.1)
 #########################
 
 BIN_DIR              ?= bin
-PLATFORM_HEADERS_DIR ?= sw/shared/platform/generated
 TARGET_ADDRMAP_DIR   ?= $(abspath addrmap)
 SOURCE_ADDRMAP_DIR   ?= $(ROOT)/util/addrmap
 DOCS_DIR             ?= $(ROOT)/docs
@@ -71,6 +74,8 @@ SOURCE_HBMCTRL_DIR   ?= $(ROOT)/hw/occamy/hbm_xbar_ctrl
 SOURCE_QUADCTRL_DIR  ?= $(ROOT)/hw/occamy/quadrant_s1_ctrl
 SNITCH_TEST_DIR      ?= $(SNITCH_ROOT)/target/common/test
 TARGET_TEST_DIR      ?= $(ROOT)/target/sim/test
+SW_DIR                = $(ROOT)/target/sim/sw
+PLATFORM_HEADERS_DIR  = $(SW_DIR)/shared/platform
 CVA6_TRACE            = trace_hart_0.log
 
 # If the configuration file is overriden on the command-line (through
@@ -81,15 +86,16 @@ CVA6_TRACE            = trace_hart_0.log
 DEFAULT_CFG = cfg/full.hjson
 CFG         = cfg/lru.hjson
 
+# Common dependency for all RTL simulators
+$(BIN_DIR):
+	mkdir -p $@
+
 #####################
 # Simulator options #
 #####################
 
-VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy_sim -t snitch_cluster
+VSIM_BENDER += -t cv64a6_imafdc_sv39 -t occamy_sim
 
-VSIM_FLAGS += -t 1ps
-VSIM_FLAGS += -voptargs=+acc
-VSIM_FLAGS += -do "log -r /*; run -a"
 # Downgraded from error as VSIM *wrongly* reports illegal enum assignments in riscv_dbg 4-phase CDCs
 # TODO: Workaround; revise
 VSIM_FLAGS += -warning 8386
@@ -181,11 +187,11 @@ clean-bootrom:
 	rm -rf $(BOOTROM_TARGETS)
 
 $(TARGET_TEST_DIR)/bootrom.elf: $(TARGET_TEST_DIR)/bootrom.S $(TARGET_TEST_DIR)/bootrom.ld
-	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
+	$(HOST_RISCV_GCC_BINROOT)/riscv64-unknown-elf-gcc -mabi=lp64d -march=rv64imafd -static -nostartfiles -T$(TARGET_TEST_DIR)/bootrom.ld $< -o $(TARGET_TEST_DIR)/bootrom.elf
 $(TARGET_TEST_DIR)/bootrom.dump: $(TARGET_TEST_DIR)/bootrom.elf
-	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objdump -D $< > $@
+	$(HOST_RISCV_GCC_BINROOT)/riscv64-unknown-elf-objdump -D $< > $@
 $(TARGET_TEST_DIR)/bootrom.bin: $(TARGET_TEST_DIR)/bootrom.elf
-	$(RISCV_GCC_BINROOT)/riscv64-unknown-elf-objcopy -O binary $< $@
+	$(HOST_RISCV_GCC_BINROOT)/riscv64-unknown-elf-objcopy -O binary $< $@
 
 ###############
 # RTL sources #
@@ -228,7 +234,6 @@ $(MISC_OCCAMYGEN_TARGETS): .misc_occamygen_targets_group
 		--quadrant-s1-ctrl $(SOURCE_OCCAMY_DIR)/occamy_quadrant_s1_ctrl.sv.tpl \
 		--xilinx-sv        $(SOURCE_OCCAMY_DIR)/occamy_xilinx.sv.tpl \
 		--cva6-sv          $(SOURCE_OCCAMY_DIR)/occamy_cva6.sv.tpl
-	@$(VERIBLE_FMT) --inplace $(MISC_OCCAMYGEN_SV_TARGETS)
 	@touch $@
 
 tb: $(TARGET_TEST_DIR)/testharness.sv
@@ -238,7 +243,6 @@ clean-tb:
 $(TARGET_TEST_DIR)/testharness.sv: $(TARGET_TEST_DIR)/testharness.sv.tpl $(CFG)
 	@echo "[OCCAMYGEN] Generate $@"
 	@$(OCCAMYGEN) --cfg $(CFG) --outdir test --testharness-sv $<
-	@$(VERIBLE_FMT) --inplace $@
 
 # TODO
 # 	@$(OCCAMYGEN) --cfg $(CFG) \
@@ -265,12 +269,10 @@ $(TARGET_CLINT_DIR)/clint.%: $(CLINTROOT)/data/clint.%.tpl $(CFG) | $(TARGET_CLI
 # $(CLINT_REGGEN_TARGETS) &: $(TARGET_CLINT_DIR)/clint.hjson | $(TARGET_CLINT_DIR)
 # 	@echo "[REGGEN] Generate $(CLINT_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_CLINT_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(CLINT_REGGEN_TARGETS)
 $(CLINT_REGGEN_TARGETS): .clint_reggen_targets_group
 .clint_reggen_targets_group: $(TARGET_CLINT_DIR)/clint.hjson | $(TARGET_CLINT_DIR)
 	@echo "[REGGEN] Generate $(CLINT_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_CLINT_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(CLINT_REGGEN_TARGETS)
 	@touch $@
 
 PLICROOT = $(ROOT)/hw/vendor/pulp_platform_opentitan_peripherals/src/rv_plic
@@ -290,12 +292,10 @@ $(TARGET_PLIC_DIR)/rv_plic.%: $(PLICROOT)/data/rv_plic.%.tpl | $(TARGET_PLIC_DIR
 # $(PLIC_REGGEN_TARGETS) &: $(TARGET_PLIC_DIR)/rv_plic.hjson | $(TARGET_PLIC_DIR)
 # 	@echo "[REGGEN] Generate $(PLIC_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_PLIC_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(PLIC_REGGEN_TARGETS)
 $(PLIC_REGGEN_TARGETS): .plic_reggen_targets_group
 .plic_reggen_targets_group: $(TARGET_PLIC_DIR)/rv_plic.hjson | $(TARGET_PLIC_DIR)
 	@echo "[REGGEN] Generate $(PLIC_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_PLIC_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(PLIC_REGGEN_TARGETS)
 	@touch $@
 
 SOCCTRL_OCCAMYGEN_TARGETS = $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson
@@ -313,12 +313,10 @@ $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson: $(SOURCE_SOCCTRL_DIR)/occamy_soc_reg
 # $(SOCCTRL_REGGEN_TARGETS) &: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson | $(TARGET_SOCCTRL_DIR)
 # 	@echo "[REGGEN] Generate $(SOCCTRL_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_SOCCTRL_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(SOCCTRL_REGGEN_TARGETS)
 $(SOCCTRL_REGGEN_TARGETS): .socctrl_reggen_targets_group
 .socctrl_reggen_targets_group: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson | $(TARGET_SOCCTRL_DIR)
 	@echo "[REGGEN] Generate $(SOCCTRL_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_SOCCTRL_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(SOCCTRL_REGGEN_TARGETS)
 	@touch $@
 
 HBMCTRL_OCCAMYGEN_TARGETS = $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
@@ -336,12 +334,10 @@ $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson: $(SOURCE_HBMCTRL_DIR)/occamy_hb
 # $(HBMCTRL_REGGEN_TARGETS) &: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson | $(TARGET_HBMCTRL_DIR)
 # 	@echo "[REGGEN] Generate $(HBMCTRL_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_HBMCTRL_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(HBMCTRL_REGGEN_TARGETS)
 $(HBMCTRL_REGGEN_TARGETS): .hbmctrl_reggen_targets_group
 .hbmctrl_reggen_targets_group: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson | $(TARGET_HBMCTRL_DIR)
 	@echo "[REGGEN] Generate $(HBMCTRL_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_HBMCTRL_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(HBMCTRL_REGGEN_TARGETS)
 	@touch $@
 
 QUADCTRL_OCCAMYGEN_TARGETS = $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson
@@ -359,12 +355,10 @@ $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson: $(SOURCE_QUADCTRL_DIR)/occa
 # $(QUADCTRL_REGGEN_TARGETS) &: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson | $(TARGET_QUADCTRL_DIR)
 # 	@echo "[REGGEN] Generate $(QUADCTRL_REGGEN_TARGETS)"
 # 	@$(REGGEN) -r -t $(TARGET_QUADCTRL_DIR) $<
-# 	@$(VERIBLE_FMT) --inplace $(QUADCTRL_REGGEN_TARGETS)
 $(QUADCTRL_REGGEN_TARGETS): .quadctrl_reggen_targets_group
 .quadctrl_reggen_targets_group: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson | $(TARGET_QUADCTRL_DIR)
 	@echo "[REGGEN] Generate $(QUADCTRL_REGGEN_TARGETS)"
 	@$(REGGEN) -r -t $(TARGET_QUADCTRL_DIR) $<
-	@$(VERIBLE_FMT) --inplace $(QUADCTRL_REGGEN_TARGETS)
 	@touch $@
 
 ###############
@@ -422,56 +416,11 @@ $(ADDRMAP_PDF): $(ADDRMAP_TEX) | $(TARGET_ADDRMAP_DIR)
 # Software #
 ############
 
-IDMAROOT = $(shell $(BENDER) path idma)
-
-PLATFORM_HEADERS  = $(PLATFORM_HEADERS_DIR)/occamy_cfg.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/occamy_base_addr.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/clint.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h
-PLATFORM_HEADERS += $(PLATFORM_HEADERS_DIR)/idma.h
-
-.PHONY: sw clean-headers clean-sw
-
-sw: $(PLATFORM_HEADERS)
-	$(MAKE) -C sw/ all
-
-clean-headers:
-	rm -f $(PLATFORM_HEADERS)
-
-clean-sw: clean-headers
-	$(MAKE) -C sw/ clean
-
-# REGGEN headers
-$(PLATFORM_HEADERS_DIR)/clint.h: $(TARGET_CLINT_DIR)/clint.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/occamy_soc_ctrl.h: $(TARGET_SOCCTRL_DIR)/occamy_soc_reg.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_cluster_peripheral.h: $(SNITCH_ROOT)/hw/snitch_cluster/src/snitch_cluster_peripheral/snitch_cluster_peripheral_reg.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_quad_peripheral.h: $(TARGET_QUADCTRL_DIR)/occamy_quadrant_s1_reg.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/snitch_hbm_xbar_peripheral.h: $(TARGET_HBMCTRL_DIR)/occamy_hbm_xbar_reg.hjson
-	$(call reggen_generate_header,$@,$<)
-$(PLATFORM_HEADERS_DIR)/idma.h: $(IDMAROOT)/target/rtl/idma_reg64_1d.hjson
-	$(call reggen_generate_header,$@,$<)
-
-# OCCAMYGEN headers
-$(PLATFORM_HEADERS_DIR)/occamy_cfg.h: $(PLATFORM_HEADERS_DIR)/occamy_cfg.h.tpl $(CFG)
-	@echo "[OCCAMYGEN] Generating $@"
-	@$(OCCAMYGEN) -c $(CFG) --outdir $(PLATFORM_HEADERS_DIR) --cheader $<
-$(PLATFORM_HEADERS_DIR)/occamy_base_addr.h: $(CFG)
-	@echo "[OCCAMYGEN] Generating $@"
-	@$(OCCAMYGEN) -c $(CFG) --outdir $(PLATFORM_HEADERS_DIR) -D $@
+include sw.mk
 
 ##########
 # Traces #
 ##########
-
-traces: $(CVA6_TXT_TRACE) $(CVA6_PERF_DUMP)
-annotate: $(CVA6_ANNOTATED_TRACE)
 
 $(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
 	cp $< $@
@@ -480,11 +429,19 @@ $(CVA6_TXT_TRACE): $(SIM_DIR)/trace_hart_0.log
 $(CVA6_PERF_DUMP): $(CVA6_TXT_TRACE) $(EVENTS_PY)
 	$(PYTHON) $(EVENTS_PY) -f cva6 $< -o $@
 $(CVA6_ANNOTATED_TRACE): $(CVA6_TXT_TRACE) $(ANNOTATE_PY)
-	$(PYTHON) $(ANNOTATE_PY) $(ANNOTATE_FLAGS) -o $@ $(CVA6_BINARY) $<
+	$(PYTHON) $(ANNOTATE_PY) -f cva6 -q --keep-time --addr2line=$(CVA6_ADDR2LINE) -o $@ $(CVA6_BINARY) $<
 
-############
+#############
 # Questasim #
-############
+#############
+
+GENERATED_RTL_SOURCES  = $(MISC_OCCAMYGEN_SV_TARGETS)
+GENERATED_RTL_SOURCES += $(TARGET_TEST_DIR)/testharness.sv
+GENERATED_RTL_SOURCES += $(filter %.sv,$(CLINT_OCCAMYGEN_TARGETS) $(CLINT_REGGEN_TARGETS))
+GENERATED_RTL_SOURCES += $(filter %.sv,$(PLIC_PLICGEN_TARGETS) $(PLIC_REGGEN_TARGETS))
+GENERATED_RTL_SOURCES += $(filter %.sv,$(SOCCTRL_OCCAMYGEN_TARGETS) $(SOCCTRL_REGGEN_TARGETS))
+GENERATED_RTL_SOURCES += $(filter %.sv,$(HBMCTRL_OCCAMYGEN_TARGETS) $(HBMCTRL_REGGEN_TARGETS))
+GENERATED_RTL_SOURCES += $(filter %.sv,$(QUADCTRL_OCCAMYGEN_TARGETS) $(QUADCTRL_REGGEN_TARGETS))
 
 include $(SNITCH_ROOT)/target/common/vsim.mk
 
@@ -496,8 +453,7 @@ $(BIN_DIR)/$(TARGET).vsim: $(TARGET_TEST_DIR)/bootrom.bin
 #######
 
 # Build compilation script and compile all sources for VCS simulation
-$(BIN_DIR)/$(TARGET).vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} $(TARGET_TEST_DIR)/bootrom.bin
-	mkdir -p bin
+$(BIN_DIR)/$(TARGET).vcs: work-vcs/compile.sh work/lib/libfesvr.a ${TB_CC_SOURCES} $(TARGET_TEST_DIR)/bootrom.bin | $(BIN_DIR)
 	vcs $(VCS_FLAGS) -o $(BIN_DIR)/$(TARGET).vcs tb_bin -cc $(CC) -cpp $(CXX) \
 		$(TB_CC_SOURCES) -CFLAGS "$(TB_CC_FLAGS)" -LDFLAGS "-L${FESVR}/lib" -lfesvr -lutil
 
